@@ -1,0 +1,237 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.EditRolesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OrderingSpecialEquipment.Views"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000"
+             d:DataContext="{d:DesignInstance Type=local:EditRolesViewModel, IsDesignTimeCreatable=True}">
+    <UserControl.Resources>
+        <converters:Converters.BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="ThemedDataGridStyle" BasedOn="{StaticResource ThemedDataGridStyle}" TargetType="DataGrid" />
+        <Style x:Key="ThemedButtonStyle" BasedOn="{StaticResource ThemedButtonStyle}" TargetType="Button" />
+        <Style x:Key="ThemedTextBoxStyle" BasedOn="{StaticResource ThemedTextBoxStyle}" TargetType="TextBox" />
+        <Style x:Key="ThemedLabelStyle" BasedOn="{StaticResource {x:Type Label}}" TargetType="Label" />
+        <Style x:Key="ThemedCheckBoxStyle" BasedOn="{StaticResource {x:Type CheckBox}}" TargetType="CheckBox" />
+        <Style x:Key="ThemedComboBoxStyle" BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox" />
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки управления -->
+            <RowDefinition Height="*"/>
+            <!-- DataGrid -->
+            <RowDefinition Height="Auto"/>
+            <!-- Панель редактирования -->
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,10">
+            <Button Content="Загрузить" Command="{Binding LoadRolesCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding Roles}" 
+                  SelectedItem="{Binding SelectedRole}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  SelectionMode="Single"
+                  Style="{StaticResource ThemedDataGridStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Код" Binding="{Binding Code}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Чтение/AuditLogs" Binding="{Binding TAB_AuditLogs}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Чтение/Departments" Binding="{Binding TAB_Departments}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Экспорт данных" Binding="{Binding SPEC_ExportData}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Системный админ" Binding="{Binding SPEC_SystemAdmin}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Активна" Binding="{Binding IsActive}" IsReadOnly="True" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <GroupBox Grid.Row="2" Header="Редактирование роли" Margin="0,10,0,0" Visibility="{Binding SelectedRole, Converter={StaticResource BoolToVis}}">
+            <ScrollViewer>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" Content="ID:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" IsEnabled="{Binding IsEditing, Converter={StaticResource BoolToVis}, ConverterParameter=inverted}"/>
+
+                    <Label Grid.Row="1" Grid.Column="0" Content="Название:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditName, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                    <Label Grid.Row="2" Grid.Column="0" Content="Код:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditCode, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                    <Label Grid.Row="3" Grid.Column="0" Content="Описание:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditDescription, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                    <!-- Права на таблицы -->
+                    <Label Grid.Row="4" Grid.Column="0" Content="Права на таблицы:" FontWeight="Bold" Style="{StaticResource ThemedLabelStyle}"/>
+
+                    <Label Grid.Row="5" Grid.Column="0" Content="AuditLogs:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_AuditLogs, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="6" Grid.Column="0" Content="Departments:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_Departments, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="7" Grid.Column="0" Content="EquipmentDependencies:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_EquipmentDependencies, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="8" Grid.Column="0" Content="Equipments:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_Equipments, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="9" Grid.Column="0" Content="LessorOrganizations:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_LessorOrganizations, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="10" Grid.Column="0" Content="LicensePlates:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_LicensePlates, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="11" Grid.Column="0" Content="Roles:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="11" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_Roles, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="12" Grid.Column="0" Content="ShiftRequests:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="12" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_ShiftRequests, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="13" Grid.Column="0" Content="TransportProgram:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="13" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_TransportProgram, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="14" Grid.Column="0" Content="UserDepartmentAccess:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="14" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_UserDepartmentAccess, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="15" Grid.Column="0" Content="UserFavorites:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="15" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_UserFavorites, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="16" Grid.Column="0" Content="Users:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="16" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_Users, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="17" Grid.Column="0" Content="UserWarehouseAccess:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="17" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_UserWarehouseAccess, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="18" Grid.Column="0" Content="WarehouseAreas:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="18" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_WarehouseAreas, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <Label Grid.Row="19" Grid.Column="0" Content="Warehouses:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox Grid.Row="19" Grid.Column="1" Grid.ColumnSpan="2" SelectedValue="{Binding Tab_Warehouses, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedComboBoxStyle}">
+                        <ComboBoxItem Content="0 - Запрещено" Tag="0"/>
+                        <ComboBoxItem Content="1 - Чтение" Tag="1"/>
+                        <ComboBoxItem Content="2 - Запись" Tag="2"/>
+                    </ComboBox>
+
+                    <!-- Специальные права -->
+                    <Label Grid.Row="20" Grid.Column="0" Content="Специальные права:" FontWeight="Bold" Style="{StaticResource ThemedLabelStyle}"/>
+
+                    <CheckBox Grid.Row="21" Grid.Column="0" Grid.ColumnSpan="3" Content="Экспорт данных (SPEC_ExportData)" IsChecked="{Binding Spec_ExportData}" Style="{StaticResource ThemedCheckBoxStyle}"/>
+                    <CheckBox Grid.Row="22" Grid.Column="0" Grid.ColumnSpan="3" Content="Просмотр отчетов (SPEC_ViewReports)" IsChecked="{Binding Spec_ViewReports}" Style="{StaticResource ThemedCheckBoxStyle}"/>
+                    <CheckBox Grid.Row="23" Grid.Column="0" Grid.ColumnSpan="3" Content="Управление всеми отделами (SPEC_ManageAllDepartments)" IsChecked="{Binding Spec_ManageAllDepartments}" Style="{StaticResource ThemedCheckBoxStyle}"/>
+                    <CheckBox Grid.Row="24" Grid.Column="0" Grid.ColumnSpan="3" Content="Управление пользователями (SPEC_ManageUsers)" IsChecked="{Binding Spec_ManageUsers}" Style="{StaticResource ThemedCheckBoxStyle}"/>
+                    <CheckBox Grid.Row="25" Grid.Column="0" Grid.ColumnSpan="3" Content="Системный администратор (SPEC_SystemAdmin)" IsChecked="{Binding Spec_SystemAdmin}" Style="{StaticResource ThemedCheckBoxStyle}"/>
+
+                    <CheckBox Grid.Row="26" Grid.Column="0" Content="Активна" IsChecked="{Binding EditIsActive}" VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Row="27" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                        <Button Content="Сохранить" Command="{Binding SaveRoleCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                        <Button Content="Удалить" Command="{Binding DeleteRoleCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                        <Button Content="Отмена" Command="{Binding CancelEditCommand}" Style="{StaticResource ThemedButtonStyle}"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </GroupBox>
+    </Grid>
+</UserControl>

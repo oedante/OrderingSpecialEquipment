@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.EditLessorOrganizationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OrderingSpecialEquipment.Views"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="500" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance Type=local:EditLessorOrganizationsViewModel, IsDesignTimeCreatable=True}">
+    <UserControl.Resources>
+        <converters:Converters.BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="ThemedDataGridStyle" BasedOn="{StaticResource ThemedDataGridStyle}" TargetType="DataGrid" />
+        <Style x:Key="ThemedButtonStyle" BasedOn="{StaticResource ThemedButtonStyle}" TargetType="Button" />
+        <Style x:Key="ThemedTextBoxStyle" BasedOn="{StaticResource ThemedTextBoxStyle}" TargetType="TextBox" />
+        <Style x:Key="ThemedLabelStyle" BasedOn="{StaticResource {x:Type Label}}" TargetType="Label" />
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки управления -->
+            <RowDefinition Height="*"/>
+            <!-- DataGrid -->
+            <RowDefinition Height="Auto"/>
+            <!-- Панель редактирования -->
+        </Grid.RowDefinitions>
+
+        <!-- Кнопки загрузки и управления -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,10">
+            <Button Content="Загрузить" Command="{Binding LoadLessorOrganizationsCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+        </StackPanel>
+
+        <!-- DataGrid для отображения арендодателей -->
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding LessorOrganizations}" 
+                  SelectedItem="{Binding SelectedLessorOrg}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  SelectionMode="Single"
+                  Style="{StaticResource ThemedDataGridStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="ИНН" Binding="{Binding INN}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Контактное лицо" Binding="{Binding ContactPerson}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Активна" Binding="{Binding IsActive}" IsReadOnly="True" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Панель редактирования -->
+        <GroupBox Grid.Row="2" Header="Редактирование арендодателя" Margin="0,10,0,0" Visibility="{Binding SelectedLessorOrg, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="ID:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" IsEnabled="{Binding IsEditing, Converter={StaticResource BoolToVis}, ConverterParameter=inverted}"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Content="Название:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditName, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="2" Grid.Column="0" Content="ИНН:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditINN, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="3" Grid.Column="0" Content="Контактное лицо:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditContactPerson, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="4" Grid.Column="0" Content="Телефон:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditPhone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="5" Grid.Column="0" Content="Email:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditEmail, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="6" Grid.Column="0" Content="Адрес:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAddress, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <CheckBox Grid.Row="7" Grid.Column="0" Content="Активна" IsChecked="{Binding EditIsActive}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                    <Button Content="Сохранить" Command="{Binding SaveLessorOrganizationCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Удалить" Command="{Binding DeleteLessorOrganizationCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Отмена" Command="{Binding CancelEditCommand}" Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</UserControl>

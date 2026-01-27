@@ -1,0 +1,164 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.EditWarehousesAndAreasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OrderingSpecialEquipment.Views"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="700" d:DesignWidth="1000"
+             d:DataContext="{d:DesignInstance Type=local:EditWarehousesAndAreasViewModel, IsDesignTimeCreatable=True}">
+    <UserControl.Resources>
+        <converters:Converters.BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <Style x:Key="ThemedDataGridStyle" BasedOn="{StaticResource ThemedDataGridStyle}" TargetType="DataGrid" />
+        <Style x:Key="ThemedButtonStyle" BasedOn="{StaticResource ThemedButtonStyle}" TargetType="Button" />
+        <Style x:Key="ThemedTextBoxStyle" BasedOn="{StaticResource ThemedTextBoxStyle}" TargetType="TextBox" />
+        <Style x:Key="ThemedLabelStyle" BasedOn="{StaticResource {x:Type Label}}" TargetType="Label" />
+        <Style x:Key="ThemedComboBoxStyle" BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox" />
+        <Style x:Key="ThemedCheckBoxStyle" BasedOn="{StaticResource {x:Type CheckBox}}" TargetType="CheckBox" />
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки управления складами -->
+            <RowDefinition Height="*"/>
+            <!-- DataGrid складов -->
+            <RowDefinition Height="Auto"/>
+            <!-- Панель редактирования склада -->
+            <RowDefinition Height="Auto"/>
+            <!-- Кнопки управления территориями -->
+            <RowDefinition Height="*"/>
+            <!-- DataGrid территорий -->
+            <RowDefinition Height="Auto"/>
+            <!-- Панель редактирования территории -->
+        </Grid.RowDefinitions>
+
+        <!-- Склады -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,10">
+            <Button Content="Загрузить склады" Command="{Binding LoadWarehousesCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding Warehouses}" 
+                  SelectedItem="{Binding SelectedWarehouse}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  SelectionMode="Single"
+                  Style="{StaticResource ThemedDataGridStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="ID Отдела" Binding="{Binding DepartmentId}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" IsReadOnly="True" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <GroupBox Grid.Row="2" Header="Редактирование склада" Margin="0,10,0,10" Visibility="{Binding SelectedWarehouse, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="ID:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditWarehouseId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" IsEnabled="{Binding IsEditingWarehouse, Converter={StaticResource BoolToVis}, ConverterParameter=inverted}"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Content="Название:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditWarehouseName, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="2" Grid.Column="0" Content="ID Отдела:" Style="{StaticResource ThemedLabelStyle}"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" 
+                          ItemsSource="{Binding DepartmentsForSelection}" 
+                          SelectedValue="{Binding EditWarehouseDepartmentId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}"
+                          SelectedValuePath="Id" DisplayMemberPath="Name" 
+                          Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                <Label Grid.Row="3" Grid.Column="0" Content="Адрес:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditWarehouseAddress, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" AcceptsReturn="True" Height="60" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <CheckBox Grid.Row="4" Grid.Column="0" Content="Активен" IsChecked="{Binding EditWarehouseIsActive}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                    <Button Content="Сохранить" Command="{Binding SaveWarehouseCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Удалить" Command="{Binding DeleteWarehouseCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Отмена" Command="{Binding CancelEditWarehouseCommand}" Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- Территории -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,0,0,10">
+            <Button Content="Загрузить территории" Command="{Binding LoadAreasCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="4" 
+                  ItemsSource="{Binding WarehouseAreas}" 
+                  SelectedItem="{Binding SelectedArea}" 
+                  AutoGenerateColumns="False" 
+                  CanUserAddRows="False" 
+                  SelectionMode="Single"
+                  Style="{StaticResource ThemedDataGridStyle}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="ID Склада" Binding="{Binding WarehouseId}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Тип территории" Binding="{Binding AreaType}" IsReadOnly="True" Width="*"/>
+                <DataGridTextColumn Header="Макс. вместимость" Binding="{Binding MaxCapacity}" IsReadOnly="True" Width="*"/>
+                <DataGridCheckBoxColumn Header="Активна" Binding="{Binding IsActive}" IsReadOnly="True" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <GroupBox Grid.Row="5" Header="Редактирование территории" Margin="0,10,0,0" Visibility="{Binding SelectedArea, Converter={StaticResource BoolToVis}}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="ID:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAreaId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" IsEnabled="{Binding IsEditingArea, Converter={StaticResource BoolToVis}, ConverterParameter=inverted}"/>
+
+                <Label Grid.Row="1" Grid.Column="0" Content="Название:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAreaName, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="2" Grid.Column="0" Content="ID Склада:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAreaWarehouseId, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}" IsEnabled="False"/>
+                <!-- ReadOnly для связи -->
+
+                <Label Grid.Row="3" Grid.Column="0" Content="Тип территории:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAreaType, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <Label Grid.Row="4" Grid.Column="0" Content="Макс. вместимость:" Style="{StaticResource ThemedLabelStyle}"/>
+                <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2" Text="{Binding EditAreaMaxCapacity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                <CheckBox Grid.Row="5" Grid.Column="0" Content="Активна" IsChecked="{Binding EditAreaIsActive}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                    <Button Content="Сохранить" Command="{Binding SaveAreaCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Удалить" Command="{Binding DeleteAreaCommand}" Style="{StaticResource ThemedButtonStyle}" Margin="0,0,5,0"/>
+                    <Button Content="Отмена" Command="{Binding CancelEditAreaCommand}" Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</UserControl>
