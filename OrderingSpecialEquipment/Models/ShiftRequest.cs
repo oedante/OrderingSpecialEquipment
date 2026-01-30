@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderingSpecialEquipment.Models
@@ -84,7 +85,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("CreatedByUserId")]
         [StringLength(10)]
         [Display(Name = "ID создавшего", Description = "ID пользователя, создавшего заявку")]
-        public string CreatedByUserId { get; set; } = string.Empty;
+        public string CreatedByUserId { get; set; } = string.Empty; // Важно: не nullable, если используется как FK
 
         [Column("CreatedAt")]
         [Display(Name = "Дата создания", Description = "Дата и время создания заявки")]
@@ -103,13 +104,36 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Месяц программы", Description = "Месяц, к которому относится заявка в контексте транспортной программы")]
         public int? ProgramMonth { get; set; }
 
-        // Навигационные свойства (опционально, для EF)
-        public virtual Equipment Equipment { get; set; } = null!;
+        // --- НАВИГАЦИОННЫЕ СВОЙСТВА ---
+        // Связь: Многие к одному (ShiftRequest -> User)
+        /// <summary>
+        /// Пользователь, создавший заявку.
+        /// </summary>
+        [ForeignKey("CreatedByUserId")]
+        public virtual User? CreatedByUser { get; set; }
+
+        // Связь: Многие к одному (ShiftRequest -> Equipment)
+        [ForeignKey("EquipmentId")]
+        public virtual Equipment? Equipment { get; set; }
+
+        // Связь: Многие к одному (ShiftRequest -> LicensePlate)
+        [ForeignKey("LicensePlateId")]
         public virtual LicensePlate? LicensePlate { get; set; }
-        public virtual Warehouse Warehouse { get; set; } = null!;
+
+        // Связь: Многие к одному (ShiftRequest -> Warehouse)
+        [ForeignKey("WarehouseId")]
+        public virtual Warehouse? Warehouse { get; set; }
+
+        // Связь: Многие к одному (ShiftRequest -> WarehouseArea)
+        [ForeignKey("AreaId")]
         public virtual WarehouseArea? Area { get; set; }
-        public virtual User CreatedByUser { get; set; } = null!;
+
+        // Связь: Многие к одному (ShiftRequest -> Department)
+        [ForeignKey("DepartmentId")]
         public virtual Department? Department { get; set; }
+
+        // Связь: Многие к одному (ShiftRequest -> LessorOrganization)
+        [ForeignKey("LessorOrganizationId")]
         public virtual LessorOrganization? LessorOrganization { get; set; }
     }
 }

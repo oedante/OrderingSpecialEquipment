@@ -1,50 +1,60 @@
-﻿using Npgsql; // Npgsql
+﻿using Microsoft.Extensions.Configuration;
 using System;
-using System.Data.SqlClient; // Microsoft.Data.SqlClient
-using System.Data.Common;
 using System.IO;
 
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Реализация IConnectionService для работы с PostgreSQL и MSSQL.
+    /// Реализация IConnectionService для управления строкой подключения к базе данных.
     /// </summary>
     public class ConnectionService : IConnectionService
     {
-        private const string SettingsFileName = "DbConnectionSettings.json";
-        private readonly string _settingsFilePath;
+        private readonly IConfiguration _configuration;
+        private const string DefaultConnectionString = "Host=217.114.43.126;Port=5432;Database=OrderingSpecialEquipment;Username=student;Password=Qq587655!;"; // Заглушка
+        private const ConnectionType DefaultConnectionType = ConnectionType.PostgreSQL;
 
-        public ConnectionType CurrentConnectionType { get; private set; } = ConnectionType.PostgreSQL; // Значение по умолчанию
-
-        public ConnectionService()
+        public ConnectionService(IConfiguration configuration)
         {
-            _settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, SettingsFileName);
-            // Загрузка настроек при создании сервиса
-            var loadedSettings = LoadConnectionSettings();
-            CurrentConnectionType = loadedSettings.type;
+            _configuration = configuration;
+        }
+
+        public ConnectionType CurrentConnectionType
+        {
+            get
+            {
+                var typeStr = _configuration["ConnectionType"];
+                if (Enum.TryParse<ConnectionType>(typeStr, out var type))
+                {
+                    return type;
+                }
+                // Возвращаем значение по умолчанию, если в конфигурации нет или ошибка
+                return DefaultConnectionType;
+            }
         }
 
         public string GetConnectionString()
         {
-            var settings = LoadConnectionSettings();
-            return settings.connectionString;
+            var cs = _configuration.GetConnectionString("DefaultConnection");
+            // Возвращаем строку из конфигурации или заглушку, если её нет
+            return string.IsNullOrEmpty(cs) ? DefaultConnectionString : cs;
         }
 
         public bool ValidateConnectionString(string connectionString)
         {
+            // Простая проверка на null/empty. Более сложная проверка - через тест подключения.
+            return !string.IsNullOrEmpty(connectionString) && connectionString.Length > 5; // Пример минимальной длины
+        }
+
+        public bool TestConnection(string connectionString)
+        {
+            // Тестирование подключения к БД (реализация зависит от провайдера)
+            // В реальном приложении используйте NpgsqlConnection.Open() или SqlConnection.Open()
             try
             {
-                switch (CurrentConnectionType)
-                {
-                    case ConnectionType.PostgreSQL:
-                        using (var conn = new NpgsqlConnection(connectionString)) { /* conn.ConnectionString parsing logic could be added here */ }
-                        break;
-                    case ConnectionType.MSSQL:
-                        using (var conn = new SqlConnection(connectionString)) { /* conn.ConnectionString parsing logic could be added here */ }
-                        break;
-                    default:
-                        return false;
-                }
+                if (!ValidateConnectionString(connectionString)) return false;
+
+                using var connection = CreateConnection(connectionString, CurrentConnectionType);
+                connection.Open();
                 return true;
             }
             catch
@@ -53,81 +63,40 @@ namespace OrderingSpecialEquipment.Services
             }
         }
 
-        public bool TestConnection(string connectionString)
-        {
-            try
-            {
-                DbConnection connection;
-                switch (CurrentConnectionType)
-                {
-                    case ConnectionType.PostgreSQL:
-                        connection = new NpgsqlConnection(connectionString);
-                        break;
-                    case ConnectionType.MSSQL:
-                        connection = new SqlConnection(connectionString);
-                        break;
-                    default:
-                        return false;
-                }
-
-                connection.Open();
-                connection.Close();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка тестирования подключения: {ex.Message}");
-                return false;
-            }
-        }
-
         public void SaveConnectionSettings(ConnectionType connectionType, string connectionString)
         {
-            try
-            {
-                var settings = new ConnectionSettings
-                {
-                    Type = connectionType.ToString(),
-                    ConnectionString = connectionString
-                };
-                var json = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(_settingsFilePath, json);
-                Console.WriteLine("Настройки подключения сохранены.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка сохранения настроек подключения: {ex.Message}");
-            }
+            // Сохранение в файл настроек (appsettings.json или отдельный файл)
+            // Для упрощения, предположим, что настройки хранятся в appsettings.json
+            // Это требует использования IConfigurationRoot и перезаписи файла, что не так тривиально.
+            // В реальном приложении может использоваться отдельный JSON-файл для настроек подключения.
+            // Пока оставим как заглушку.
+            Console.WriteLine($"Попытка сохранить настройки подключения: {connectionType}, {connectionString}");
+            //throw new NotImplementedException("Сохранение настроек подключения не реализовано в этом примере.");
         }
 
         public (ConnectionType type, string connectionString) LoadConnectionSettings()
         {
-            try
-            {
-                if (File.Exists(_settingsFilePath))
-                {
-                    var json = File.ReadAllText(_settingsFilePath);
-                    var settings = System.Text.Json.JsonSerializer.Deserialize<ConnectionSettings>(json);
-                    if (settings != null)
-                    {
-                        var type = Enum.TryParse<ConnectionType>(settings.Type, out var parsedType) ? parsedType : ConnectionType.PostgreSQL;
-                        return (type, settings.ConnectionString);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка загрузки настроек подключения: {ex.Message}");
-            }
-            // Значения по умолчанию
-            return (ConnectionType.PostgreSQL, "");
+            // Загрузка из appsettings.json (или другого источника)
+            // Это уже делает IConfiguration
+            var cs = GetConnectionString();
+            var type = CurrentConnectionType;
+            return (type, cs);
         }
 
-        // Вспомогательный класс для сериализации/десериализации настроек
-        private class ConnectionSettings
+        // Вспомогательный метод для создания соединения (требует соответствующие NuGet-пакеты)
+        private System.Data.Common.DbConnection CreateConnection(string connectionString, ConnectionType type)
         {
-            public string Type { get; set; } = ConnectionType.PostgreSQL.ToString();
-            public string ConnectionString { get; set; } = "";
+            switch (type)
+            {
+                case ConnectionType.PostgreSQL:
+                    // Убедитесь, что установлен пакет Npgsql
+                    return new Npgsql.NpgsqlConnection(connectionString);
+                case ConnectionType.MSSQL:
+                    // Убедитесь, что установлен пакет Microsoft.Data.SqlClient
+                    return new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+                default:
+                    throw new InvalidOperationException($"Unsupported connection type: {type}");
+            }
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderingSpecialEquipment.Models
@@ -61,11 +63,47 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Дата создания", Description = "Дата и время создания записи")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Навигационные свойства (опционально, для EF)
-        public virtual Role Role { get; set; } = null!;
+        // --- НАВИГАЦИОННЫЕ СВОЙСТВА ---
+        // Связь: Многие к одному (User -> Role)
+        /// <summary>
+        /// Роль пользователя.
+        /// </summary>
+        [ForeignKey("RoleId")] // <-- Оставлено, так как RoleId - это FK в User, указывающий на Role.Key
+        public virtual Role? Role { get; set; }
+
+        // Связь: Многие к одному (User -> Department)
+        /// <summary>
+        /// Отдел по умолчанию.
+        /// </summary>
+        [ForeignKey("DefaultDepartmentId")] // <-- Оставлено, так как DefaultDepartmentId - это FK в User, указывающий на Department.Id
         public virtual Department? DefaultDepartment { get; set; }
+
+        // Связь: Один ко многим (User -> UserDepartmentAccess)
+        /// <summary>
+        /// Коллекция записей доступа к отделам.
+        /// </summary>
+        // УБРАНО: [ForeignKey("UserId")] - EF Core сам поймёт связь по названию свойства UserId в UserDepartmentAccess
         public virtual ICollection<UserDepartmentAccess> UserDepartmentAccesses { get; set; } = new List<UserDepartmentAccess>();
-        public virtual ICollection<ShiftRequest> ShiftRequests { get; set; } = new List<ShiftRequest>();
-        public virtual ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();
+
+        // Связь: Один ко многим (User -> ShiftRequest)
+        /// <summary>
+        /// Коллекция заявок, созданных пользователем.
+        /// </summary>
+        // УБРАНО: [ForeignKey("CreatedByUserId")] - EF Core сам поймёт связь по названию свойства CreatedByUserId в ShiftRequest
+        public virtual ICollection<ShiftRequest> CreatedShiftRequests { get; set; } = new List<ShiftRequest>();
+
+        // Связь: Один ко многим (User -> UserFavorite)
+        /// <summary>
+        /// Коллекция избранных записей пользователя.
+        /// </summary>
+        // УБРАНО: [ForeignKey("UserId")] - EF Core сам поймёт связь по названию свойства UserId в UserFavorite
+        public virtual ICollection<UserFavorite> Favorites { get; set; } = new List<UserFavorite>();
+
+        // Связь: Один ко многим (User -> AuditLog)
+        /// <summary>
+        /// Коллекция логов аудита, созданных пользователем.
+        /// </summary>
+        // УБРАНО: [ForeignKey("ChangedByUserId")] - EF Core сам поймёт связь по названию свойства ChangedByUserId в AuditLog
+        public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
 }

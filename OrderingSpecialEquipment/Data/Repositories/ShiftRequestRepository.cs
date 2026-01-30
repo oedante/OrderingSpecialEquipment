@@ -86,7 +86,18 @@ namespace OrderingSpecialEquipment.Data.Repositories
             return null;
         }
 
-        // ShiftRequest не имеет Id типа string, поэтому метод не переопределяется.
-        // public override async Task<ShiftRequest?> GetByIdStringAsync(string id) => null;
+        // --- РЕАЛИЗАЦИЯ НОВОГО МЕТОДА ---
+        public async Task<IList<ShiftRequest>> FindRequestsAsync(DateTime? date = null, int? shift = null, string? equipmentId = null, string? warehouseId = null, string? departmentId = null)
+        {
+            var query = Context.ShiftRequests.AsQueryable();
+
+            if (date.HasValue) query = query.Where(r => r.Date.Date == date.Value.Date);
+            if (shift.HasValue) query = query.Where(r => r.Shift == shift);
+            if (!string.IsNullOrEmpty(equipmentId)) query = query.Where(r => r.EquipmentId == equipmentId);
+            if (!string.IsNullOrEmpty(warehouseId)) query = query.Where(r => r.WarehouseId == warehouseId);
+            if (!string.IsNullOrEmpty(departmentId)) query = query.Where(r => r.DepartmentId == departmentId);
+
+            return await query.OrderBy(r => r.Date).ThenBy(r => r.Shift).ToListAsync();
+        }
     }
 }

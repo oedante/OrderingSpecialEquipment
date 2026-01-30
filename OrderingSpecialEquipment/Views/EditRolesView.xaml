@@ -9,8 +9,8 @@
              d:DesignHeight="700" d:DesignWidth="1000"
              d:DataContext="{d:DesignInstance Type=local:EditRolesViewModel, IsDesignTimeCreatable=True}">
     <UserControl.Resources>
-        <converters:Converters.BoolToYesNoConverter x:Key="BoolToYesNo"/>
-        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="ThemedDataGridStyle" BasedOn="{StaticResource ThemedDataGridStyle}" TargetType="DataGrid" />
         <Style x:Key="ThemedButtonStyle" BasedOn="{StaticResource ThemedButtonStyle}" TargetType="Button" />
         <Style x:Key="ThemedTextBoxStyle" BasedOn="{StaticResource ThemedTextBoxStyle}" TargetType="TextBox" />

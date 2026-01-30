@@ -4,59 +4,85 @@ using System.Windows.Input;
 namespace OrderingSpecialEquipment.Commands
 {
     /// <summary>
-    /// Реализация ICommand, которая позволяет привязывать методы в ViewModel к элементам управления UI.
+    /// Необобщённая реализация ICommand для действий без параметра или с object-параметром.
     /// </summary>
     public class RelayCommand : ICommand
     {
         private readonly Action<object?> _execute;
-        private readonly Predicate<object?>? _canExecute;
+        private readonly Func<object?, bool>? _canExecute;
 
-        /// <summary>
-        /// Конструктор команды с возможностью указать условие выполнения.
-        /// </summary>
-        /// <param name="execute">Метод, вызываемый при выполнении команды.</param>
-        /// <param name="canExecute">Метод, определяющий, можно ли выполнить команду. Необязательный параметр.</param>
-        public RelayCommand(Action<object?> execute, Predicate<object?>? canExecute = null)
+        public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
 
-        /// <summary>
-        /// Возникает, когда меняется состояние, влияющее на выполнение команды.
-        /// </summary>
-        public event EventHandler? CanExecuteChanged
+        // Конструктор для команд без параметра
+        public RelayCommand(Action execute, Func<bool>? canExecute = null)
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            _execute = _ => execute?.Invoke(); // Игнорируем параметр
+            _canExecute = _ => canExecute?.Invoke() ?? true; // Игнорируем параметр
         }
 
-        /// <summary>
-        /// Определяет, может ли команда выполниться в данный момент.
-        /// </summary>
-        /// <param name="parameter">Параметр команды.</param>
-        /// <returns>True, если команда может быть выполнена, иначе false.</returns>
+        public event EventHandler? CanExecuteChanged;
+
         public bool CanExecute(object? parameter)
         {
             return _canExecute?.Invoke(parameter) ?? true;
         }
 
-        /// <summary>
-        /// Выполняет логику команды.
-        /// </summary>
-        /// <param name="parameter">Параметр команды.</param>
         public void Execute(object? parameter)
         {
             _execute(parameter);
         }
 
         /// <summary>
-        /// Вызывает событие CanExecuteChanged вручную.
-        /// Полезно, когда условия, влияющие на CanExecute, изменяются извне.
+        /// Вызывает событие CanExecuteChanged.
         /// </summary>
         public void RaiseCanExecuteChanged()
         {
-            CommandManager.InvalidateRequerySuggested();
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Обобщённая реализация ICommand, позволяющая передавать параметр строго типизированного типа T.
+    /// </summary>
+    /// <typeparam name="T">Тип параметра команды.</typeparam>
+    public class RelayCommandOfT<T> : ICommand // Изменим имя на RelayCommandOfT
+    {
+        private readonly Action<T?> _execute;
+        private readonly Func<T?, bool>? _canExecute;
+
+        public RelayCommandOfT(Action<T?> execute, Func<T?, bool>? canExecute = null)
+        {
+            _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+            _canExecute = canExecute;
+        }
+
+        public event EventHandler? CanExecuteChanged;
+
+        public bool CanExecute(object? parameter)
+        {
+            if (parameter != null && !(parameter is T || (parameter is null && typeof(T).IsClass)))
+            {
+                return false;
+            }
+            return _canExecute?.Invoke((T?)parameter) ?? true;
+        }
+
+        public void Execute(object? parameter)
+        {
+            if (parameter != null && !(parameter is T || (parameter is null && typeof(T).IsClass)))
+            {
+                throw new ArgumentException($"Неправильный тип параметра. Ожидался '{typeof(T)?.Name}', получен '{parameter.GetType()?.Name}'.");
+            }
+            _execute((T?)parameter);
+        }
+
+        public void RaiseCanExecuteChanged()
+        {
+            CanExecuteChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

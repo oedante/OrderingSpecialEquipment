@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderingSpecialEquipment.Models
@@ -11,8 +12,8 @@ namespace OrderingSpecialEquipment.Models
     {
         [Key]
         [Column("Key")]
-        [Display(Name = "Ключ лога", Description = "Уникальный ключ записи лога")]
-        public int Key { get; set; }
+        [Display(Name = "Ключ", Description = "Уникальный ключ записи лога")]
+        public int Key { get; set; } // SERIAL
 
         [Column("TableName")]
         [StringLength(50)]
@@ -40,7 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("ChangedByUserId")]
         [StringLength(10)]
         [Display(Name = "ID пользователя", Description = "ID пользователя, который совершил изменение")]
-        public string ChangedByUserId { get; set; } = string.Empty;
+        public string ChangedByUserId { get; set; } = string.Empty; // Важно: не nullable, если используется как FK
 
         [Column("ChangedAt")]
         [Display(Name = "Дата изменения", Description = "Дата и время изменения")]
@@ -55,5 +56,13 @@ namespace OrderingSpecialEquipment.Models
         [StringLength(500)]
         [Display(Name = "User Agent", Description = "Информация о браузере/клиенте")]
         public string? UserAgent { get; set; }
+
+        // --- НАВИГАЦИОННЫЕ СВОЙСТВА ---
+        // Связь: Многие к одному (AuditLog -> User)
+        /// <summary>
+        /// Пользователь, который совершил изменение.
+        /// </summary>
+        [ForeignKey("ChangedByUserId")] // <-- Атрибут ForeignKey здесь
+        public virtual User? ChangedByUser { get; set; }
     }
 }

@@ -58,7 +58,18 @@ namespace OrderingSpecialEquipment.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // Навигационные свойства (опционально, для EF)
+        // Связь: Один ко многим (LessorOrganization -> LicensePlate)
+        /// <summary>
+        /// Госномера, связанные с этой организацией.
+        /// </summary>
+        // УБРАНО: [ForeignKey("LessorOrganizationId")] - EF Core сам поймёт связь по названию свойства LessorOrganizationId в LicensePlate
         public virtual ICollection<LicensePlate> LicensePlates { get; set; } = new List<LicensePlate>();
+
+        // Связь: Один ко многим (LessorOrganization -> ShiftRequest)
+        /// <summary>
+        /// Заявки, связанные с этой организацией.
+        /// </summary>
+        // УБРАНО: [ForeignKey("LessorOrganizationId")] - EF Core сам поймёт связь по названию свойства LessorOrganizationId в ShiftRequest
         public virtual ICollection<ShiftRequest> ShiftRequests { get; set; } = new List<ShiftRequest>();
     }
 }

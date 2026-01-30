@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderingSpecialEquipment.Models
@@ -9,15 +11,16 @@ namespace OrderingSpecialEquipment.Models
     [Table("Roles")]
     public class Role
     {
+        // --- ИЗМЕНЕНО: Первичный ключ - Id (string), а не Key (int) ---
         [Key]
-        [Column("Key")]
-        [Display(Name = "Ключ", Description = "Уникальный ключ роли")]
-        public int Key { get; set; } // SERIAL
-
         [Column("Id")]
         [StringLength(10)]
         [Display(Name = "ID роли", Description = "Уникальный идентификатор роли")]
         public string Id { get; set; } = string.Empty;
+
+        [Column("Key")]
+        [Display(Name = "Ключ", Description = "Суррогатный ключ (SERIAL)")]
+        public int Key { get; set; } // SERIAL
 
         [Column("Name")]
         [StringLength(50)]
@@ -128,7 +131,12 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Дата создания", Description = "Дата и время создания записи")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Навигационные свойства (опционально, для EF)
+        // --- НАВИГАЦИОННОЕ СВОЙСТВО ---
+        // Связь: Один ко многим (Role -> User)
+        /// <summary>
+        /// Коллекция пользователей, имеющих эту роль.
+        /// </summary>
+        // УБРАНО: [ForeignKey("RoleId")] - EF Core сам поймёт связь по названию свойства RoleId в User и навигации User.Role
         public virtual ICollection<User> Users { get; set; } = new List<User>();
     }
 }

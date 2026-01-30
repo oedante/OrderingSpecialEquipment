@@ -12,7 +12,7 @@ namespace OrderingSpecialEquipment.Services
         private User? _currentUser;
         private readonly IUserRepository _userRepository; // Зависимость от репозитория
 
-        public AuthenticationService(IUserRepository userRepository)
+        public AuthenticationService(IUserRepository userRepository) // Принимаем IUserRepository через DI
         {
             _userRepository = userRepository;
         }
@@ -22,19 +22,39 @@ namespace OrderingSpecialEquipment.Services
             var windowsIdentity = WindowsIdentity.GetCurrent();
             if (windowsIdentity != null && !string.IsNullOrEmpty(windowsIdentity.Name))
             {
-                // Ищем пользователя в БД по WindowsLogin
-                // ВАЖНО: Это синхронный вызов асинхронного метода. В UI-потоке может вызвать блокировку.
-                // В реальном приложении используйте асинхронный подход.
-                _currentUser = _userRepository.GetByWindowsLoginAsync(windowsIdentity.Name).Result;
-                // Проверяем, активен ли пользователь (проверка уже включена в репозиторий)
-                // if (_currentUser != null && !_currentUser.IsActive)
-                // {
-                //     _currentUser = null; // Пользователь заблокирован
-                // }
+                // --- НОРМАЛИЗАЦИЯ WINDOWS LOGIN ---
+                string normalizedWindowsLogin = NormalizeWindowsLogin(windowsIdentity.Name);
+
+                // Ищем пользователя в БД по нормализованному логину Windows
+                _currentUser = _userRepository.GetByWindowsLoginAsync(normalizedWindowsLogin).Result; // Используем Result осторожно
+                // Проверяем, активен ли пользователь (проверка уже включена в репозитории, если там добавлено && u.IsActive)
+                if (_currentUser != null && !_currentUser.IsActive)
+                {
+                    _currentUser = null; // Пользователь заблокирован
+                }
             }
             return _currentUser;
         }
 
         public bool IsUserAuthenticated => _currentUser != null;
+
+        // --- ВСПОМОГАТЕЛЬНЫЙ МЕТОД ---
+        /// <summary>
+        /// Нормализует логин Windows, удаляя домен (DOMAIN\username -> username).
+        /// </summary>
+        /// <param name="fullLogin">Полный логин Windows (DOMAIN\username или username).</param>
+        /// <returns>Нормализованный логин (username).</returns>
+        private static string NormalizeWindowsLogin(string fullLogin)
+        {
+            if (string.IsNullOrEmpty(fullLogin))
+                return fullLogin;
+
+            var parts = fullLogin.Split('\\');
+            if (parts.Length > 1)
+            {
+                return parts[parts.Length - 1];
+            }
+            return fullLogin;
+        }
     }
 }

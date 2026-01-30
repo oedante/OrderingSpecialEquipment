@@ -9,8 +9,8 @@
              d:DesignHeight="400" d:DesignWidth="600"
              d:DataContext="{d:DesignInstance Type=local:SettingsViewModel, IsDesignTimeCreatable=True}">
     <UserControl.Resources>
-        <converters:Converters.BoolToYesNoConverter x:Key="BoolToYesNo"/>
-        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <Style x:Key="ThemedButtonStyle" BasedOn="{StaticResource ThemedButtonStyle}" TargetType="Button" />
         <Style x:Key="ThemedLabelStyle" BasedOn="{StaticResource {x:Type Label}}" TargetType="Label" />
         <Style x:Key="ThemedComboBoxStyle" BasedOn="{StaticResource {x:Type ComboBox}}" TargetType="ComboBox" />

@@ -7,40 +7,121 @@
         xmlns:viewmodels="clr-namespace:OrderingSpecialEquipment.ViewModels"
         xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
         mc:Ignorable="d"
-        Title="Ordering Special Equipment" Height="600" Width="1000"
+        Title="Заказ спецтехники" Height="800" Width="1200"
         WindowStartupLocation="CenterScreen">
     <Window.Resources>
-        <converters:Converters.BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- Конвертеры -->
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToWidthConverter x:Key="BoolToWidth"/>
+        <!-- Новый конвертер -->
+
+        <!-- DataTemplates для отображения ViewModel -->
+        <DataTemplate DataType="{x:Type viewmodels:MainViewModel}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <!-- Основная таблица заявок -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- GridSplitter -->
+                    <ColumnDefinition Width="{Binding IsEquipmentPanelVisible, Converter={StaticResource BoolToWidth}, ConverterParameter=300}" x:Name="EquipmentColumn"/>
+                    <!-- Панель техники (Collapsible) -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Основная таблица заявок -->
+                <DataGrid Grid.Column="0"
+                          ItemsSource="{Binding ShiftRequestsToShow}" 
+                          SelectedItem="{Binding SelectedShiftRequest}" 
+                          AutoGenerateColumns="False" 
+                          CanUserAddRows="False" 
+                          SelectionMode="Single"
+                          Style="{StaticResource ThemedDataGridStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat='dd.MM.yyyy'}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Смена" Binding="{Binding Shift}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="ID Техники" Binding="{Binding EquipmentId}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="ID Склада" Binding="{Binding WarehouseId}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="ID Территории" Binding="{Binding AreaId}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Номер техники" Binding="{Binding VehicleNumber}" Width="*"/>
+                        <DataGridTextColumn Header="Марка техники" Binding="{Binding VehicleBrand}" Width="*"/>
+                        <DataGridTextColumn Header="ID Арендодателя" Binding="{Binding LessorOrganizationId}" Width="*"/>
+                        <DataGridTextColumn Header="Запрошено" Binding="{Binding RequestedCount}" Width="*"/>
+                        <DataGridTextColumn Header="Отработано часов" Binding="{Binding WorkedHours}" Width="*"/>
+                        <DataGridTextColumn Header="Факт. стоимость" Binding="{Binding ActualCost, StringFormat=C}" Width="*"/>
+                        <DataGridCheckBoxColumn Header="Выполнено" Binding="{Binding IsWorked}" Width="*"/>
+                        <DataGridCheckBoxColumn Header="Заблокировано" Binding="{Binding IsBlocked}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Комментарий" Binding="{Binding Comment}" Width="*"/>
+                        <DataGridTextColumn Header="ID Создавшего" Binding="{Binding CreatedByUserId}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Дата создания" Binding="{Binding CreatedAt, StringFormat='dd.MM.yyyy HH:mm:ss'}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="ID Отдела" Binding="{Binding DepartmentId}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Год Программы" Binding="{Binding ProgramYear}" IsReadOnly="True" Width="*"/>
+                        <DataGridTextColumn Header="Месяц Программы" Binding="{Binding ProgramMonth}" IsReadOnly="True" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Разделитель -->
+                <GridSplitter Grid.Column="1" 
+                              Width="5" 
+                              ResizeBehavior="PreviousAndNext" 
+                              Background="{StaticResource BorderBrush}" 
+                              Visibility="{Binding IsEquipmentPanelVisible, Converter={StaticResource BoolToVis}}"/>
+
+                <!-- Панель техники (Collapsible) -->
+                <GroupBox Grid.Column="2" 
+                          Header="Доступная техника" 
+                          Margin="5,0,0,0" 
+                          Visibility="{Binding IsEquipmentPanelVisible, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <!-- Кнопки управления -->
+                            <RowDefinition Height="*"/>
+                            <!-- Список техники -->
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" 
+                                    Orientation="Horizontal" 
+                                    HorizontalAlignment="Left" 
+                                    Margin="0,0,0,10">
+                            <Button Content="Обновить" 
+                                    Command="{Binding RefreshAvailableEquipmentCommand}" 
+                                    Style="{StaticResource ThemedButtonStyle}" 
+                                    Margin="0,0,5,0"/>
+                            <Button Content="Скрыть" 
+                                    Command="{Binding ToggleEquipmentPanelCommand}" 
+                                    Style="{StaticResource ThemedButtonStyle}" 
+                                    Margin="0,0,5,0"/>
+                        </StackPanel>
+
+                        <ListBox Grid.Row="1" 
+                                 ItemsSource="{Binding AvailableEquipment}" 
+                                 SelectedItem="{Binding SelectedAvailableEquipment}"
+                                 MouseDoubleClick="AvailableEquipment_MouseDoubleClick"
+                                 Style="{StaticResource ThemedListBoxStyle}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Name}" ToolTip="{Binding Id}"/>
+                                        <TextBlock Text=" (" Margin="5,0,0,0"/>
+                                        <TextBlock Text="{Binding Id}"/>
+                                        <TextBlock Text=")"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </GroupBox>
+            </Grid>
+        </DataTemplate>
+
+        <!-- ... остальные DataTemplate ... -->
         <DataTemplate DataType="{x:Type viewmodels:EditDepartmentsViewModel}">
             <views:EditDepartmentsView/>
         </DataTemplate>
         <DataTemplate DataType="{x:Type viewmodels:EditEquipmentViewModel}">
             <views:EditEquipmentView/>
         </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditLessorOrganizationsViewModel}">
-            <views:EditLessorOrganizationsView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditLicensePlatesViewModel}">
-            <views:EditLicensePlatesView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditRolesViewModel}">
-            <views:EditRolesView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditUsersViewModel}">
-            <views:EditUsersView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditWarehousesAndAreasViewModel}">
-            <views:EditWarehousesAndAreasView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:EditUserAccessViewModel}">
-            <views:EditUserAccessView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:ReportsViewModel}">
-            <views:ReportsView/>
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type viewmodels:SettingsViewModel}">
-            <views:SettingsView/>
-        </DataTemplate>
+        <!-- ... и так далее для всех ViewModel ... -->
+
     </Window.Resources>
 
     <Grid>
@@ -71,11 +152,14 @@
         </Menu>
 
         <!-- Status Bar -->
-        <StatusBar Grid.Row="1">
+        <StatusBar Grid.Row="1" Style="{StaticResource ThemedStatusBarStyle}">
             <StatusBarItem>
                 <TextBlock Text="{Binding CurrentUserInfo}"/>
             </StatusBarItem>
-            <!-- Можно добавить другие элементы состояния -->
+            <!-- Добавим элемент для отображения статуса подключения к БД -->
+            <StatusBarItem>
+                <TextBlock Text="{Binding DatabaseConnectionStatusText}" Foreground="{Binding DatabaseConnectionStatusColor}"/>
+            </StatusBarItem>
         </StatusBar>
 
         <!-- Main Content Area -->

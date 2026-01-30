@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OrderingSpecialEquipment.Models
@@ -54,12 +56,47 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Дата создания", Description = "Дата и время создания записи")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Навигационные свойства (опционально, для EF)
+        // --- НАВИГАЦИОННЫЕ СВОЙСТВА ---
+        // Связь: Один ко многим (Equipment -> EquipmentDependency) как основная техника
+        /// <summary>
+        /// Зависимости, где эта техника является основной.
+        /// </summary>
+        // УБРАНО: [ForeignKey("MainEquipmentId")] - EF Core сам поймёт связь по названию свойства MainEquipmentId в EquipmentDependency
         public virtual ICollection<EquipmentDependency> EquipmentDependenciesAsMain { get; set; } = new List<EquipmentDependency>();
+
+        // Связь: Один ко многим (Equipment -> EquipmentDependency) как зависимая техника
+        /// <summary>
+        /// Зависимости, где эта техника является зависимой.
+        /// </summary>
+        // УБРАНО: [ForeignKey("DependentEquipmentId")] - EF Core сам поймёт связь по названию свойства DependentEquipmentId в EquipmentDependency
         public virtual ICollection<EquipmentDependency> EquipmentDependenciesAsDependent { get; set; } = new List<EquipmentDependency>();
+
+        // Связь: Один ко многим (Equipment -> LicensePlate)
+        /// <summary>
+        /// Госномера, связанные с этой техникой.
+        /// </summary>
+        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в LicensePlate
         public virtual ICollection<LicensePlate> LicensePlates { get; set; } = new List<LicensePlate>();
+
+        // Связь: Один ко многим (Equipment -> ShiftRequest)
+        /// <summary>
+        /// Заявки, связанные с этой техникой.
+        /// </summary>
+        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в ShiftRequest
         public virtual ICollection<ShiftRequest> ShiftRequests { get; set; } = new List<ShiftRequest>();
+
+        // Связь: Один ко многим (Equipment -> TransportProgram)
+        /// <summary>
+        /// Записи транспортной программы для этой техники.
+        /// </summary>
+        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в TransportProgram
         public virtual ICollection<TransportProgram> TransportPrograms { get; set; } = new List<TransportProgram>();
+
+        // Связь: Один ко многим (Equipment -> UserFavorite)
+        /// <summary>
+        /// Избранные пользователей для этой техники.
+        /// </summary>
+        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в UserFavorite
         public virtual ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();
     }
 }

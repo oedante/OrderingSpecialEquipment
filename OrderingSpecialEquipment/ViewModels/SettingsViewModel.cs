@@ -1,13 +1,11 @@
-﻿using OrderingSpecialEquipment.Commands;
+﻿// SettingsViewModel.cs
+using OrderingSpecialEquipment.Commands;
 using OrderingSpecialEquipment.Services;
 using System;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
-    /// <summary>
-    /// ViewModel для окна настроек приложения.
-    /// </summary>
     public class SettingsViewModel : ViewModelBase
     {
         private readonly IThemeService _themeService;
@@ -30,11 +28,9 @@ namespace OrderingSpecialEquipment.ViewModels
             _messageService = messageService;
             _authorizationService = authorizationService;
 
-            // Проверка прав доступа к настройкам (например, системный администратор)
-            if (!_authorizationService.IsCurrentUserSystemAdmin()) // Используем новый метод
+            if (!_authorizationService.IsCurrentUserSystemAdmin())
             {
                 _messageService.ShowErrorMessage("У вас нет прав на изменение настроек приложения.", "Нет доступа");
-                // Можно установить флаг IsEditable = false и скрыть элементы управления в XAML
                 return;
             }
 
@@ -43,7 +39,7 @@ namespace OrderingSpecialEquipment.ViewModels
             _connectionType = connSettings.type.ToString();
             _connectionString = connSettings.connectionString;
 
-            SaveSettingsCommand = new RelayCommand(_ => SaveSettings(), _ => true); // Права уже проверены выше
+            SaveSettingsCommand = new RelayCommand(_ => SaveSettings(), _ => true);
             TestConnectionCommand = new RelayCommand(async _ => await TestConnectionAsync(), _ => !string.IsNullOrWhiteSpace(ConnectionString));
         }
 
@@ -66,7 +62,6 @@ namespace OrderingSpecialEquipment.ViewModels
         }
 
         public string[] AvailableThemes => _themeService.GetAvailableThemes();
-
         public string[] AvailableConnectionTypes => Enum.GetNames(typeof(ConnectionType));
 
         public ICommand SaveSettingsCommand { get; }
@@ -84,7 +79,8 @@ namespace OrderingSpecialEquipment.ViewModels
                 if (Enum.TryParse<ConnectionType>(ConnectionType, out var connTypeParsed))
                 {
                     _connectionService.SaveConnectionSettings(connTypeParsed, ConnectionString);
-                    _messageService.ShowInfoMessage("Настройки сохранены.", "Успех");
+                    // Сообщаем пользователю, что для применения настроек подключения требуется перезапуск
+                    _messageService.ShowInfoMessage("Настройки сохранены. Изменения в настройках подключения вступят в силу после перезапуска приложения.", "Успех");
                 }
                 else
                 {

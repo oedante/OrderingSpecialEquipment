@@ -24,5 +24,17 @@ namespace OrderingSpecialEquipment.Data.Repositories
         Task<IList<ShiftRequest>> GetByDateRangeAndDepartmentAsync(DateTime startDate, DateTime endDate, string departmentId);
         Task<IList<ShiftRequest>> GetByDateRangeAndWarehouseAsync(DateTime startDate, DateTime endDate, string warehouseId);
         Task<IList<ShiftRequest>> GetUnblockedByDateRangeAsync(DateTime startDate, DateTime endDate);
+
+        // --- НОВЫЙ МЕТОД ---
+        /// <summary>
+        /// Находит заявки по критериям: дата, смена, ID техники, ID склада, ID отдела.
+        /// </summary>
+        /// <param name="date">Дата (необязательно).</param>
+        /// <param name="shift">Смена (необязательно).</param>
+        /// <param name="equipmentId">ID техники (необязательно).</param>
+        /// <param name="warehouseId">ID склада (необязательно).</param>
+        /// <param name="departmentId">ID отдела (необязательно).</param>
+        /// <returns>Список найденных заявок.</returns>
+        Task<IList<ShiftRequest>> FindRequestsAsync(DateTime? date = null, int? shift = null, string? equipmentId = null, string? warehouseId = null, string? departmentId = null);
     }
 }
