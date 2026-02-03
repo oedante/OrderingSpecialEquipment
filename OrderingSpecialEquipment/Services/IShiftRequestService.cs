@@ -6,43 +6,46 @@ using System.Threading.Tasks;
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Сервис для бизнес-логики, связанной с заявками на технику (ShiftRequest).
+    /// Интерфейс сервиса заявок на смены
+    /// Управляет созданием, обновлением и удалением заявок
     /// </summary>
     public interface IShiftRequestService
     {
         /// <summary>
-        /// Создаёт новую заявку, предварительно проверив зависимости.
+        /// Находит заявки по дате и смене
         /// </summary>
-        /// <param name="request">Новая заявка.</param>
-        /// <param name="userId">ID пользователя, создавшего заявку.</param>
-        /// <returns>True, если заявка создана успешно.</returns>
-        Task<bool> CreateRequestAsync(ShiftRequest request, string userId);
+        Task<IEnumerable<ShiftRequest>> FindRequestsAsync(DateTime date, int shift);
 
         /// <summary>
-        /// Обновляет существующую заявку, предварительно проверив зависимости.
+        /// Находит заявки по двум датам и сменам
         /// </summary>
-        /// <param name="request">Заявка с новыми данными. Поле Key должно быть заполнено.</param>
-        /// <returns>True, если заявка обновлена успешно.</returns>
-        Task<bool> UpdateRequestAsync(ShiftRequest request);
+        Task<IEnumerable<ShiftRequest>> FindRequestsForTwoShiftsAsync(
+            DateTime date1, int shift1,
+            DateTime date2, int shift2);
 
         /// <summary>
-        /// Блокирует заявку (устанавливает IsBlocked = true).
+        /// Создает новую заявку
         /// </summary>
-        /// <param name="key">Ключ заявки.</param>
-        /// <returns>True, если успешно заблокирована.</returns>
-        Task<bool> BlockRequestAsync(int key);
+        Task CreateRequestAsync(ShiftRequest request, User currentUser);
 
         /// <summary>
-        /// Находит заявки по критериям.
+        /// Обновляет существующую заявку
         /// </summary>
-        /// <param name="date">Дата (необязательно).</param>
-        /// <param name="shift">Смена (необязательно).</param>
-        /// <param name="equipmentId">ID техники (необязательно).</param>
-        /// <param name="warehouseId">ID склада (необязательно).</param>
-        /// <param name="departmentId">ID отдела (необязательно).</param>
-        /// <returns>Список найденных заявок.</returns>
-        Task<List<ShiftRequest>> FindRequestsAsync(DateTime? date = null, int? shift = null, string? equipmentId = null, string? warehouseId = null, string? departmentId = null);
+        Task UpdateRequestAsync(ShiftRequest request, User currentUser);
 
-        // ... другие методы ...
+        /// <summary>
+        /// Удаляет заявку
+        /// </summary>
+        Task DeleteRequestAsync(int key, User currentUser);
+
+        /// <summary>
+        /// Обрабатывает зависимости техники при создании/обновлении заявки
+        /// </summary>
+        Task ProcessDependenciesAsync(ShiftRequest request, User currentUser);
+
+        /// <summary>
+        /// Проверяет, заблокирована ли заявка
+        /// </summary>
+        Task<bool> IsRequestBlockedAsync(int key);
     }
 }

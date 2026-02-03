@@ -3,11 +3,11 @@
 namespace OrderingSpecialEquipment.Views
 {
     /// <summary>
-    /// Логика взаимодействия для EditEquipmentView.xaml
+    /// Логика взаимодействия для окна редактирования техники
     /// </summary>
-    public partial class EditEquipmentView : UserControl
+    public partial class EditEquipmentsView : UserControl
     {
-        public EditEquipmentView()
+        public EditEquipmentsView()
         {
             InitializeComponent();
         }

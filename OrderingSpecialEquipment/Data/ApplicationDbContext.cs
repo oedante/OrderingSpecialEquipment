@@ -1,253 +1,427 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrderingSpecialEquipment.Models;
 using System;
+using System.Linq;
 
 namespace OrderingSpecialEquipment.Data
 {
     /// <summary>
-    /// Класс контекста данных Entity Framework для приложения.
+    /// Контекст базы данных приложения OrderingSpecialEquipment
+    /// Управляет всеми сущностями и связями между ними
     /// </summary>
     public class ApplicationDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        // ========== Таблицы с ключевым полем "Id" ==========
+
+        /// <summary>
+        /// Таблица отделов
+        /// </summary>
+        public DbSet<Department> Departments { get; set; }
+
+        /// <summary>
+        /// Таблица техники и оборудования
+        /// </summary>
+        public DbSet<Equipment> Equipments { get; set; }
+
+        /// <summary>
+        /// Таблица организаций-арендодателей
+        /// </summary>
+        public DbSet<LessorOrganization> LessorOrganizations { get; set; }
+
+        /// <summary>
+        /// Таблица госномеров техники
+        /// </summary>
+        public DbSet<LicensePlate> LicensePlates { get; set; }
+
+        /// <summary>
+        /// Таблица ролей пользователей
+        /// </summary>
+        public DbSet<Role> Roles { get; set; }
+
+        /// <summary>
+        /// Таблица пользователей
+        /// </summary>
+        public DbSet<User> Users { get; set; }
+
+        /// <summary>
+        /// Таблица складов
+        /// </summary>
+        public DbSet<Warehouse> Warehouses { get; set; }
+
+        /// <summary>
+        /// Таблица территорий складов
+        /// </summary>
+        public DbSet<WarehouseArea> WarehouseAreas { get; set; }
+
+        // ========== Таблицы с ключевым полем "Key" ==========
+
+        /// <summary>
+        /// Таблица зависимостей техники
+        /// </summary>
+        public DbSet<EquipmentDependency> EquipmentDependencies { get; set; }
+
+        /// <summary>
+        /// Таблица заявок на смены
+        /// </summary>
+        public DbSet<ShiftRequest> ShiftRequests { get; set; }
+
+        /// <summary>
+        /// Таблица транспортной программы
+        /// </summary>
+        public DbSet<TransportProgram> TransportProgram { get; set; }
+
+        /// <summary>
+        /// Таблица доступа пользователей к отделам
+        /// </summary>
+        public DbSet<UserDepartmentAccess> UserDepartmentAccess { get; set; }
+
+        /// <summary>
+        /// Таблица доступа пользователей к складам
+        /// </summary>
+        public DbSet<UserWarehouseAccess> UserWarehouseAccess { get; set; }
+
+        /// <summary>
+        /// Таблица избранной техники пользователей
+        /// </summary>
+        public DbSet<UserFavorite> UserFavorites { get; set; }
+
+        /// <summary>
+        /// Таблица логов аудита изменений
+        /// </summary>
+        public DbSet<AuditLog> AuditLogs { get; set; }
+
+        /// <summary>
+        /// Конструктор контекста для DI
+        /// </summary>
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
         {
         }
 
-        // DbSet'ы для каждой сущности
-        public DbSet<AuditLog> AuditLogs { get; set; } = null!;
-        public DbSet<Department> Departments { get; set; } = null!;
-        public DbSet<Equipment> Equipments { get; set; } = null!;
-        public DbSet<EquipmentDependency> EquipmentDependencies { get; set; } = null!;
-        public DbSet<LessorOrganization> LessorOrganizations { get; set; } = null!;
-        public DbSet<LicensePlate> LicensePlates { get; set; } = null!;
-        public DbSet<Role> Roles { get; set; } = null!;
-        public DbSet<ShiftRequest> ShiftRequests { get; set; } = null!;
-        public DbSet<TransportProgram> TransportPrograms { get; set; } = null!;
-        public DbSet<User> Users { get; set; } = null!;
-        public DbSet<UserDepartmentAccess> UserDepartmentAccesses { get; set; } = null!;
-        public DbSet<UserFavorite> UserFavorites { get; set; } = null!;
-        public DbSet<UserWarehouseAccess> UserWarehouseAccesses { get; set; } = null!;
-        public DbSet<Warehouse> Warehouses { get; set; } = null!;
-        public DbSet<WarehouseArea> WarehouseAreas { get; set; } = null!;
-        // AppSettings, если используется как сущность, добавьте DbSet<AppSettings> AppSettings { get; set; } = null!;
-
+        /// <summary>
+        /// Настройка модели базы данных
+        /// Здесь явно настраиваются все связи между сущностями
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
-            // --- Настройка первичных ключей (SERIAL для PostgreSQL) ---
-            // Для сущностей с Key (int)
-            modelBuilder.Entity<AuditLog>().Property(e => e.Key).UseSerialColumn(); // PostgreSQL SERIAL
-            modelBuilder.Entity<Department>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<Equipment>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<EquipmentDependency>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<LessorOrganization>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<LicensePlate>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<Role>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<ShiftRequest>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<TransportProgram>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<User>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<UserDepartmentAccess>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<UserFavorite>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<UserWarehouseAccess>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<Warehouse>().Property(e => e.Key).UseSerialColumn();
-            modelBuilder.Entity<WarehouseArea>().Property(e => e.Key).UseSerialColumn();
-
-            // --- Явная настройка связей (Relationships) ---
-
-            // --- UserFavorite -> User & Equipment ---
-            modelBuilder.Entity<UserFavorite>()
-                .HasOne(uf => uf.User)
-                .WithMany(u => u.Favorites)
-                .HasForeignKey(uf => uf.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            modelBuilder.Entity<UserFavorite>()
-                .HasOne(uf => uf.Equipment)
-                .WithMany(e => e.UserFavorites) // Предполагаем, что в Equipment есть List<UserFavorite>
-                .HasForeignKey(uf => uf.EquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- User -> Role ---
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.Role)
-                .WithMany(r => r.Users)
-                .HasForeignKey(u => u.RoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- User -> DefaultDepartment ---
-            modelBuilder.Entity<User>()
-                .HasOne(u => u.DefaultDepartment)
-                .WithMany() // У Department нет навигационного свойства обратно к User (DefaultDepartment)
-                .HasForeignKey(u => u.DefaultDepartmentId)
-                .OnDelete(DeleteBehavior.SetNull); // Или Restrict, если поле не nullable
-
-            // --- User -> UserDepartmentAccesses ---
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.UserDepartmentAccesses)
-                .WithOne(uda => uda.User)
-                .HasForeignKey(uda => uda.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- User -> CreatedShiftRequests ---
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.CreatedShiftRequests)
-                .WithOne(sr => sr.CreatedByUser!)
-                .HasForeignKey(sr => sr.CreatedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- User -> AuditLogs ---
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.AuditLogs)
-                .WithOne(al => al.ChangedByUser!)
-                .HasForeignKey(al => al.ChangedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- UserDepartmentAccess -> User, Department ---
-            modelBuilder.Entity<UserDepartmentAccess>()
-                .HasOne(uda => uda.User)
-                .WithMany(u => u.UserDepartmentAccesses)
-                .HasForeignKey(uda => uda.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            modelBuilder.Entity<UserDepartmentAccess>()
-                .HasOne(uda => uda.Department)
-                .WithMany(d => d.UserDepartmentAccesses) // Предполагаем, что в Department есть List<UserDepartmentAccess>
-                .HasForeignKey(uda => uda.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- UserDepartmentAccess -> UserWarehouseAccesses ---
-            modelBuilder.Entity<UserDepartmentAccess>()
-                .HasMany(uda => uda.UserWarehouseAccesses)
-                .WithOne(uwa => uwa.UserDepartmentAccess)
-                .HasForeignKey(uwa => uwa.UserDepartmentAccessKey)
-                .OnDelete(DeleteBehavior.Cascade); // При удалении UDA, удаляются связанные UWA
-
-            // --- Department -> UserDepartmentAccesses ---
-            modelBuilder.Entity<Department>()
-                .HasMany(d => d.UserDepartmentAccesses)
-                .WithOne(uda => uda.Department)
-                .HasForeignKey(uda => uda.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- Department -> Warehouses ---
-            modelBuilder.Entity<Department>()
-                .HasMany(d => d.Warehouses)
-                .WithOne(w => w.Department)
-                .HasForeignKey(w => w.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- Warehouse -> Department ---
-            modelBuilder.Entity<Warehouse>()
-                .HasOne(w => w.Department)
-                .WithMany(d => d.Warehouses)
-                .HasForeignKey(w => w.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- Warehouse -> WarehouseAreas ---
-            modelBuilder.Entity<Warehouse>()
-                .HasMany(w => w.WarehouseAreas)
-                .WithOne(wa => wa.Warehouse!)
-                .HasForeignKey(wa => wa.WarehouseId)
-                .OnDelete(DeleteBehavior.Cascade); // При удалении склада, территории удаляются
-
-            // --- WarehouseArea -> Warehouse ---
-            modelBuilder.Entity<WarehouseArea>()
-                .HasOne(wa => wa.Warehouse)
-                .WithMany(w => w.WarehouseAreas)
-                .HasForeignKey(wa => wa.WarehouseId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- EquipmentDependency -> MainEquipment & DependentEquipment ---
-            modelBuilder.Entity<EquipmentDependency>()
-                .HasOne(ed => ed.MainEquipment)
-                .WithMany(e => e.EquipmentDependenciesAsMain) // Предполагаем, что в Equipment есть List<EquipmentDependency>
-                .HasForeignKey(ed => ed.MainEquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            modelBuilder.Entity<EquipmentDependency>()
-                .HasOne(ed => ed.DependentEquipment)
-                .WithMany(e => e.EquipmentDependenciesAsDependent) // Предполагаем, что в Equipment есть List<EquipmentDependency>
-                .HasForeignKey(ed => ed.DependentEquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- ShiftRequest -> Equipment ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.Equipment)
-                .WithMany(e => e.ShiftRequests) // Предполагаем, что в Equipment есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.EquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- ShiftRequest -> LicensePlate ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.LicensePlate)
-                .WithMany(lp => lp.ShiftRequests) // Предполагаем, что в LicensePlate есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.LicensePlateId)
-                .OnDelete(DeleteBehavior.SetNull); // Или Restrict, если поле не nullable
-
-            // --- ShiftRequest -> Warehouse ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.Warehouse)
-                .WithMany(w => w.ShiftRequests) // Предполагаем, что в Warehouse есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.WarehouseId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- ShiftRequest -> WarehouseArea ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.Area)
-                .WithMany(wa => wa.ShiftRequests) // Предполагаем, что в WarehouseArea есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.AreaId)
-                .OnDelete(DeleteBehavior.SetNull); // Или Restrict, если поле не nullable
-
-            // --- ShiftRequest -> Department ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.Department)
-                .WithMany(d => d.ShiftRequests) // Предполагаем, что в Department есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.DepartmentId)
-                .OnDelete(DeleteBehavior.SetNull); // Или Restrict, если поле не nullable
-
-            // --- ShiftRequest -> LessorOrganization ---
-            modelBuilder.Entity<ShiftRequest>()
-                .HasOne(sr => sr.LessorOrganization)
-                .WithMany(lo => lo.ShiftRequests) // Предполагаем, что в LessorOrganization есть List<ShiftRequest>
-                .HasForeignKey(sr => sr.LessorOrganizationId)
-                .OnDelete(DeleteBehavior.SetNull); // Или Restrict, если поле не nullable
-
-            // --- LicensePlate -> Equipment ---
-            modelBuilder.Entity<LicensePlate>()
-                .HasOne(lp => lp.Equipment)
-                .WithMany(e => e.LicensePlates) // Предполагаем, что в Equipment есть List<LicensePlate>
-                .HasForeignKey(lp => lp.EquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- LicensePlate -> LessorOrganization ---
-            modelBuilder.Entity<LicensePlate>()
-                .HasOne(lp => lp.LessorOrganization)
-                .WithMany(lo => lo.LicensePlates) // Предполагаем, что в LessorOrganization есть List<LicensePlate>
-                .HasForeignKey(lp => lp.LessorOrganizationId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- AuditLog -> User (ChangedByUser) ---
-            modelBuilder.Entity<AuditLog>()
-                .HasOne(al => al.ChangedByUser)
-                .WithMany(u => u.AuditLogs) // Убедитесь, что в User есть List<AuditLog>
-                .HasForeignKey(al => al.ChangedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- TransportProgram -> Department ---
-            modelBuilder.Entity<TransportProgram>()
-                .HasOne(tp => tp.Department)
-                .WithMany(d => d.TransportPrograms) // Предполагаем, что в Department есть List<TransportProgram>
-                .HasForeignKey(tp => tp.DepartmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
-            // --- TransportProgram -> Equipment ---
-            modelBuilder.Entity<TransportProgram>()
-                .HasOne(tp => tp.Equipment)
-                .WithMany(e => e.TransportPrograms) // Предполагаем, что в Equipment есть List<TransportProgram>
-                .HasForeignKey(tp => tp.EquipmentId)
-                .OnDelete(DeleteBehavior.ClientSetNull); // Или Restrict
-
             base.OnModelCreating(modelBuilder);
+
+            // Устанавливаем схему по умолчанию
+            modelBuilder.HasDefaultSchema("public");
+
+            // ========== Настройка связей для таблиц с ключевым полем "Id" ==========
+
+            // Отделы
+            modelBuilder.Entity<Department>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+            });
+
+            // Техника
+            modelBuilder.Entity<Equipment>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+            });
+
+            // Организации-арендодатели
+            modelBuilder.Entity<LessorOrganization>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+                entity.HasIndex(e => e.INN).IsUnique();
+            });
+
+            // Госномера
+            modelBuilder.Entity<LicensePlate>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+                entity.HasIndex(e => e.PlateNumber).IsUnique();
+
+                entity.HasOne(e => e.Equipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.LessorOrganization)
+                    .WithMany()
+                    .HasForeignKey(e => e.LessorOrganizationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Роли
+            modelBuilder.Entity<Role>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+            });
+
+            // Пользователи
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.HasIndex(e => e.WindowsLogin).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasOne(e => e.Role)
+                    .WithMany()
+                    .HasForeignKey(e => e.RoleId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.DefaultDepartment)
+                    .WithMany()
+                    .HasForeignKey(e => e.DefaultDepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Склады
+            modelBuilder.Entity<Warehouse>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Территории складов
+            modelBuilder.Entity<WarehouseArea>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Id).IsUnique();
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.Id).ValueGeneratedOnAdd(); // ID генерируется базой данных
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasOne(e => e.Warehouse)
+                    .WithMany()
+                    .HasForeignKey(e => e.WarehouseId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ========== Настройка связей для таблиц с ключевым полем "Key" ==========
+
+            // Зависимости техники
+            modelBuilder.Entity<EquipmentDependency>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.MainEquipmentId, e.DependentEquipmentId }).IsUnique();
+
+                entity.HasOne(e => e.MainEquipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.MainEquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.DependentEquipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.DependentEquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasCheckConstraint("CHK_EquipmentDependencies_Different",
+                    "\"MainEquipmentId\" != \"DependentEquipmentId\"");
+            });
+
+            // Заявки на смены
+            modelBuilder.Entity<ShiftRequest>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.Date, e.Shift });
+                entity.HasIndex(e => e.EquipmentId);
+                entity.HasIndex(e => e.WarehouseId);
+                entity.HasIndex(e => e.DepartmentId);
+                entity.HasIndex(e => e.CreatedByUserId);
+                entity.HasIndex(e => e.LicensePlateId);
+                entity.HasIndex(e => new { e.ProgramYear, e.ProgramMonth });
+
+                entity.HasOne(e => e.Equipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.LicensePlate)
+                    .WithMany()
+                    .HasForeignKey(e => e.LicensePlateId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Warehouse)
+                    .WithMany()
+                    .HasForeignKey(e => e.WarehouseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Area)
+                    .WithMany()
+                    .HasForeignKey(e => e.AreaId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.CreatedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.CreatedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.LessorOrganization)
+                    .WithMany()
+                    .HasForeignKey(e => e.LessorOrganizationId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasCheckConstraint("CHK_ShiftRequests_ProgramMonth",
+                    "\"ProgramMonth\" IS NULL OR (\"ProgramMonth\" >= 1 AND \"ProgramMonth\" <= 12)");
+            });
+
+            // Транспортная программа
+            modelBuilder.Entity<TransportProgram>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.DepartmentId, e.Year });
+                entity.HasIndex(e => e.EquipmentId);
+
+                entity.HasIndex(e => new { e.DepartmentId, e.Year, e.EquipmentId }).IsUnique();
+
+                entity.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Equipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasCheckConstraint("CHK_TransportProgram_Year",
+                    "\"Year\" >= 2020 AND \"Year\" <= 2100");
+
+                entity.HasCheckConstraint("CHK_TransportProgram_Hours",
+                    "\"JanuaryHours\" >= 0 AND \"FebruaryHours\" >= 0 AND \"MarchHours\" >= 0 AND " +
+                    "\"AprilHours\" >= 0 AND \"MayHours\" >= 0 AND \"JuneHours\" >= 0 AND " +
+                    "\"JulyHours\" >= 0 AND \"AugustHours\" >= 0 AND \"SeptemberHours\" >= 0 AND " +
+                    "\"OctoberHours\" >= 0 AND \"NovemberHours\" >= 0 AND \"DecemberHours\" >= 0");
+            });
+
+            // Доступ пользователей к отделам
+            modelBuilder.Entity<UserDepartmentAccess>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.UserId, e.DepartmentId }).IsUnique();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.DepartmentId);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Department)
+                    .WithMany()
+                    .HasForeignKey(e => e.DepartmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Доступ пользователей к складам
+            modelBuilder.Entity<UserWarehouseAccess>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.UserDepartmentAccessKey, e.WarehouseId }).IsUnique();
+                entity.HasIndex(e => e.UserDepartmentAccessKey);
+                entity.HasIndex(e => e.WarehouseId);
+
+                entity.HasOne(e => e.UserDepartmentAccess)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserDepartmentAccessKey)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Warehouse)
+                    .WithMany()
+                    .HasForeignKey(e => e.WarehouseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Избранное пользователей
+            modelBuilder.Entity<UserFavorite>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.UserId, e.EquipmentId }).IsUnique();
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => e.EquipmentId);
+
+                entity.HasOne(e => e.User)
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Equipment)
+                    .WithMany()
+                    .HasForeignKey(e => e.EquipmentId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Логи аудита
+            modelBuilder.Entity<AuditLog>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.Property(e => e.Key).ValueGeneratedOnAdd();
+
+                entity.HasIndex(e => new { e.TableName, e.RecordId });
+                entity.HasIndex(e => e.ChangedByUserId);
+                entity.HasIndex(e => e.ChangedAt);
+
+                entity.HasOne(e => e.ChangedByUser)
+                    .WithMany()
+                    .HasForeignKey(e => e.ChangedByUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Настройка для работы с временными зонами в UTC
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetColumnType("timestamp with time zone");
+                    }
+                }
+            }
         }
     }
 }

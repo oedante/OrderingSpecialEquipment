@@ -1,0 +1,169 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.EditEquipmentDependenciesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2006"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1000">
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToWidthConverter x:Key="BoolToWidth"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNo"/>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель управления -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource PanelBackground}" 
+                BorderBrush="{DynamicResource BorderBrush}" 
+                BorderThickness="1" 
+                Padding="10" 
+                Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="Зависимости техники" 
+                           FontSize="16" 
+                           FontWeight="Bold" 
+                           Foreground="{DynamicResource TextForeground}"
+                           Margin="0,0,0,10"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Обновить" 
+                            Command="{Binding LoadDependenciesCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Добавить" 
+                            Command="{Binding AddDependencyCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Редактировать" 
+                            Command="{Binding EditDependencyCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Удалить" 
+                            Command="{Binding DeleteDependencyCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Сохранить" 
+                            Command="{Binding SaveDependencyCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Отмена" 
+                            Command="{Binding CancelEditCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBox Text="{Binding SearchText}" 
+                             Width="200"
+                             Style="{StaticResource ThemedTextBoxStyle}"
+                             Margin="0,0,5,0"/>
+                    <Button Content="Поиск" 
+                            Command="{Binding SearchCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Основное содержимое -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Таблица зависимостей -->
+            <Border Grid.Column="0" 
+                    Background="{DynamicResource PanelBackground}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    Padding="10">
+                <DataGrid ItemsSource="{Binding Dependencies}"
+                          SelectedItem="{Binding SelectedDependency}"
+                          Style="{StaticResource ThemedDataGridStyle}"
+                          RowStyle="{StaticResource ThemedDataGridRowStyle}"
+                          CellStyle="{StaticResource ThemedDataGridCellStyle}"
+                          ColumnHeaderStyle="{StaticResource ThemedDataGridColumnHeaderStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Key}" Width="60"/>
+                        <DataGridTextColumn Header="Основная техника" Binding="{Binding MainEquipment.Name}" Width="200"/>
+                        <DataGridTextColumn Header="Зависимая техника" Binding="{Binding DependentEquipment.Name}" Width="200"/>
+                        <DataGridTextColumn Header="Требуемое количество" Binding="{Binding RequiredCount}" Width="100"/>
+                        <DataGridCheckBoxColumn Header="Обязательная" Binding="{Binding IsMandatory}" Width="80"/>
+                        <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="200"/>
+                        <DataGridTextColumn Header="Дата создания" Binding="{Binding CreatedAt}" Width="150"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Панель редактирования -->
+            <Border Grid.Column="1" 
+                    Width="350"
+                    Background="{DynamicResource PanelBackground}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    Padding="10"
+                    Visibility="{Binding IsEditMode, Converter={StaticResource BoolToVis}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Редактирование зависимости" 
+                                   FontSize="14" 
+                                   FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextForeground}"
+                                   Margin="0,0,0,10"/>
+
+                        <Label Content="ID:" Style="{StaticResource ThemedLabelStyle}"/>
+                        <TextBox Text="{Binding SelectedDependency.Key, Mode=OneWay}" 
+                                 IsEnabled="False"
+                                 Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                        <Label Content="Основная техника:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <ComboBox ItemsSource="{Binding EquipmentList}"
+                                  SelectedItem="{Binding SelectedDependency.MainEquipment}"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                        <Label Content="Зависимая техника:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <ComboBox ItemsSource="{Binding EquipmentList}"
+                                  SelectedItem="{Binding SelectedDependency.DependentEquipment}"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                        <Label Content="Требуемое количество:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <TextBox Text="{Binding SelectedDependency.RequiredCount}" 
+                                 Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                        <CheckBox Content="Обязательная зависимость" 
+                                  IsChecked="{Binding SelectedDependency.IsMandatory}"
+                                  Style="{StaticResource ThemedCheckBoxStyle}"
+                                  Margin="0,10,0,0"/>
+
+                        <Label Content="Описание:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <TextBox Text="{Binding SelectedDependency.Description}" 
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 Height="60"
+                                 Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                            <Button Content="Сохранить" 
+                                    Command="{Binding SaveDependencyCommand}"
+                                    Style="{StaticResource ThemedButtonStyle}"
+                                    Width="100"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="Отмена" 
+                                    Command="{Binding CancelEditCommand}"
+                                    Style="{StaticResource ThemedButtonStyle}"
+                                    Width="100"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

@@ -1,50 +1,52 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования отделов.
+    /// ViewModel для редактирования отделов
     /// </summary>
-    public class EditDepartmentsViewModel : ViewModelBase
+    public class EditDepartmentsViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly IDepartmentRepository _departmentRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
 
         private ObservableCollection<Department> _departments;
         private Department? _selectedDepartment;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editName = string.Empty;
-        private bool _editIsActive = true;
+        private bool _isEditMode;
+        private string _searchText;
 
-        public EditDepartmentsViewModel(
-            IDepartmentRepository departmentRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditDepartmentsViewModel(IServiceProvider serviceProvider)
         {
-            _departmentRepository = departmentRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _departmentRepository = serviceProvider.GetRequiredService<IDepartmentRepository>();
 
-            _departments = new ObservableCollection<Department>();
-            LoadDepartmentsCommand = new RelayCommand(async _ => await LoadDepartmentsAsync(), _ => _authorizationService.CanReadTable("Departments"));
-            SaveDepartmentCommand = new RelayCommand(async _ => await SaveDepartmentAsync(), _ => CanSaveDepartment());
-            DeleteDepartmentCommand = new RelayCommand(async _ => await DeleteDepartmentAsync(), _ => CanDeleteDepartment());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            Departments = new ObservableCollection<Department>();
+            SearchText = string.Empty;
 
-            // Загрузка данных при создании ViewModel
-            Task.Run(async () => await LoadDepartmentsAsync());
+            // Команды
+            LoadDepartmentsCommand = new RelayCommand(LoadDepartments);
+            AddDepartmentCommand = new RelayCommand(AddDepartment);
+            EditDepartmentCommand = new RelayCommand(EditDepartment, CanEditDepartment);
+            DeleteDepartmentCommand = new RelayCommand(DeleteDepartment, CanDeleteDepartment);
+            SaveDepartmentCommand = new RelayCommand(SaveDepartment, CanSaveDepartment);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchDepartments);
+
+            // Загрузка данных
+            _ = LoadDepartmentsAsync();
         }
 
-        // Свойства для привязки к UI
+        // ========== Свойства ==========
+
         public ObservableCollection<Department> Departments
         {
             get => _departments;
@@ -54,186 +56,227 @@ namespace OrderingSpecialEquipment.ViewModels
         public Department? SelectedDepartment
         {
             get => _selectedDepartment;
-            set
-            {
-                if (SetProperty(ref _selectedDepartment, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editName = value.Name;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditName));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    // Вызов RaiseCanExecuteChanged для команд
-                    ((RelayCommand)SaveDepartmentCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteDepartmentCommand).RaiseCanExecuteChanged();
-                }
-            }
+            set => SetProperty(ref _selectedDepartment, value);
         }
 
-        public string EditId
+        public bool IsEditMode
         {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    // Вызов RaiseCanExecuteChanged для команд
-                    ((RelayCommand)SaveDepartmentCommand).RaiseCanExecuteChanged();
-                }
-            }
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
         }
 
-        public string EditName
+        public string SearchText
         {
-            get => _editName;
-            set => SetProperty(ref _editName, value);
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
         }
 
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
+        // ========== Команды ==========
 
-        // Команды
         public ICommand LoadDepartmentsCommand { get; }
-        public ICommand SaveDepartmentCommand { get; }
+        public ICommand AddDepartmentCommand { get; }
+        public ICommand EditDepartmentCommand { get; }
         public ICommand DeleteDepartmentCommand { get; }
+        public ICommand SaveDepartmentCommand { get; }
         public ICommand CancelEditCommand { get; }
+        public ICommand SearchCommand { get; }
 
-        // Методы команд
+        // ========== Методы ==========
+
+        /// <summary>
+        /// Загружает все отделы
+        /// </summary>
         private async Task LoadDepartmentsAsync()
         {
             try
             {
-                var dbDepartments = await _departmentRepository.GetAllAsync(); // Или GetActiveAsync()
-                Departments.Clear();
-                foreach (var dept in dbDepartments)
-                {
-                    if (dept.IsActive) // Фильтруем неактивные при отображении, если нужно
-                        Departments.Add(dept);
-                }
+                var departments = await _departmentRepository.GetAllAsync();
+                Departments = new ObservableCollection<Department>(departments);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки отделов: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки отделов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveDepartment()
+        private void LoadDepartments()
         {
-            return _authorizationService.CanWriteTable("Departments") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditName) &&
-                   (!_isEditing || SelectedDepartment?.Id == EditId); // Если редактируем, ID должен совпадать
+            _ = LoadDepartmentsAsync();
         }
 
-        private async Task SaveDepartmentAsync()
+        /// <summary>
+        /// Добавляет новый отдел
+        /// </summary>
+        private void AddDepartment()
         {
-            if (!CanSaveDepartment()) return;
-
-            try
+            SelectedDepartment = new Department
             {
-                Department department;
-                bool isNew = !_isEditing;
+                Id = GenerateNewId("DE"),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
 
-                if (isNew)
-                {
-                    // Проверка на уникальность ID
-                    if (await _departmentRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Отдел с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    department = new Department { Id = EditId, Name = EditName, IsActive = EditIsActive };
-                    await _departmentRepository.AddAsync(department);
-                }
-                else
-                {
-                    department = SelectedDepartment!;
-                    department.Name = EditName;
-                    department.IsActive = EditIsActive;
-                    _departmentRepository.Update(department);
-                }
+        /// <summary>
+        /// Редактирует выбранный отдел
+        /// </summary>
+        private void EditDepartment()
+        {
+            if (SelectedDepartment != null)
+            {
+                IsEditMode = true;
+            }
+        }
 
-                await _departmentRepository.SaveChangesAsync();
+        private bool CanEditDepartment()
+        {
+            return SelectedDepartment != null && !IsEditMode;
+        }
 
-                if (isNew)
+        /// <summary>
+        /// Удаляет выбранный отдел
+        /// </summary>
+        private async void DeleteDepartment()
+        {
+            if (SelectedDepartment == null)
+                return;
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить отдел '{SelectedDepartment.Name}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
                 {
-                    if (department.IsActive) // Только если активен
-                        Departments.Add(department);
-                }
-                else
-                {
-                    // Обновление в ObservableCollection может не сработать автоматически, если Name изменилось.
-                    // Лучше обновить весь список или реализовать INotifyPropertyChanged в Department.
-                    // Для простоты, перезагрузим список.
+                    await _departmentRepository.RemoveAsync(SelectedDepartment);
                     await LoadDepartmentsAsync();
+                    SelectedDepartment = null;
                 }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Отдел добавлен." : "Отдел обновлен.", "Успех");
-            }
-            catch (Exception ex)
-            {
-                _messageService.ShowErrorMessage($"Ошибка сохранения отдела: {ex.Message}", "Ошибка");
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления отдела: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
         private bool CanDeleteDepartment()
         {
-            return _authorizationService.CanWriteTable("Departments") &&
-                   SelectedDepartment != null && SelectedDepartment.Key != 0; // Предполагаем, что Key != 0 для существующих записей
+            return SelectedDepartment != null && !IsEditMode;
         }
 
-        private async Task DeleteDepartmentAsync()
+        /// <summary>
+        /// Сохраняет отдел
+        /// </summary>
+        private async void SaveDepartment()
         {
-            if (!CanDeleteDepartment() || SelectedDepartment == null) return;
+            if (SelectedDepartment == null)
+                return;
 
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить отдел '{SelectedDepartment.Name}'?")) return;
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedDepartment.Name))
+            {
+                MessageBox.Show("Введите наименование отдела", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                // Удаление может быть логическим (установка IsActive = false) или физическим.
-                // Пока делаем физическое удаление.
-                _departmentRepository.Delete(SelectedDepartment);
-                await _departmentRepository.SaveChangesAsync();
-                Departments.Remove(SelectedDepartment);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Отдел удален.", "Успех");
+                if (Departments.Any(d => d.Id != SelectedDepartment.Id && d.Name == SelectedDepartment.Name))
+                {
+                    MessageBox.Show("Отдел с таким наименованием уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedDepartment.Key == 0)
+                {
+                    // Новый отдел
+                    await _departmentRepository.AddAsync(SelectedDepartment);
+                }
+                else
+                {
+                    // Обновление существующего
+                    _departmentRepository.Update(SelectedDepartment);
+                }
+
+                await LoadDepartmentsAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка удаления отдела: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения отдела: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void CancelEdit()
+        private bool CanSaveDepartment()
         {
-            ResetEditFields();
+            return SelectedDepartment != null && IsEditMode;
         }
 
-        private void ResetEditFields()
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
+        private void CancelEdit()
         {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editName = string.Empty;
-            _editIsActive = true;
-            SelectedDepartment = null; // Это должно сбросить UI
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditName));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveDepartmentCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteDepartmentCommand).RaiseCanExecuteChanged();
+            IsEditMode = false;
+            SelectedDepartment = null;
+        }
+
+        /// <summary>
+        /// Поиск отделов
+        /// </summary>
+        private async void SearchDepartments()
+        {
+            try
+            {
+                var allDepartments = await _departmentRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var filtered = allDepartments.Where(d =>
+                        d.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        d.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+                    Departments = new ObservableCollection<Department>(filtered);
+                }
+                else
+                {
+                    Departments = new ObservableCollection<Department>(allDepartments);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Генерирует новый идентификатор в формате префикс + номер
+        /// </summary>
+        private string GenerateNewId(string prefix)
+        {
+            try
+            {
+                var existingIds = Departments.Select(d => d.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
+                {
+                    return $"{prefix}000001";
+                }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
+            }
+            catch
+            {
+                return $"{prefix}000001";
+            }
         }
     }
 }

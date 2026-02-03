@@ -1,73 +1,51 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования ролей пользователей.
+    /// ViewModel для редактирования ролей
     /// </summary>
-    public class EditRolesViewModel : ViewModelBase
+    public class EditRolesViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly IRoleRepository _roleRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
 
         private ObservableCollection<Role> _roles;
         private Role? _selectedRole;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editName = string.Empty;
-        private string _editCode = string.Empty;
-        private string? _editDescription;
+        private bool _isEditMode;
+        private string _searchText;
 
-        // Права на таблицы
-        private short _tab_AuditLogs = 0;
-        private short _tab_Departments = 0;
-        private short _tab_EquipmentDependencies = 0;
-        private short _tab_Equipments = 0;
-        private short _tab_LessorOrganizations = 0;
-        private short _tab_LicensePlates = 0;
-        private short _tab_Roles = 0;
-        private short _tab_ShiftRequests = 0;
-        private short _tab_TransportProgram = 0;
-        private short _tab_UserDepartmentAccess = 0;
-        private short _tab_UserFavorites = 0;
-        private short _tab_Users = 0;
-        private short _tab_UserWarehouseAccess = 0;
-        private short _tab_WarehouseAreas = 0;
-        private short _tab_Warehouses = 0;
-
-        // Специальные права
-        private bool _spec_ExportData = false;
-        private bool _spec_ViewReports = false;
-        private bool _spec_ManageAllDepartments = false;
-        private bool _spec_ManageUsers = false;
-        private bool _spec_SystemAdmin = false;
-        private bool _editIsActive = true;
-
-        public EditRolesViewModel(
-            IRoleRepository roleRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditRolesViewModel(IServiceProvider serviceProvider)
         {
-            _roleRepository = roleRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _roleRepository = serviceProvider.GetRequiredService<IRoleRepository>();
 
-            _roles = new ObservableCollection<Role>();
-            LoadRolesCommand = new RelayCommand(async _ => await LoadRolesAsync(), _ => _authorizationService.CanReadTable("Roles"));
-            SaveRoleCommand = new RelayCommand(async _ => await SaveRoleAsync(), _ => CanSaveRole());
-            DeleteRoleCommand = new RelayCommand(async _ => await DeleteRoleAsync(), _ => CanDeleteRole());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            Roles = new ObservableCollection<Role>();
+            SearchText = string.Empty;
 
-            Task.Run(async () => await LoadRolesAsync());
+            // Команды
+            LoadRolesCommand = new RelayCommand(LoadRoles);
+            AddRoleCommand = new RelayCommand(AddRole);
+            EditRoleCommand = new RelayCommand(EditRole, CanEditRole);
+            DeleteRoleCommand = new RelayCommand(DeleteRole, CanDeleteRole);
+            SaveRoleCommand = new RelayCommand(SaveRole, CanSaveRole);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchRoles);
+
+            // Загрузка данных
+            _ = LoadRolesAsync();
         }
+
+        // ========== Свойства ==========
 
         public ObservableCollection<Role> Roles
         {
@@ -78,351 +56,247 @@ namespace OrderingSpecialEquipment.ViewModels
         public Role? SelectedRole
         {
             get => _selectedRole;
-            set
-            {
-                if (SetProperty(ref _selectedRole, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editName = value.Name;
-                        _editCode = value.Code;
-                        _editDescription = value.Description;
-                        _tab_AuditLogs = value.TAB_AuditLogs;
-                        _tab_Departments = value.TAB_Departments;
-                        _tab_EquipmentDependencies = value.TAB_EquipmentDependencies;
-                        _tab_Equipments = value.TAB_Equipments;
-                        _tab_LessorOrganizations = value.TAB_LessorOrganizations;
-                        _tab_LicensePlates = value.TAB_LicensePlates;
-                        _tab_Roles = value.TAB_Roles;
-                        _tab_ShiftRequests = value.TAB_ShiftRequests;
-                        _tab_TransportProgram = value.TAB_TransportProgram;
-                        _tab_UserDepartmentAccess = value.TAB_UserDepartmentAccess;
-                        _tab_UserFavorites = value.TAB_UserFavorites;
-                        _tab_Users = value.TAB_Users;
-                        _tab_UserWarehouseAccess = value.TAB_UserWarehouseAccess;
-                        _tab_WarehouseAreas = value.TAB_WarehouseAreas;
-                        _tab_Warehouses = value.TAB_Warehouses;
-                        _spec_ExportData = value.SPEC_ExportData;
-                        _spec_ViewReports = value.SPEC_ViewReports;
-                        _spec_ManageAllDepartments = value.SPEC_ManageAllDepartments;
-                        _spec_ManageUsers = value.SPEC_ManageUsers;
-                        _spec_SystemAdmin = value.SPEC_SystemAdmin;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditName));
-                    OnPropertyChanged(nameof(EditCode));
-                    OnPropertyChanged(nameof(EditDescription));
-                    OnPropertyChanged(nameof(Tab_AuditLogs));
-                    OnPropertyChanged(nameof(Tab_Departments));
-                    OnPropertyChanged(nameof(Tab_EquipmentDependencies));
-                    OnPropertyChanged(nameof(Tab_Equipments));
-                    OnPropertyChanged(nameof(Tab_LessorOrganizations));
-                    OnPropertyChanged(nameof(Tab_LicensePlates));
-                    OnPropertyChanged(nameof(Tab_Roles));
-                    OnPropertyChanged(nameof(Tab_ShiftRequests));
-                    OnPropertyChanged(nameof(Tab_TransportProgram));
-                    OnPropertyChanged(nameof(Tab_UserDepartmentAccess));
-                    OnPropertyChanged(nameof(Tab_UserFavorites));
-                    OnPropertyChanged(nameof(Tab_Users));
-                    OnPropertyChanged(nameof(Tab_UserWarehouseAccess));
-                    OnPropertyChanged(nameof(Tab_WarehouseAreas));
-                    OnPropertyChanged(nameof(Tab_Warehouses));
-                    OnPropertyChanged(nameof(Spec_ExportData));
-                    OnPropertyChanged(nameof(Spec_ViewReports));
-                    OnPropertyChanged(nameof(Spec_ManageAllDepartments));
-                    OnPropertyChanged(nameof(Spec_ManageUsers));
-                    OnPropertyChanged(nameof(Spec_SystemAdmin));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    ((RelayCommand)SaveRoleCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteRoleCommand).RaiseCanExecuteChanged();
-                }
-            }
+            set => SetProperty(ref _selectedRole, value);
         }
 
-        public string EditId
+        public bool IsEditMode
         {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    ((RelayCommand)SaveRoleCommand).RaiseCanExecuteChanged();
-                }
-            }
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
         }
 
-        public string EditName
+        public string SearchText
         {
-            get => _editName;
-            set => SetProperty(ref _editName, value);
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
         }
 
-        public string EditCode
-        {
-            get => _editCode;
-            set => SetProperty(ref _editCode, value);
-        }
+        // ========== Команды ==========
 
-        public string? EditDescription
-        {
-            get => _editDescription;
-            set => SetProperty(ref _editDescription, value);
-        }
+        public RelayCommand LoadRolesCommand { get; }
+        public RelayCommand AddRoleCommand { get; }
+        public RelayCommand EditRoleCommand { get; }
+        public RelayCommand DeleteRoleCommand { get; }
+        public RelayCommand SaveRoleCommand { get; }
+        public RelayCommand CancelEditCommand { get; }
+        public RelayCommand SearchCommand { get; }
 
-        // Геттеры и сеттеры для прав на таблицы
-        public short Tab_AuditLogs { get => _tab_AuditLogs; set => SetProperty(ref _tab_AuditLogs, value); }
-        public short Tab_Departments { get => _tab_Departments; set => SetProperty(ref _tab_Departments, value); }
-        public short Tab_EquipmentDependencies { get => _tab_EquipmentDependencies; set => SetProperty(ref _tab_EquipmentDependencies, value); }
-        public short Tab_Equipments { get => _tab_Equipments; set => SetProperty(ref _tab_Equipments, value); }
-        public short Tab_LessorOrganizations { get => _tab_LessorOrganizations; set => SetProperty(ref _tab_LessorOrganizations, value); }
-        public short Tab_LicensePlates { get => _tab_LicensePlates; set => SetProperty(ref _tab_LicensePlates, value); }
-        public short Tab_Roles { get => _tab_Roles; set => SetProperty(ref _tab_Roles, value); }
-        public short Tab_ShiftRequests { get => _tab_ShiftRequests; set => SetProperty(ref _tab_ShiftRequests, value); }
-        public short Tab_TransportProgram { get => _tab_TransportProgram; set => SetProperty(ref _tab_TransportProgram, value); }
-        public short Tab_UserDepartmentAccess { get => _tab_UserDepartmentAccess; set => SetProperty(ref _tab_UserDepartmentAccess, value); }
-        public short Tab_UserFavorites { get => _tab_UserFavorites; set => SetProperty(ref _tab_UserFavorites, value); }
-        public short Tab_Users { get => _tab_Users; set => SetProperty(ref _tab_Users, value); }
-        public short Tab_UserWarehouseAccess { get => _tab_UserWarehouseAccess; set => SetProperty(ref _tab_UserWarehouseAccess, value); }
-        public short Tab_WarehouseAreas { get => _tab_WarehouseAreas; set => SetProperty(ref _tab_WarehouseAreas, value); }
-        public short Tab_Warehouses { get => _tab_Warehouses; set => SetProperty(ref _tab_Warehouses, value); }
+        // ========== Методы ==========
 
-        // Геттеры и сеттеры для специальных прав
-        public bool Spec_ExportData { get => _spec_ExportData; set => SetProperty(ref _spec_ExportData, value); }
-        public bool Spec_ViewReports { get => _spec_ViewReports; set => SetProperty(ref _spec_ViewReports, value); }
-        public bool Spec_ManageAllDepartments { get => _spec_ManageAllDepartments; set => SetProperty(ref _spec_ManageAllDepartments, value); }
-        public bool Spec_ManageUsers { get => _spec_ManageUsers; set => SetProperty(ref _spec_ManageUsers, value); }
-        public bool Spec_SystemAdmin { get => _spec_SystemAdmin; set => SetProperty(ref _spec_SystemAdmin, value); }
-
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
-
-        public ICommand LoadRolesCommand { get; }
-        public ICommand SaveRoleCommand { get; }
-        public ICommand DeleteRoleCommand { get; }
-        public ICommand CancelEditCommand { get; }
-
+        /// <summary>
+        /// Загружает роли
+        /// </summary>
         private async Task LoadRolesAsync()
         {
             try
             {
-                var dbRoles = await _roleRepository.GetAllAsync();
-                Roles.Clear();
-                foreach (var role in dbRoles)
-                {
-                    // Фильтруем неактивные при отображении в основном списке, если нужно
-                    // В данном случае, оставим все, чтобы пользователь мог редактировать IsActive
-                    Roles.Add(role);
-                }
+                var roles = await _roleRepository.GetAllAsync();
+                Roles = new ObservableCollection<Role>(roles);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки ролей: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки ролей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveRole()
+        private void LoadRoles()
         {
-            return _authorizationService.CanWriteTable("Roles") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditName) &&
-                   !string.IsNullOrWhiteSpace(EditCode) &&
-                   (!_isEditing || SelectedRole?.Id == EditId);
+            _ = LoadRolesAsync();
         }
 
-        private async Task SaveRoleAsync()
+        /// <summary>
+        /// Добавляет новую роль
+        /// </summary>
+        private void AddRole()
         {
-            if (!CanSaveRole()) return;
-
-            try
+            SelectedRole = new Role
             {
-                Role role;
-                bool isNew = !_isEditing;
+                Id = GenerateNewId("RL"),
+                IsActive = true,
+                IsSystem = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
 
-                if (isNew)
-                {
-                    if (await _roleRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Роль с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    role = new Role
-                    {
-                        Id = EditId,
-                        Name = EditName,
-                        Code = EditCode,
-                        Description = EditDescription,
-                        TAB_AuditLogs = Tab_AuditLogs,
-                        TAB_Departments = Tab_Departments,
-                        TAB_EquipmentDependencies = Tab_EquipmentDependencies,
-                        TAB_Equipments = Tab_Equipments,
-                        TAB_LessorOrganizations = Tab_LessorOrganizations,
-                        TAB_LicensePlates = Tab_LicensePlates,
-                        TAB_Roles = Tab_Roles,
-                        TAB_ShiftRequests = Tab_ShiftRequests,
-                        TAB_TransportProgram = Tab_TransportProgram,
-                        TAB_UserDepartmentAccess = Tab_UserDepartmentAccess,
-                        TAB_UserFavorites = Tab_UserFavorites,
-                        TAB_Users = Tab_Users,
-                        TAB_UserWarehouseAccess = Tab_UserWarehouseAccess,
-                        TAB_WarehouseAreas = Tab_WarehouseAreas,
-                        TAB_Warehouses = Tab_Warehouses,
-                        SPEC_ExportData = Spec_ExportData,
-                        SPEC_ViewReports = Spec_ViewReports,
-                        SPEC_ManageAllDepartments = Spec_ManageAllDepartments,
-                        SPEC_ManageUsers = Spec_ManageUsers,
-                        SPEC_SystemAdmin = Spec_SystemAdmin,
-                        IsActive = EditIsActive
-                    };
-                    await _roleRepository.AddAsync(role);
-                }
-                else
-                {
-                    role = SelectedRole!;
-                    role.Name = EditName;
-                    role.Code = EditCode;
-                    role.Description = EditDescription;
-                    role.TAB_AuditLogs = Tab_AuditLogs;
-                    role.TAB_Departments = Tab_Departments;
-                    role.TAB_EquipmentDependencies = Tab_EquipmentDependencies;
-                    role.TAB_Equipments = Tab_Equipments;
-                    role.TAB_LessorOrganizations = Tab_LessorOrganizations;
-                    role.TAB_LicensePlates = Tab_LicensePlates;
-                    role.TAB_Roles = Tab_Roles;
-                    role.TAB_ShiftRequests = Tab_ShiftRequests;
-                    role.TAB_TransportProgram = Tab_TransportProgram;
-                    role.TAB_UserDepartmentAccess = Tab_UserDepartmentAccess;
-                    role.TAB_UserFavorites = Tab_UserFavorites;
-                    role.TAB_Users = Tab_Users;
-                    role.TAB_UserWarehouseAccess = Tab_UserWarehouseAccess;
-                    role.TAB_WarehouseAreas = Tab_WarehouseAreas;
-                    role.TAB_Warehouses = Tab_Warehouses;
-                    role.SPEC_ExportData = Spec_ExportData;
-                    role.SPEC_ViewReports = Spec_ViewReports;
-                    role.SPEC_ManageAllDepartments = Spec_ManageAllDepartments;
-                    role.SPEC_ManageUsers = Spec_ManageUsers;
-                    role.SPEC_SystemAdmin = Spec_SystemAdmin;
-                    role.IsActive = EditIsActive;
-                    _roleRepository.Update(role);
-                }
-
-                await _roleRepository.SaveChangesAsync();
-
-                if (isNew)
-                {
-                    // Добавляем в список, даже если IsActive = false, для видимости
-                    Roles.Add(role);
-                }
-                else
-                {
-                    await LoadRolesAsync(); // Обновление списка
-                }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Роль добавлена." : "Роль обновлена.", "Успех");
+        /// <summary>
+        /// Редактирует выбранную роль
+        /// </summary>
+        private void EditRole()
+        {
+            if (SelectedRole != null)
+            {
+                IsEditMode = true;
             }
-            catch (Exception ex)
+        }
+
+        private bool CanEditRole()
+        {
+            return SelectedRole != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Удаляет выбранную роль
+        /// </summary>
+        private async void DeleteRole()
+        {
+            if (SelectedRole == null)
+                return;
+
+            if (SelectedRole.IsSystem)
             {
-                _messageService.ShowErrorMessage($"Ошибка сохранения роли: {ex.Message}", "Ошибка");
+                MessageBox.Show("Системную роль нельзя удалить", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить роль '{SelectedRole.Name}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _roleRepository.RemoveAsync(SelectedRole);
+                    await LoadRolesAsync();
+                    SelectedRole = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления роли: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
         private bool CanDeleteRole()
         {
-            return _authorizationService.CanWriteTable("Roles") &&
-                   SelectedRole != null && SelectedRole.Key != 0;
+            return SelectedRole != null && !IsEditMode && !SelectedRole.IsSystem;
         }
 
-        private async Task DeleteRoleAsync()
+        /// <summary>
+        /// Сохраняет роль
+        /// </summary>
+        private async void SaveRole()
         {
-            if (!CanDeleteRole() || SelectedRole == null) return;
+            if (SelectedRole == null)
+                return;
 
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить роль '{SelectedRole.Name}'?")) return;
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedRole.Name))
+            {
+                MessageBox.Show("Введите наименование роли", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedRole.Code))
+            {
+                MessageBox.Show("Введите код роли", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                _roleRepository.Delete(SelectedRole);
-                await _roleRepository.SaveChangesAsync();
-                Roles.Remove(SelectedRole);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Роль удалена.", "Успех");
+                if (Roles.Any(r => r.Id != SelectedRole.Id && r.Name == SelectedRole.Name))
+                {
+                    MessageBox.Show("Роль с таким наименованием уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (Roles.Any(r => r.Id != SelectedRole.Id && r.Code == SelectedRole.Code))
+                {
+                    MessageBox.Show("Роль с таким кодом уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedRole.Key == 0)
+                {
+                    // Новая роль
+                    await _roleRepository.AddAsync(SelectedRole);
+                }
+                else
+                {
+                    // Обновление существующей
+                    _roleRepository.Update(SelectedRole);
+                }
+
+                await LoadRolesAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка удаления роли: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения роли: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void CancelEdit()
+        private bool CanSaveRole()
         {
-            ResetEditFields();
+            return SelectedRole != null && IsEditMode;
         }
 
-        private void ResetEditFields()
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
+        private void CancelEdit()
         {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editName = string.Empty;
-            _editCode = string.Empty;
-            _editDescription = null;
-            _tab_AuditLogs = 0;
-            _tab_Departments = 0;
-            _tab_EquipmentDependencies = 0;
-            _tab_Equipments = 0;
-            _tab_LessorOrganizations = 0;
-            _tab_LicensePlates = 0;
-            _tab_Roles = 0;
-            _tab_ShiftRequests = 0;
-            _tab_TransportProgram = 0;
-            _tab_UserDepartmentAccess = 0;
-            _tab_UserFavorites = 0;
-            _tab_Users = 0;
-            _tab_UserWarehouseAccess = 0;
-            _tab_WarehouseAreas = 0;
-            _tab_Warehouses = 0;
-            _spec_ExportData = false;
-            _spec_ViewReports = false;
-            _spec_ManageAllDepartments = false;
-            _spec_ManageUsers = false;
-            _spec_SystemAdmin = false;
-            _editIsActive = true;
+            IsEditMode = false;
             SelectedRole = null;
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditName));
-            OnPropertyChanged(nameof(EditCode));
-            OnPropertyChanged(nameof(EditDescription));
-            OnPropertyChanged(nameof(Tab_AuditLogs));
-            OnPropertyChanged(nameof(Tab_Departments));
-            OnPropertyChanged(nameof(Tab_EquipmentDependencies));
-            OnPropertyChanged(nameof(Tab_Equipments));
-            OnPropertyChanged(nameof(Tab_LessorOrganizations));
-            OnPropertyChanged(nameof(Tab_LicensePlates));
-            OnPropertyChanged(nameof(Tab_Roles));
-            OnPropertyChanged(nameof(Tab_ShiftRequests));
-            OnPropertyChanged(nameof(Tab_TransportProgram));
-            OnPropertyChanged(nameof(Tab_UserDepartmentAccess));
-            OnPropertyChanged(nameof(Tab_UserFavorites));
-            OnPropertyChanged(nameof(Tab_Users));
-            OnPropertyChanged(nameof(Tab_UserWarehouseAccess));
-            OnPropertyChanged(nameof(Tab_WarehouseAreas));
-            OnPropertyChanged(nameof(Tab_Warehouses));
-            OnPropertyChanged(nameof(Spec_ExportData));
-            OnPropertyChanged(nameof(Spec_ViewReports));
-            OnPropertyChanged(nameof(Spec_ManageAllDepartments));
-            OnPropertyChanged(nameof(Spec_ManageUsers));
-            OnPropertyChanged(nameof(Spec_SystemAdmin));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveRoleCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteRoleCommand).RaiseCanExecuteChanged();
+        }
+
+        /// <summary>
+        /// Поиск ролей
+        /// </summary>
+        private async void SearchRoles()
+        {
+            try
+            {
+                var allRoles = await _roleRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var filtered = allRoles.Where(r =>
+                        r.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        r.Code.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        r.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+                    Roles = new ObservableCollection<Role>(filtered);
+                }
+                else
+                {
+                    Roles = new ObservableCollection<Role>(allRoles);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Генерирует новый идентификатор в формате префикс + номер
+        /// </summary>
+        private string GenerateNewId(string prefix)
+        {
+            try
+            {
+                var existingIds = Roles.Select(r => r.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
+                {
+                    return $"{prefix}000001";
+                }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
+            }
+            catch
+            {
+                return $"{prefix}000001";
+            }
         }
     }
 }

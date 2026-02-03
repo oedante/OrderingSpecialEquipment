@@ -1,197 +1,308 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
+using System.Windows.Media;
 
 namespace OrderingSpecialEquipment.Converters
 {
-    // Каждый конвертер теперь отдельный public class
+    /// <summary>
+    /// Класс со всеми конвертерами приложения
+    /// </summary>
+    public static class Converters
+    {
+        /// <summary>
+        /// Конвертер булевого значения в видимость
+        /// </summary>
+        public static readonly BoolToVisibilityConverter BoolToVisibilityConverter = new BoolToVisibilityConverter();
+
+        /// <summary>
+        /// Конвертер булевого значения в ширину (0 или заданное значение)
+        /// </summary>
+        public static readonly BoolToWidthConverter BoolToWidthConverter = new BoolToWidthConverter();
+
+        /// <summary>
+        /// Конвертер булевого значения в "Да/Нет"
+        /// </summary>
+        public static readonly BoolToYesNoConverter BoolToYesNoConverter = new BoolToYesNoConverter();
+
+        /// <summary>
+        /// Конвертер смены (0 - Ночная, 1 - Дневная)
+        /// </summary>
+        public static readonly ShiftConverter ShiftConverter = new ShiftConverter();
+
+        /// <summary>
+        /// Конвертер инвертирования булевого значения
+        /// </summary>
+        public static readonly InverseBooleanConverter InverseBooleanConverter = new InverseBooleanConverter();
+
+        /// <summary>
+        /// Конвертер нулевого значения в видимость
+        /// </summary>
+        public static readonly NullToVisibilityConverter NullToVisibilityConverter = new NullToVisibilityConverter();
+
+        /// <summary>
+        /// Конвертер форматирования даты
+        /// </summary>
+        public static readonly DateTimeFormatConverter DateTimeFormatConverter = new DateTimeFormatConverter();
+
+        /// <summary>
+        /// Конвертер форматирования чисел
+        /// </summary>
+        public static readonly NumberFormatConverter NumberFormatConverter = new NumberFormatConverter();
+
+        /// <summary>
+        /// Конвертер для форматирования валюты
+        /// </summary>
+        public static readonly CurrencyConverter CurrencyConverter = new CurrencyConverter();
+
+        /// <summary>
+        /// Конвертер для цвета текста в зависимости от фона
+        /// </summary>
+        public static readonly BackgroundToForegroundConverter BackgroundToForegroundConverter = new BackgroundToForegroundConverter();
+
+        /// <summary>
+        /// Конвертер для прав доступа (0-Запрещено, 1-Чтение, 2-Запись)
+        /// </summary>
+        public static readonly PermissionToBoolConverter PermissionToBoolConverter = new PermissionToBoolConverter();
+
+        /// <summary>
+        /// Конвертер для процента выполнения в цвет
+        /// </summary>
+        public static readonly CompletionToColorConverter CompletionToColorConverter = new CompletionToColorConverter();
+    }
+
+    /// <summary>
+    /// Конвертер булевого значения в видимость
+    /// </summary>
+    public class BoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                return boolValue ? Visibility.Visible : Visibility.Collapsed;
+            }
+            return Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is Visibility visibility)
+            {
+                return visibility == Visibility.Visible;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Конвертер булевого значения в ширину (0 или заданное значение)
+    /// </summary>
+    public class BoolToWidthConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue)
+            {
+                if (boolValue)
+                {
+                    // Если параметр задан, используем его, иначе 300
+                    if (parameter is string paramStr && double.TryParse(paramStr, out double width))
+                    {
+                        return width;
+                    }
+                    return 300.0;
+                }
+                return 0.0;
+            }
+            return 0.0;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is double width)
+            {
+                return width > 0;
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Конвертер булевого значения в "Да/Нет"
+    /// </summary>
     public class BoolToYesNoConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool b)
+            if (value is bool boolValue)
             {
-                return b ? "Да" : "Нет";
+                return boolValue ? "Да" : "Нет";
             }
             return "Нет";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string s)
+            if (value is string strValue)
             {
-                return s == "Да";
+                return strValue == "Да";
             }
             return false;
         }
     }
 
-    public class BoolToVisibilityConverter : IValueConverter
+    /// <summary>
+    /// Конвертер смены (0 - Ночная, 1 - Дневная)
+    /// </summary>
+    public class ShiftConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            bool b = value is bool && (bool)value;
-            bool inverted = parameter is string param && param.ToLower() == "inverted";
-
-            if (inverted)
-                b = !b;
-
-            return b ? Visibility.Visible : Visibility.Collapsed;
+            if (value is int shift)
+            {
+                return shift == 0 ? "Ночная" : "Дневная";
+            }
+            return "Неизвестно";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class BoolToActiveInactiveConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool b)
+            if (value is string strValue)
             {
-                return b ? "Активен" : "Не активен";
-            }
-            return "Не активен";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string s)
-            {
-                return s == "Активен";
-            }
-            return false;
-        }
-    }
-
-    public class IntToStringWithPaddingConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is int i)
-            {
-                int length = 3; // Значение по умолчанию
-                if (parameter != null && int.TryParse(parameter.ToString(), out int paramLength))
-                {
-                    length = paramLength;
-                }
-                return i.ToString($"D{length}");
-            }
-            return "000";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string s && int.TryParse(s, out int result))
-            {
-                return result;
+                return strValue == "Ночная" ? 0 : 1;
             }
             return 0;
         }
     }
 
-    public class DateTimeToStringConverter : IValueConverter
+    /// <summary>
+    /// Конвертер инвертирования булевого значения
+    /// </summary>
+    public class InverseBooleanConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is DateTime dt)
+            if (value is bool boolValue)
             {
-                return dt.ToString("dd.MM.yyyy");
+                return !boolValue;
             }
-            return "";
+            return true;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string s && DateTime.TryParseExact(s, "dd.MM.yyyy", culture, DateTimeStyles.None, out DateTime result))
+            if (value is bool boolValue)
             {
-                return result;
+                return !boolValue;
+            }
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Конвертер нулевого значения в видимость
+    /// </summary>
+    public class NullToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            bool isNull = value == null;
+            if (parameter is string paramStr && paramStr == "Inverse")
+            {
+                isNull = !isNull;
+            }
+            return isNull ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Конвертер для цвета текста в зависимости от фона
+    /// </summary>
+    public class BackgroundToForegroundConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is SolidColorBrush brush)
+            {
+                // Если фон темный, возвращаем светлый текст, и наоборот
+                var color = brush.Color;
+                double brightness = (color.R * 0.299 + color.G * 0.587 + color.B * 0.114) / 255;
+                return brightness < 0.5 ? Brushes.White : Brushes.Black;
+            }
+            return Brushes.Black;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// Конвертер для форматирования даты
+    /// </summary>
+    public class DateTimeFormatConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is DateTime dateTime)
+            {
+                string format = parameter as string ?? "d";
+                return dateTime.ToString(format, culture);
+            }
+            return string.Empty;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is string strValue)
+            {
+                if (DateTime.TryParse(strValue, culture, DateTimeStyles.None, out DateTime result))
+                {
+                    return result;
+                }
             }
             return DateTime.Now;
         }
     }
 
-    public class TimeSpanToStringConverter : IValueConverter
+    /// <summary>
+    /// Конвертер для форматирования чисел
+    /// </summary>
+    public class NumberFormatConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is TimeSpan ts)
+            if (value is decimal decimalValue)
             {
-                return ts.ToString(@"hh\:mm\:ss");
+                string format = parameter as string ?? "N2";
+                return decimalValue.ToString(format, culture);
             }
-            return "00:00:00";
+            if (value is double doubleValue)
+            {
+                string format = parameter as string ?? "N2";
+                return doubleValue.ToString(format, culture);
+            }
+            if (value is int intValue)
+            {
+                string format = parameter as string ?? "N0";
+                return intValue.ToString(format, culture);
+            }
+            return string.Empty;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string s && TimeSpan.TryParse(s, out TimeSpan result))
+            if (value is string strValue)
             {
-                return result;
-            }
-            return TimeSpan.Zero;
-        }
-    }
-
-    public class ObjectToStringConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            return value?.ToString() ?? "";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            // ConvertBack для этого конвертера обычно не имеет смысла
-            throw new NotImplementedException();
-        }
-    }
-
-    public class EnumToStringConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value != null)
-            {
-                return value.ToString();
-            }
-            return "";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string s && targetType.IsEnum)
-            {
-                return Enum.Parse(targetType, s);
-            }
-            throw new ArgumentException("Target type must be an enum and value must be a string.");
-        }
-    }
-
-    public class DecimalToCurrencyStringConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is decimal d)
-            {
-                // Используем культуру по умолчанию или переданную
-                var info = culture ?? CultureInfo.CurrentCulture;
-                return d.ToString("C2", info); // "C2" - валюта с 2 знаками после запятой
-            }
-            return "0.00 ₽";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string s)
-            {
-                // Пытаемся извлечь число из строки валюты
-                var numberStyle = NumberStyles.Currency;
-                var info = culture ?? CultureInfo.CurrentCulture;
-                if (decimal.TryParse(s, numberStyle, info, out decimal result))
+                if (decimal.TryParse(strValue, NumberStyles.Any, culture, out decimal result))
                 {
                     return result;
                 }
@@ -200,81 +311,106 @@ namespace OrderingSpecialEquipment.Converters
         }
     }
 
-    public class NullOrEmptyToNullConverter : IValueConverter
+    /// <summary>
+    /// Конвертер для форматирования валюты
+    /// </summary>
+    public class CurrencyConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string str)
+            if (value is decimal decimalValue)
             {
-                return string.IsNullOrEmpty(str) ? null : value;
+                return $"{decimalValue:N2} ₽";
             }
-            return value;
+
+            if (value is double doubleValue)
+            {
+                return $"{doubleValue:N2} ₽";
+            }
+
+            if (value is int intValue)
+            {
+                return $"{intValue:N0} ₽";
+            }
+
+            if (value is long longValue)
+            {
+                return $"{longValue:N0} ₽";
+            }
+
+            return "0,00 ₽";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return value;
-        }
-    }
-
-    public class IsNullOrEmptyToBoolConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is string str)
+            if (value is string stringValue)
             {
-                return string.IsNullOrEmpty(str);
-            }
-            return value == null;
-        }
+                var cleanValue = stringValue.Replace("₽", "")
+                                            .Replace(" ", "")
+                                            .Replace(",", ".");
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class DictionaryLookupConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value == null || parameter == null)
-                return Binding.DoNothing;
-
-            var dict = parameter as System.Collections.IDictionary;
-            if (dict != null && dict.Contains(value))
-            {
-                return dict[value];
-            }
-            return Binding.DoNothing;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class BoolToWidthConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool isVisible && isVisible)
-            {
-                if (parameter is double width)
+                if (decimal.TryParse(cleanValue, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal result))
                 {
-                    return new GridLength(width);
+                    return result;
                 }
-                return new GridLength(300); // Значение по умолчанию
             }
-            return new GridLength(0); // Сворачиваем колонку
+
+            return 0m;
+        }
+    }
+
+    /// <summary>
+    /// Конвертер для прав доступа (0-Запрещено, 1-Чтение, 2-Запись)
+    /// </summary>
+    public class PermissionToBoolConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is short permissionLevel)
+            {
+                return permissionLevel > 0;
+            }
+            return false;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // ConvertBack не имеет смысла для ширины колонки
-            throw new NotImplementedException();
+            if (value is bool boolValue)
+            {
+                return boolValue ? (short)2 : (short)0; // Запись или запрещено
+            }
+            return (short)0;
         }
     }
 
+    /// <summary>
+    /// Конвертер для процента выполнения в цвет
+    /// </summary>
+    public class CompletionToColorConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is decimal percentage)
+            {
+                // Если больше 100%, зеленый (перевыполнение)
+                if (percentage >= 100)
+                    return Brushes.Green;
+                // Если больше 90%, зеленоватый
+                else if (percentage >= 90)
+                    return Brushes.LightGreen;
+                // Если больше 80%, желтый
+                else if (percentage >= 80)
+                    return Brushes.Orange;
+                // Если меньше 80%, красный
+                else
+                    return Brushes.Red;
+            }
+            return Brushes.Gray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

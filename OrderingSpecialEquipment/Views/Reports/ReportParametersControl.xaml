@@ -1,0 +1,120 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.Reports.ReportParametersControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2006"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="400">
+    <UserControl.Resources>
+        <converters:DateTimeFormatConverter x:Key="DateTimeFormat"/>
+    </UserControl.Resources>
+
+    <Border Style="{StaticResource CardStyle}" Padding="20">
+        <ScrollViewer>
+            <StackPanel>
+                <!-- Тип отчета -->
+                <TextBlock Text="Тип отчета" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox SelectedItem="{Binding SelectedReportType}" 
+                          Style="{StaticResource SearchableComboBoxStyle}"
+                          Margin="0,0,0,16">
+                    <ComboBoxItem Content="Отчет по исполнению заявок"/>
+                    <ComboBoxItem Content="Отчет по транспортной программе"/>
+                </ComboBox>
+
+                <!-- Период для отчета по исполнению -->
+                <StackPanel Visibility="{Binding IsTransportProgramReport, Converter={StaticResource InverseBoolToVis}}">
+                    <TextBlock Text="Период отчета" Style="{StaticResource FieldLabelStyle}"/>
+
+                    <Grid Margin="0,0,0,16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Дата начала" Style="{StaticResource FieldLabelStyle}" FontSize="12"/>
+                            <DatePicker SelectedDate="{Binding StartDate}" 
+                                        Style="{StaticResource ModernDatePickerStyle}"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="1" Text="–" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   FontSize="18" Margin="8,0"/>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Дата окончания" Style="{StaticResource FieldLabelStyle}" FontSize="12"/>
+                            <DatePicker SelectedDate="{Binding EndDate}" 
+                                        Style="{StaticResource ModernDatePickerStyle}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox Content="Только выполненные заявки" 
+                              IsChecked="{Binding OnlyWorked}"
+                              Margin="0,0,0,16"/>
+                </StackPanel>
+
+                <!-- Параметры для транспортной программы -->
+                <StackPanel Visibility="{Binding IsTransportProgramReport, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="Год отчета" Style="{StaticResource FieldLabelStyle}"/>
+                    <ComboBox ItemsSource="{Binding Years}" 
+                              SelectedItem="{Binding SelectedYear}"
+                              Style="{StaticResource SearchableComboBoxStyle}"
+                              Margin="0,0,0,16"/>
+
+                    <CheckBox Content="Детализация по месяцам" 
+                              IsChecked="{Binding MonthlyBreakdown}"
+                              Margin="0,0,0,16"/>
+
+                    <StackPanel Visibility="{Binding ShowMonthSelection, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Месяц" Style="{StaticResource FieldLabelStyle}"/>
+                        <ComboBox ItemsSource="{Binding Months}" 
+                                  DisplayMemberPath="Name"
+                                  SelectedValuePath="Value"
+                                  SelectedValue="{Binding SelectedMonth}"
+                                  Style="{StaticResource SearchableComboBoxStyle}"
+                                  Margin="0,0,0,16"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Фильтры -->
+                <TextBlock Text="Фильтры" Style="{StaticResource SectionHeaderStyle}" FontSize="16" Margin="0,24,0,16"/>
+
+                <TextBlock Text="Отдел" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Departments}" 
+                          SelectedValue="{Binding SelectedDepartmentId}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          Style="{StaticResource SearchableComboBoxStyle}"
+                          Margin="0,0,0,16"/>
+
+                <TextBlock Text="Склад" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Warehouses}" 
+                          SelectedValue="{Binding SelectedWarehouseId}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          Style="{StaticResource SearchableComboBoxStyle}"
+                          Margin="0,0,0,16"/>
+
+                <TextBlock Text="Техника" Style="{StaticResource FieldLabelStyle}"/>
+                <ComboBox ItemsSource="{Binding Equipments}" 
+                          SelectedValue="{Binding SelectedEquipmentId}"
+                          DisplayMemberPath="Name"
+                          SelectedValuePath="Id"
+                          Style="{StaticResource SearchableComboBoxStyle}"
+                          Margin="0,0,0,16"/>
+
+                <!-- Статус -->
+                <Border Background="{StaticResource HoverBackground}" 
+                        CornerRadius="6"
+                        Padding="12"
+                        Margin="0,16,0,0">
+                    <TextBlock Text="{Binding StatusMessage}" 
+                               Foreground="{StaticResource SecondaryTextColor}"/>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
+</UserControl>

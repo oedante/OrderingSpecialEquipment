@@ -1,4 +1,5 @@
-﻿using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
 using System;
 using System.Collections.Generic;
@@ -8,171 +9,229 @@ using System.Threading.Tasks;
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Реализация IShiftRequestService.
+    /// Реализация сервиса заявок на смены
+    /// Управляет созданием, обновлением и удалением заявок
+    /// Создает новый сервис скоуп для каждой операции
     /// </summary>
     public class ShiftRequestService : IShiftRequestService
     {
-        private readonly IShiftRequestRepository _requestRepo;
-        private readonly IShiftRequestValidationService _validationService;
-        private readonly IDataValidationService _dataValidationService; // Для валидации полей
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IEquipmentDependencyService _dependencyService;
 
-        public ShiftRequestService(
-            IShiftRequestRepository requestRepo,
-            IShiftRequestValidationService validationService,
-            IDataValidationService dataValidationService)
+        /// <summary>
+        /// Конструктор с внедрением зависимости
+        /// </summary>
+        public ShiftRequestService(IServiceProvider serviceProvider, IEquipmentDependencyService dependencyService)
         {
-            _requestRepo = requestRepo;
-            _validationService = validationService;
-            _dataValidationService = dataValidationService;
+            _serviceProvider = serviceProvider;
+            _dependencyService = dependencyService;
         }
 
-        public async Task<bool> CreateRequestAsync(ShiftRequest request, string userId)
+        /// <summary>
+        /// Находит заявки по дате и смене
+        /// </summary>
+        public async Task<IEnumerable<ShiftRequest>> FindRequestsAsync(DateTime date, int shift)
         {
-            // Валидация на уровне данных
-            if (!_dataValidationService.IsValidId(request.EquipmentId) ||
-                !string.IsNullOrEmpty(request.LicensePlateId) && !_dataValidationService.IsValidId(request.LicensePlateId) ||
-                !_dataValidationService.IsValidId(request.WarehouseId) ||
-                !string.IsNullOrEmpty(request.AreaId) && !_dataValidationService.IsValidId(request.AreaId) ||
-                !string.IsNullOrEmpty(request.LessorOrganizationId) && !_dataValidationService.IsValidId(request.LessorOrganizationId) ||
-                !string.IsNullOrEmpty(request.DepartmentId) && !_dataValidationService.IsValidId(request.DepartmentId))
-            {
-                // Логировать ошибку валидации
-                Console.WriteLine("Ошибка валидации ID в заявке.");
-                return false;
-            }
-
-            // Проверка зависимостей
-            var existingRequests = (await _requestRepo.GetByDateAndShiftAsync(request.Date, request.Shift)).ToList(); // Преобразуем в List
-            var validationErrors = await _validationService.ValidateDependenciesAsync(request, existingRequests);
-
-            if (validationErrors.Count > 0)
-            {
-                // Логировать ошибки валидации зависимостей
-                Console.WriteLine($"Ошибки зависимостей: {string.Join(", ", validationErrors)}");
-                return false;
-            }
-
-            // Установка системных полей
-            request.CreatedByUserId = userId;
-            request.CreatedAt = DateTime.UtcNow;
-            request.IsBlocked = false; // По умолчанию не заблокирована
-
             try
             {
-                await _requestRepo.AddAsync(request);
-                await _requestRepo.SaveChangesAsync();
-                return true;
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+                    return await repo.GetByDateAndShiftAsync(date, shift);
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка сохранения заявки: {ex.Message}");
-                return false;
+                Console.WriteLine($"Ошибка при поиске заявок: {ex.Message}");
+                return new List<ShiftRequest>();
             }
         }
 
-        public async Task<bool> UpdateRequestAsync(ShiftRequest request)
+        /// <summary>
+        /// Находит заявки по двум датам и сменам
+        /// </summary>
+        public async Task<IEnumerable<ShiftRequest>> FindRequestsForTwoShiftsAsync(
+            DateTime date1, int shift1,
+            DateTime date2, int shift2)
         {
-            // Получаем старую версию заявки для проверки зависимостей
-            var oldRequest = await _requestRepo.GetByIdAsync(request.Key);
-            if (oldRequest == null)
-            {
-                Console.WriteLine("Заявка для обновления не найдена.");
-                return false;
-            }
-
-            // Валидация на уровне данных
-            if (!_dataValidationService.IsValidId(request.EquipmentId) ||
-                !string.IsNullOrEmpty(request.LicensePlateId) && !_dataValidationService.IsValidId(request.LicensePlateId) ||
-                !_dataValidationService.IsValidId(request.WarehouseId) ||
-                !string.IsNullOrEmpty(request.AreaId) && !_dataValidationService.IsValidId(request.AreaId) ||
-                !string.IsNullOrEmpty(request.LessorOrganizationId) && !_dataValidationService.IsValidId(request.LessorOrganizationId) ||
-                !string.IsNullOrEmpty(request.DepartmentId) && !_dataValidationService.IsValidId(request.DepartmentId))
-            {
-                Console.WriteLine("Ошибка валидации ID в заявке.");
-                return false;
-            }
-
-            // Проверка зависимостей
-            // Нужно получить все заявки на *ту же дату и смену*, кроме *текущей* (request.Key)
-            var existingRequests = (await _requestRepo.GetByDateAndShiftAsync(request.Date, request.Shift)).ToList(); // Преобразуем в List
-            existingRequests = existingRequests.Where(r => r.Key != request.Key).ToList(); // Используем Where, а не RemoveAll
-
-            // Для проверки зависимостей, нужно учесть, что количество текущей техники изменилось
-            // Т.е. если в старой заявке было 2, а в новой 1, то при проверке нужно "добавить обратно" 2 и "вычесть" 1
-            // Это делает сервис валидации, передавая ему *новую* заявку и *все старые* (кроме неё самой)
-            var validationErrors = await _validationService.ValidateDependenciesAsync(request, existingRequests);
-
-            if (validationErrors.Count > 0)
-            {
-                Console.WriteLine($"Ошибки зависимостей при обновлении: {string.Join(", ", validationErrors)}");
-                return false;
-            }
-
-            // Копируем разрешённые к изменению поля
-            oldRequest.Date = request.Date;
-            oldRequest.Shift = request.Shift;
-            oldRequest.EquipmentId = request.EquipmentId;
-            oldRequest.LicensePlateId = request.LicensePlateId;
-            oldRequest.WarehouseId = request.WarehouseId;
-            oldRequest.AreaId = request.AreaId;
-            oldRequest.VehicleNumber = request.VehicleNumber;
-            oldRequest.VehicleBrand = request.VehicleBrand;
-            oldRequest.LessorOrganizationId = request.LessorOrganizationId;
-            oldRequest.RequestedCount = request.RequestedCount;
-            oldRequest.WorkedHours = request.WorkedHours;
-            oldRequest.ActualCost = request.ActualCost;
-            oldRequest.IsWorked = request.IsWorked;
-            // IsBlocked не изменяется через Update, только через BlockRequest
-            oldRequest.Comment = request.Comment;
-            // CreatedByUserId и CreatedAt не изменяются
-            oldRequest.DepartmentId = request.DepartmentId;
-            oldRequest.ProgramYear = request.ProgramYear;
-            oldRequest.ProgramMonth = request.ProgramMonth;
-
             try
             {
-                _requestRepo.Update(oldRequest);
-                await _requestRepo.SaveChangesAsync();
-                return true;
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+                    return await repo.GetByDatesAndShiftsAsync(date1, shift1, date2, shift2);
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка обновления заявки: {ex.Message}");
-                return false;
+                Console.WriteLine($"Ошибка при поиске заявок для двух смен: {ex.Message}");
+                return new List<ShiftRequest>();
             }
         }
 
-        public async Task<bool> BlockRequestAsync(int key)
+        /// <summary>
+        /// Создает новую заявку
+        /// </summary>
+        public async Task CreateRequestAsync(ShiftRequest request, User currentUser)
         {
-            var request = await _requestRepo.GetByIdAsync(key);
-            if (request == null || request.IsBlocked)
-            {
-                Console.WriteLine("Заявка не найдена или уже заблокирована.");
-                return false;
-            }
+            if (request == null || currentUser == null)
+                throw new ArgumentNullException("Некорректные параметры запроса");
 
-            request.IsBlocked = true;
             try
             {
-                _requestRepo.Update(request);
-                await _requestRepo.SaveChangesAsync();
-                return true;
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+                    var equipmentRepo = scope.ServiceProvider.GetRequiredService<IEquipmentRepository>();
+
+                    // Проверяем, заблокирована ли техника для этой даты и смены
+                    var existingRequests = await FindRequestsAsync(request.Date, request.Shift);
+                    var conflictingRequest = existingRequests.FirstOrDefault(r =>
+                        r.EquipmentId == request.EquipmentId &&
+                        r.WarehouseId == request.WarehouseId &&
+                        r.IsBlocked);
+
+                    if (conflictingRequest != null)
+                    {
+                        throw new InvalidOperationException($"Заявка на эту технику уже заблокирована для {request.Date.ToShortDateString()}, смена {request.Shift}");
+                    }
+
+                    // Получаем технику для проверки CanOrderMultiple
+                    var equipment = await equipmentRepo.GetByIdAsync(request.EquipmentId);
+                    if (equipment != null && !equipment.CanOrderMultiple)
+                    {
+                        // Для техники, которую нельзя заказывать несколько раз, проверяем существование
+                        var existingSameEquipment = existingRequests.FirstOrDefault(r =>
+                            r.EquipmentId == request.EquipmentId &&
+                            r.WarehouseId == request.WarehouseId &&
+                            !r.IsBlocked);
+
+                        if (existingSameEquipment != null)
+                        {
+                            throw new InvalidOperationException($"Техника '{equipment.Name}' уже заказана на эту дату и смену. Создайте отдельную заявку.");
+                        }
+                    }
+
+                    // Устанавливаем пользователя-создателя
+                    request.CreatedByUserId = currentUser.Id;
+                    request.CreatedAt = DateTime.UtcNow;
+
+                    // Сохраняем заявку
+                    await repo.AddAsync(request);
+
+                    // Обрабатываем зависимости
+                    await _dependencyService.ProcessDependenciesAsync(request, currentUser);
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка блокировки заявки: {ex.Message}");
-                return false;
+                Console.WriteLine($"Ошибка при создании заявки: {ex.Message}");
+                throw;
             }
         }
 
-        // --- ОБНОВЛЁННЫЙ МЕТОД ---
-        public async Task<List<ShiftRequest>> FindRequestsAsync(DateTime? date = null, int? shift = null, string? equipmentId = null, string? warehouseId = null, string? departmentId = null)
+        /// <summary>
+        /// Обновляет существующую заявку
+        /// </summary>
+        public async Task UpdateRequestAsync(ShiftRequest request, User currentUser)
         {
-            // Используем конкретный метод репозитория
-            var results = await _requestRepo.FindRequestsAsync(date, shift, equipmentId, warehouseId, departmentId);
-            return results.ToList(); // Преобразуем IList в List
+            if (request == null || currentUser == null)
+                throw new ArgumentNullException("Некорректные параметры запроса");
+
+            try
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+
+                    // Проверяем, заблокирована ли заявка
+                    if (request.IsBlocked)
+                    {
+                        throw new InvalidOperationException("Заблокированную заявку нельзя редактировать");
+                    }
+
+                    // Обновляем время изменения
+                    request.CreatedAt = DateTime.UtcNow;
+
+                    // Обновляем заявку
+                    repo.Update(request);
+
+                    // Обрабатываем зависимости
+                    await _dependencyService.ProcessDependenciesAsync(request, currentUser);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при обновлении заявки: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Удаляет заявку
+        /// </summary>
+        public async Task DeleteRequestAsync(int key, User currentUser)
+        {
+            if (currentUser == null)
+                throw new ArgumentNullException(nameof(currentUser));
+
+            try
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+
+                    // Получаем заявку
+                    var request = await repo.GetByIdAsync(key);
+                    if (request == null)
+                    {
+                        throw new InvalidOperationException("Заявка не найдена");
+                    }
+
+                    // Проверяем, заблокирована ли заявка
+                    if (request.IsBlocked)
+                    {
+                        throw new InvalidOperationException("Заблокированную заявку нельзя удалить");
+                    }
+
+                    // Удаляем заявку
+                    await repo.RemoveAsync(request);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при удалении заявки: {ex.Message}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Обрабатывает зависимости техники при создании/обновлении заявки
+        /// </summary>
+        public async Task ProcessDependenciesAsync(ShiftRequest request, User currentUser)
+        {
+            await _dependencyService.ProcessDependenciesAsync(request, currentUser);
+        }
+
+        /// <summary>
+        /// Проверяет, заблокирована ли заявка
+        /// </summary>
+        public async Task<bool> IsRequestBlockedAsync(int key)
+        {
+            try
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var repo = scope.ServiceProvider.GetRequiredService<IShiftRequestRepository>();
+                    var request = await repo.GetByIdAsync(key);
+                    return request?.IsBlocked == true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при проверке блокировки заявки: {ex.Message}");
+                return false;
+            }
         }
     }
-    // --- КЛАССЫ ExpressionExtensions и ExpressionReplacer БОЛЬШЕ НЕ НУЖНЫ ---
-    // Удаляем их из этого файла.
 }

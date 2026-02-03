@@ -3,7 +3,7 @@
 namespace OrderingSpecialEquipment.Views
 {
     /// <summary>
-    /// Логика взаимодействия для EditDepartmentsView.xaml
+    /// Логика взаимодействия для окна редактирования отделов
     /// </summary>
     public partial class EditDepartmentsView : UserControl
     {

@@ -1,32 +1,26 @@
-﻿namespace OrderingSpecialEquipment.Services
+﻿using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+
+namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Интерфейс для сервиса управления темами оформления (светлая/темная).
+    /// Интерфейс сервиса управления темами оформления
     /// </summary>
     public interface IThemeService
     {
         /// <summary>
-        /// Применяет выбранную тему.
+        /// Применяет указанную тему
         /// </summary>
-        /// <param name="themeName">Название темы (например, "Light", "Dark").</param>
         void ApplyTheme(string themeName);
 
         /// <summary>
-        /// Сохраняет выбранную тему в настройках приложения.
+        /// Загружает предпочтения темы из конфигурации
         /// </summary>
-        /// <param name="themeName">Название темы.</param>
-        void SaveThemePreference(string themeName);
-
-        /// <summary>
-        /// Загружает сохраненную тему из настроек приложения.
-        /// </summary>
-        /// <returns>Название сохраненной темы.</returns>
         string LoadThemePreference();
 
         /// <summary>
-        /// Получает список доступных тем.
+        /// Сохраняет предпочтения темы в конфигурацию
         /// </summary>
-        /// <returns>Массив названий тем.</returns>
-        string[] GetAvailableThemes();
+        Task SaveThemePreferenceAsync(string themeName);
     }
 }

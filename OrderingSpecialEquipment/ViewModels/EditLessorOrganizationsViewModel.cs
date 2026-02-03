@@ -1,298 +1,290 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования организаций-арендодателей.
+    /// ViewModel для редактирования организаций-арендодателей
     /// </summary>
-    public class EditLessorOrganizationsViewModel : ViewModelBase
+    public class EditLessorOrganizationsViewModel : BaseViewModel
     {
-        private readonly ILessorOrganizationRepository _lessorOrgRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILessorOrganizationRepository _organizationRepository;
 
-        private ObservableCollection<LessorOrganization> _lessorOrganizations;
-        private LessorOrganization? _selectedLessorOrg;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editName = string.Empty;
-        private string? _editINN;
-        private string? _editContactPerson;
-        private string? _editPhone;
-        private string? _editEmail;
-        private string? _editAddress;
-        private bool _editIsActive = true;
+        private ObservableCollection<LessorOrganization> _organizations;
+        private LessorOrganization? _selectedOrganization;
+        private bool _isEditMode;
+        private string _searchText;
 
-        public EditLessorOrganizationsViewModel(
-            ILessorOrganizationRepository lessorOrgRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditLessorOrganizationsViewModel(IServiceProvider serviceProvider)
         {
-            _lessorOrgRepository = lessorOrgRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _organizationRepository = serviceProvider.GetRequiredService<ILessorOrganizationRepository>();
 
-            _lessorOrganizations = new ObservableCollection<LessorOrganization>();
-            LoadLessorOrganizationsCommand = new RelayCommand(async _ => await LoadLessorOrganizationsAsync(), _ => _authorizationService.CanReadTable("LessorOrganizations"));
-            SaveLessorOrganizationCommand = new RelayCommand(async _ => await SaveLessorOrganizationAsync(), _ => CanSaveLessorOrganization());
-            DeleteLessorOrganizationCommand = new RelayCommand(async _ => await DeleteLessorOrganizationAsync(), _ => CanDeleteLessorOrganization());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            Organizations = new ObservableCollection<LessorOrganization>();
+            SearchText = string.Empty;
 
-            Task.Run(async () => await LoadLessorOrganizationsAsync());
+            // Команды
+            LoadOrganizationsCommand = new RelayCommand(LoadOrganizations);
+            AddOrganizationCommand = new RelayCommand(AddOrganization);
+            EditOrganizationCommand = new RelayCommand(EditOrganization, CanEditOrganization);
+            DeleteOrganizationCommand = new RelayCommand(DeleteOrganization, CanDeleteOrganization);
+            SaveOrganizationCommand = new RelayCommand(SaveOrganization, CanSaveOrganization);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchOrganizations);
+
+            // Загрузка данных
+            _ = LoadOrganizationsAsync();
         }
 
-        public ObservableCollection<LessorOrganization> LessorOrganizations
+        // ========== Свойства ==========
+
+        public ObservableCollection<LessorOrganization> Organizations
         {
-            get => _lessorOrganizations;
-            set => SetProperty(ref _lessorOrganizations, value);
+            get => _organizations;
+            set => SetProperty(ref _organizations, value);
         }
 
-        public LessorOrganization? SelectedLessorOrg
+        public LessorOrganization? SelectedOrganization
         {
-            get => _selectedLessorOrg;
-            set
-            {
-                if (SetProperty(ref _selectedLessorOrg, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editName = value.Name;
-                        _editINN = value.INN;
-                        _editContactPerson = value.ContactPerson;
-                        _editPhone = value.Phone;
-                        _editEmail = value.Email;
-                        _editAddress = value.Address;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditName));
-                    OnPropertyChanged(nameof(EditINN));
-                    OnPropertyChanged(nameof(EditContactPerson));
-                    OnPropertyChanged(nameof(EditPhone));
-                    OnPropertyChanged(nameof(EditEmail));
-                    OnPropertyChanged(nameof(EditAddress));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    ((RelayCommand)SaveLessorOrganizationCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteLessorOrganizationCommand).RaiseCanExecuteChanged();
-                }
-            }
+            get => _selectedOrganization;
+            set => SetProperty(ref _selectedOrganization, value);
         }
 
-        public string EditId
+        public bool IsEditMode
         {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    ((RelayCommand)SaveLessorOrganizationCommand).RaiseCanExecuteChanged();
-                }
-            }
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
         }
 
-        public string EditName
+        public string SearchText
         {
-            get => _editName;
-            set => SetProperty(ref _editName, value);
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
         }
 
-        public string? EditINN
-        {
-            get => _editINN;
-            set => SetProperty(ref _editINN, value);
-        }
+        // ========== Команды ==========
 
-        public string? EditContactPerson
-        {
-            get => _editContactPerson;
-            set => SetProperty(ref _editContactPerson, value);
-        }
+        public RelayCommand LoadOrganizationsCommand { get; }
+        public RelayCommand AddOrganizationCommand { get; }
+        public RelayCommand EditOrganizationCommand { get; }
+        public RelayCommand DeleteOrganizationCommand { get; }
+        public RelayCommand SaveOrganizationCommand { get; }
+        public RelayCommand CancelEditCommand { get; }
+        public RelayCommand SearchCommand { get; }
 
-        public string? EditPhone
-        {
-            get => _editPhone;
-            set => SetProperty(ref _editPhone, value);
-        }
+        // ========== Методы ==========
 
-        public string? EditEmail
-        {
-            get => _editEmail;
-            set => SetProperty(ref _editEmail, value);
-        }
-
-        public string? EditAddress
-        {
-            get => _editAddress;
-            set => SetProperty(ref _editAddress, value);
-        }
-
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
-
-        public ICommand LoadLessorOrganizationsCommand { get; }
-        public ICommand SaveLessorOrganizationCommand { get; }
-        public ICommand DeleteLessorOrganizationCommand { get; }
-        public ICommand CancelEditCommand { get; }
-
-        private async Task LoadLessorOrganizationsAsync()
+        /// <summary>
+        /// Загружает организации-арендодатели
+        /// </summary>
+        private async Task LoadOrganizationsAsync()
         {
             try
             {
-                var dbOrgs = await _lessorOrgRepository.GetAllAsync();
-                LessorOrganizations.Clear();
-                foreach (var org in dbOrgs)
-                {
-                    // Фильтруем неактивные при отображении в основном списке, если нужно
-                    // В данном случае, оставим все, чтобы пользователь мог редактировать IsActive
-                    LessorOrganizations.Add(org);
-                }
+                var organizations = await _organizationRepository.GetAllAsync();
+                Organizations = new ObservableCollection<LessorOrganization>(organizations);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки арендодателей: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки организаций: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveLessorOrganization()
+        private void LoadOrganizations()
         {
-            return _authorizationService.CanWriteTable("LessorOrganizations") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditName) &&
-                   (!_isEditing || SelectedLessorOrg?.Id == EditId);
+            _ = LoadOrganizationsAsync();
         }
 
-        private async Task SaveLessorOrganizationAsync()
+        /// <summary>
+        /// Добавляет новую организацию
+        /// </summary>
+        private void AddOrganization()
         {
-            if (!CanSaveLessorOrganization()) return;
+            SelectedOrganization = new LessorOrganization
+            {
+                Id = GenerateNewId("LO"),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
+
+        /// <summary>
+        /// Редактирует выбранную организацию
+        /// </summary>
+        private void EditOrganization()
+        {
+            if (SelectedOrganization != null)
+            {
+                IsEditMode = true;
+            }
+        }
+
+        private bool CanEditOrganization()
+        {
+            return SelectedOrganization != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Удаляет выбранную организацию
+        /// </summary>
+        private async void DeleteOrganization()
+        {
+            if (SelectedOrganization == null)
+                return;
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить организацию '{SelectedOrganization.Name}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _organizationRepository.RemoveAsync(SelectedOrganization);
+                    await LoadOrganizationsAsync();
+                    SelectedOrganization = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления организации: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private bool CanDeleteOrganization()
+        {
+            return SelectedOrganization != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Сохраняет организацию
+        /// </summary>
+        private async void SaveOrganization()
+        {
+            if (SelectedOrganization == null)
+                return;
+
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedOrganization.Name))
+            {
+                MessageBox.Show("Введите наименование организации", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                LessorOrganization organization;
-                bool isNew = !_isEditing;
-
-                if (isNew)
+                if (Organizations.Any(o => o.Id != SelectedOrganization.Id && o.Name == SelectedOrganization.Name))
                 {
-                    if (await _lessorOrgRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Организация-арендодатель с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    organization = new LessorOrganization
-                    {
-                        Id = EditId,
-                        Name = EditName,
-                        INN = EditINN,
-                        ContactPerson = EditContactPerson,
-                        Phone = EditPhone,
-                        Email = EditEmail,
-                        Address = EditAddress,
-                        IsActive = EditIsActive
-                    };
-                    await _lessorOrgRepository.AddAsync(organization);
+                    MessageBox.Show("Организация с таким наименованием уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (!string.IsNullOrEmpty(SelectedOrganization.INN) &&
+                    Organizations.Any(o => o.Id != SelectedOrganization.Id && o.INN == SelectedOrganization.INN))
+                {
+                    MessageBox.Show("Организация с таким ИНН уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedOrganization.Key == 0)
+                {
+                    // Новая организация
+                    await _organizationRepository.AddAsync(SelectedOrganization);
                 }
                 else
                 {
-                    organization = SelectedLessorOrg!;
-                    organization.Name = EditName;
-                    organization.INN = EditINN;
-                    organization.ContactPerson = EditContactPerson;
-                    organization.Phone = EditPhone;
-                    organization.Email = EditEmail;
-                    organization.Address = EditAddress;
-                    organization.IsActive = EditIsActive;
-                    _lessorOrgRepository.Update(organization);
+                    // Обновление существующей
+                    _organizationRepository.Update(SelectedOrganization);
                 }
 
-                await _lessorOrgRepository.SaveChangesAsync();
-
-                if (isNew)
-                {
-                    // Добавляем в список, даже если IsActive = false, для видимости
-                    LessorOrganizations.Add(organization);
-                }
-                else
-                {
-                    await LoadLessorOrganizationsAsync(); // Обновление списка
-                }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Арендодатель добавлен." : "Арендодатель обновлен.", "Успех");
+                await LoadOrganizationsAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка сохранения арендодателя: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения организации: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanDeleteLessorOrganization()
+        private bool CanSaveOrganization()
         {
-            return _authorizationService.CanWriteTable("LessorOrganizations") &&
-                   SelectedLessorOrg != null && SelectedLessorOrg.Key != 0;
+            return SelectedOrganization != null && IsEditMode;
         }
 
-        private async Task DeleteLessorOrganizationAsync()
-        {
-            if (!CanDeleteLessorOrganization() || SelectedLessorOrg == null) return;
-
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить арендодателя '{SelectedLessorOrg.Name}'?")) return;
-
-            try
-            {
-                _lessorOrgRepository.Delete(SelectedLessorOrg);
-                await _lessorOrgRepository.SaveChangesAsync();
-                LessorOrganizations.Remove(SelectedLessorOrg);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Арендодатель удален.", "Успех");
-            }
-            catch (Exception ex)
-            {
-                _messageService.ShowErrorMessage($"Ошибка удаления арендодателя: {ex.Message}", "Ошибка");
-            }
-        }
-
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
         private void CancelEdit()
         {
-            ResetEditFields();
+            IsEditMode = false;
+            SelectedOrganization = null;
         }
 
-        private void ResetEditFields()
+        /// <summary>
+        /// Поиск организаций
+        /// </summary>
+        private async void SearchOrganizations()
         {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editName = string.Empty;
-            _editINN = null;
-            _editContactPerson = null;
-            _editPhone = null;
-            _editEmail = null;
-            _editAddress = null;
-            _editIsActive = true;
-            SelectedLessorOrg = null;
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditName));
-            OnPropertyChanged(nameof(EditINN));
-            OnPropertyChanged(nameof(EditContactPerson));
-            OnPropertyChanged(nameof(EditPhone));
-            OnPropertyChanged(nameof(EditEmail));
-            OnPropertyChanged(nameof(EditAddress));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveLessorOrganizationCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteLessorOrganizationCommand).RaiseCanExecuteChanged();
+            try
+            {
+                var allOrganizations = await _organizationRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var filtered = allOrganizations.Where(o =>
+                        o.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        o.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        (o.INN != null && o.INN.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+
+                    Organizations = new ObservableCollection<LessorOrganization>(filtered);
+                }
+                else
+                {
+                    Organizations = new ObservableCollection<LessorOrganization>(allOrganizations);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Генерирует новый идентификатор в формате префикс + номер
+        /// </summary>
+        private string GenerateNewId(string prefix)
+        {
+            try
+            {
+                var existingIds = Organizations.Select(o => o.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
+                {
+                    return $"{prefix}000001";
+                }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
+            }
+            catch
+            {
+                return $"{prefix}000001";
+            }
         }
     }
 }

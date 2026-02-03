@@ -1,73 +1,59 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования пользователей.
+    /// ViewModel для редактирования пользователей
     /// </summary>
-    public class EditUsersViewModel : ViewModelBase
+    public class EditUsersViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly IUserRepository _userRepository;
         private readonly IRoleRepository _roleRepository;
         private readonly IDepartmentRepository _departmentRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
 
         private ObservableCollection<User> _users;
         private User? _selectedUser;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editWindowsLogin = string.Empty;
-        private string _editFullName = string.Empty;
-        private string? _editEmail;
-        private string? _editPhone;
-        private string _editRoleId = string.Empty; // Привязка к роли
-        private string? _editDefaultDepartmentId; // Привязка к отделу по умолчанию
-        private bool _editHasAllDepartments = false;
-        private bool _editIsActive = true;
+        private bool _isEditMode;
+        private string _searchText;
+        private ObservableCollection<Role> _roles;
+        private ObservableCollection<Department> _departments;
 
-        // Для выбора в ComboBox
-        private ObservableCollection<Role> _rolesForSelection;
-        private ObservableCollection<Department> _departmentsForSelection;
-
-        public EditUsersViewModel(
-            IUserRepository userRepository,
-            IRoleRepository roleRepository,
-            IDepartmentRepository departmentRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditUsersViewModel(IServiceProvider serviceProvider)
         {
-            _userRepository = userRepository;
-            _roleRepository = roleRepository;
-            _departmentRepository = departmentRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _userRepository = serviceProvider.GetRequiredService<IUserRepository>();
+            _roleRepository = serviceProvider.GetRequiredService<IRoleRepository>();
+            _departmentRepository = serviceProvider.GetRequiredService<IDepartmentRepository>();
 
-            _users = new ObservableCollection<User>();
-            _rolesForSelection = new ObservableCollection<Role>();
-            _departmentsForSelection = new ObservableCollection<Department>();
+            Users = new ObservableCollection<User>();
+            Roles = new ObservableCollection<Role>();
+            Departments = new ObservableCollection<Department>();
+            SearchText = string.Empty;
 
-            LoadUsersCommand = new RelayCommand(async _ => await LoadUsersAsync(), _ => _authorizationService.CanReadTable("Users"));
-            SaveUserCommand = new RelayCommand(async _ => await SaveUserAsync(), _ => CanSaveUser());
-            DeleteUserCommand = new RelayCommand(async _ => await DeleteUserAsync(), _ => CanDeleteUser());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            // Команды
+            LoadUsersCommand = new RelayCommand(LoadUsers);
+            AddUserCommand = new RelayCommand(AddUser);
+            EditUserCommand = new RelayCommand(EditUser, CanEditUser);
+            DeleteUserCommand = new RelayCommand(DeleteUser, CanDeleteUser);
+            SaveUserCommand = new RelayCommand(SaveUser, CanSaveUser);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchUsers);
 
-            // Загрузка зависимых данных
-            Task.Run(async () =>
-            {
-                await LoadRolesForSelectionAsync();
-                await LoadDepartmentsForSelectionAsync();
-            });
-
-            Task.Run(async () => await LoadUsersAsync());
+            // Загрузка данных
+            _ = LoadDataAsync();
         }
+
+        // ========== Свойства ==========
 
         public ObservableCollection<User> Users
         {
@@ -78,312 +64,295 @@ namespace OrderingSpecialEquipment.ViewModels
         public User? SelectedUser
         {
             get => _selectedUser;
-            set
+            set => SetProperty(ref _selectedUser, value);
+        }
+
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
+        }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
+        }
+
+        public ObservableCollection<Role> Roles
+        {
+            get => _roles;
+            set => SetProperty(ref _roles, value);
+        }
+
+        public ObservableCollection<Department> Departments
+        {
+            get => _departments;
+            set => SetProperty(ref _departments, value);
+        }
+
+        // ========== Команды ==========
+
+        public RelayCommand LoadUsersCommand { get; }
+        public RelayCommand AddUserCommand { get; }
+        public RelayCommand EditUserCommand { get; }
+        public RelayCommand DeleteUserCommand { get; }
+        public RelayCommand SaveUserCommand { get; }
+        public RelayCommand CancelEditCommand { get; }
+        public RelayCommand SearchCommand { get; }
+
+        // ========== Методы ==========
+
+        /// <summary>
+        /// Загружает все данные (пользователи, роли, отделы)
+        /// </summary>
+        private async Task LoadDataAsync()
+        {
+            try
             {
-                if (SetProperty(ref _selectedUser, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editWindowsLogin = value.WindowsLogin;
-                        _editFullName = value.FullName;
-                        _editEmail = value.Email;
-                        _editPhone = value.Phone;
-                        _editRoleId = value.RoleId;
-                        _editDefaultDepartmentId = value.DefaultDepartmentId;
-                        _editHasAllDepartments = value.HasAllDepartments;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditWindowsLogin));
-                    OnPropertyChanged(nameof(EditFullName));
-                    OnPropertyChanged(nameof(EditEmail));
-                    OnPropertyChanged(nameof(EditPhone));
-                    OnPropertyChanged(nameof(EditRoleId));
-                    OnPropertyChanged(nameof(EditDefaultDepartmentId));
-                    OnPropertyChanged(nameof(EditHasAllDepartments));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    ((RelayCommand)SaveUserCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteUserCommand).RaiseCanExecuteChanged();
-                }
+                await LoadUsersAsync();
+                await LoadRolesAsync();
+                await LoadDepartmentsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        public string EditId
-        {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    ((RelayCommand)SaveUserCommand).RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public string EditWindowsLogin
-        {
-            get => _editWindowsLogin;
-            set => SetProperty(ref _editWindowsLogin, value);
-        }
-
-        public string EditFullName
-        {
-            get => _editFullName;
-            set => SetProperty(ref _editFullName, value);
-        }
-
-        public string? EditEmail
-        {
-            get => _editEmail;
-            set => SetProperty(ref _editEmail, value);
-        }
-
-        public string? EditPhone
-        {
-            get => _editPhone;
-            set => SetProperty(ref _editPhone, value);
-        }
-
-        public string EditRoleId
-        {
-            get => _editRoleId;
-            set => SetProperty(ref _editRoleId, value);
-        }
-
-        public string? EditDefaultDepartmentId
-        {
-            get => _editDefaultDepartmentId;
-            set => SetProperty(ref _editDefaultDepartmentId, value);
-        }
-
-        public bool EditHasAllDepartments
-        {
-            get => _editHasAllDepartments;
-            set => SetProperty(ref _editHasAllDepartments, value);
-        }
-
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
-
-        // --- Свойства для выбора ---
-        public ObservableCollection<Role> RolesForSelection
-        {
-            get => _rolesForSelection;
-            set => SetProperty(ref _rolesForSelection, value);
-        }
-
-        public ObservableCollection<Department> DepartmentsForSelection
-        {
-            get => _departmentsForSelection;
-            set => SetProperty(ref _departmentsForSelection, value);
-        }
-
-        public ICommand LoadUsersCommand { get; }
-        public ICommand SaveUserCommand { get; }
-        public ICommand DeleteUserCommand { get; }
-        public ICommand CancelEditCommand { get; }
-
+        /// <summary>
+        /// Загружает пользователей
+        /// </summary>
         private async Task LoadUsersAsync()
         {
             try
             {
-                var dbUsers = await _userRepository.GetAllAsync();
-                Users.Clear();
-                foreach (var user in dbUsers)
-                {
-                    // Фильтруем неактивные при отображении в основном списке, если нужно
-                    // В данном случае, оставим все, чтобы пользователь мог редактировать IsActive
-                    Users.Add(user);
-                }
+                var users = await _userRepository.GetAllAsync();
+                Users = new ObservableCollection<User>(users);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки пользователей: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки пользователей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveUser()
+        private void LoadUsers()
         {
-            return _authorizationService.CanWriteTable("Users") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditWindowsLogin) &&
-                   !string.IsNullOrWhiteSpace(EditFullName) &&
-                   !string.IsNullOrWhiteSpace(EditRoleId) &&
-                   (!_isEditing || SelectedUser?.Id == EditId);
+            _ = LoadUsersAsync();
         }
 
-        private async Task SaveUserAsync()
+        /// <summary>
+        /// Загружает роли
+        /// </summary>
+        private async Task LoadRolesAsync()
         {
-            if (!CanSaveUser()) return;
-
             try
             {
-                User user;
-                bool isNew = !_isEditing;
-
-                if (isNew)
-                {
-                    if (await _userRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Пользователь с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    user = new User
-                    {
-                        Id = EditId,
-                        WindowsLogin = EditWindowsLogin,
-                        FullName = EditFullName,
-                        Email = EditEmail,
-                        Phone = EditPhone,
-                        RoleId = EditRoleId,
-                        DefaultDepartmentId = EditDefaultDepartmentId,
-                        HasAllDepartments = EditHasAllDepartments,
-                        IsActive = EditIsActive
-                    };
-                    await _userRepository.AddAsync(user);
-                }
-                else
-                {
-                    user = SelectedUser!;
-                    user.WindowsLogin = EditWindowsLogin;
-                    user.FullName = EditFullName;
-                    user.Email = EditEmail;
-                    user.Phone = EditPhone;
-                    user.RoleId = EditRoleId;
-                    user.DefaultDepartmentId = EditDefaultDepartmentId;
-                    user.HasAllDepartments = EditHasAllDepartments;
-                    user.IsActive = EditIsActive;
-                    _userRepository.Update(user);
-                }
-
-                await _userRepository.SaveChangesAsync();
-
-                if (isNew)
-                {
-                    // Добавляем в список, даже если IsActive = false, для видимости
-                    Users.Add(user);
-                }
-                else
-                {
-                    await LoadUsersAsync(); // Обновление списка
-                }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Пользователь добавлен." : "Пользователь обновлен.", "Успех");
+                var roles = await _roleRepository.GetAllAsync();
+                Roles = new ObservableCollection<Role>(roles);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка сохранения пользователя: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки ролей: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Загружает отделы
+        /// </summary>
+        private async Task LoadDepartmentsAsync()
+        {
+            try
+            {
+                var departments = await _departmentRepository.GetAllAsync();
+                Departments = new ObservableCollection<Department>(departments);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки отделов: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Добавляет нового пользователя
+        /// </summary>
+        private void AddUser()
+        {
+            SelectedUser = new User
+            {
+                Id = GenerateNewId("US"),
+                IsActive = true,
+                HasAllDepartments = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
+
+        /// <summary>
+        /// Редактирует выбранного пользователя
+        /// </summary>
+        private void EditUser()
+        {
+            if (SelectedUser != null)
+            {
+                IsEditMode = true;
+            }
+        }
+
+        private bool CanEditUser()
+        {
+            return SelectedUser != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Удаляет выбранного пользователя
+        /// </summary>
+        private async void DeleteUser()
+        {
+            if (SelectedUser == null)
+                return;
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить пользователя '{SelectedUser.FullName}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _userRepository.RemoveAsync(SelectedUser);
+                    await LoadUsersAsync();
+                    SelectedUser = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления пользователя: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
         private bool CanDeleteUser()
         {
-            return _authorizationService.CanWriteTable("Users") &&
-                   SelectedUser != null && SelectedUser.Key != 0;
+            return SelectedUser != null && !IsEditMode;
         }
 
-        private async Task DeleteUserAsync()
+        /// <summary>
+        /// Сохраняет пользователя
+        /// </summary>
+        private async void SaveUser()
         {
-            if (!CanDeleteUser() || SelectedUser == null) return;
+            if (SelectedUser == null)
+                return;
 
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить пользователя '{SelectedUser.FullName}'?")) return;
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedUser.WindowsLogin))
+            {
+                MessageBox.Show("Введите логин Windows", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedUser.FullName))
+            {
+                MessageBox.Show("Введите ФИО", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                _userRepository.Delete(SelectedUser);
-                await _userRepository.SaveChangesAsync();
-                Users.Remove(SelectedUser);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Пользователь удален.", "Успех");
+                if (Users.Any(u => u.Id != SelectedUser.Id && u.WindowsLogin == SelectedUser.WindowsLogin))
+                {
+                    MessageBox.Show("Пользователь с таким логином Windows уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedUser.Key == 0)
+                {
+                    // Новый пользователь
+                    await _userRepository.AddAsync(SelectedUser);
+                }
+                else
+                {
+                    // Обновление существующего
+                    _userRepository.Update(SelectedUser);
+                }
+
+                await LoadUsersAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка удаления пользователя: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения пользователя: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private bool CanSaveUser()
+        {
+            return SelectedUser != null && IsEditMode;
+        }
+
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
         private void CancelEdit()
         {
-            ResetEditFields();
-        }
-
-        private void ResetEditFields()
-        {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editWindowsLogin = string.Empty;
-            _editFullName = string.Empty;
-            _editEmail = null;
-            _editPhone = null;
-            _editRoleId = string.Empty; // Сбросить на значение по умолчанию или оставить как есть?
-            _editDefaultDepartmentId = null; // Сбросить на значение по умолчанию или оставить как есть?
-            _editHasAllDepartments = false;
-            _editIsActive = true;
+            IsEditMode = false;
             SelectedUser = null;
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditWindowsLogin));
-            OnPropertyChanged(nameof(EditFullName));
-            OnPropertyChanged(nameof(EditEmail));
-            OnPropertyChanged(nameof(EditPhone));
-            OnPropertyChanged(nameof(EditRoleId));
-            OnPropertyChanged(nameof(EditDefaultDepartmentId));
-            OnPropertyChanged(nameof(EditHasAllDepartments));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveUserCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteUserCommand).RaiseCanExecuteChanged();
         }
 
-        // --- Вспомогательные методы с фильтрацией по правам ---
-        private async Task LoadRolesForSelectionAsync()
+        /// <summary>
+        /// Поиск пользователей
+        /// </summary>
+        private async void SearchUsers()
         {
             try
             {
-                var dbRoles = await _roleRepository.GetAllAsync();
-                RolesForSelection.Clear();
-                foreach (var role in dbRoles)
+                var allUsers = await _userRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
                 {
-                    // Фильтрация ролей: показываем только активные
-                    // Также можно исключить системные роли, если текущий пользователь не админ
-                    if (role.IsActive && (!_authorizationService.IsCurrentUserSystemAdmin() || !role.IsSystem))
-                    {
-                        RolesForSelection.Add(role);
-                    }
+                    var filtered = allUsers.Where(u =>
+                        u.FullName.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        u.WindowsLogin.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        u.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+
+                    Users = new ObservableCollection<User>(filtered);
+                }
+                else
+                {
+                    Users = new ObservableCollection<User>(allUsers);
                 }
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки ролей для выбора: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private async Task LoadDepartmentsForSelectionAsync()
+        /// <summary>
+        /// Генерирует новый идентификатор в формате префикс + номер
+        /// </summary>
+        private string GenerateNewId(string prefix)
         {
             try
             {
-                var dbDepts = await _departmentRepository.GetAllAsync();
-                DepartmentsForSelection.Clear();
-                foreach (var dept in dbDepts)
+                var existingIds = Users.Select(u => u.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
                 {
-                    // Фильтрация отделов: показываем только активные и доступные пользователю
-                    if (dept.IsActive && _authorizationService.CanAccessDepartment(dept.Id))
-                    {
-                        DepartmentsForSelection.Add(dept);
-                    }
+                    return $"{prefix}000001";
                 }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
             }
-            catch (Exception ex)
+            catch
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки отделов для выбора: {ex.Message}", "Ошибка");
+                return $"{prefix}000001";
             }
         }
     }

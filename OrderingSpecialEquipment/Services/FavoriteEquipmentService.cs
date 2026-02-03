@@ -1,4 +1,5 @@
-﻿using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
 using System;
 using System.Collections.Generic;
@@ -8,101 +9,149 @@ using System.Threading.Tasks;
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Реализация IFavoriteEquipmentService.
+    /// Реализация сервиса избранной техники
+    /// Управляет добавлением/удалением техники в избранное для пользователя
+    /// Создает новый сервис скоуп для каждой операции
     /// </summary>
     public class FavoriteEquipmentService : IFavoriteEquipmentService
     {
-        private readonly IUserFavoriteRepository _userFavoriteRepo;
-        private readonly IEquipmentRepositoryBase _equipmentRepo;
+        private readonly IServiceProvider _serviceProvider;
 
-        public FavoriteEquipmentService(
-            IUserFavoriteRepository userFavoriteRepo,
-            IEquipmentRepositoryBase equipmentRepo)
+        /// <summary>
+        /// Конструктор с внедрением зависимости
+        /// </summary>
+        public FavoriteEquipmentService(IServiceProvider serviceProvider)
         {
-            _userFavoriteRepo = userFavoriteRepo;
-            _equipmentRepo = equipmentRepo;
+            _serviceProvider = serviceProvider;
         }
 
-        public async Task<List<Equipment>> GetFavoriteEquipmentAsync(string userId)
+        /// <summary>
+        /// Получает избранную технику для пользователя
+        /// </summary>
+        public async Task<IEnumerable<Equipment>> GetFavoriteEquipmentAsync(string userId)
         {
-            var favoriteRecords = await _userFavoriteRepo.GetByUserAsync(userId);
-            var equipmentList = new List<Equipment>();
-
-            foreach (var fav in favoriteRecords.OrderBy(f => f.SortOrder))
+            try
             {
-                var equipment = await _equipmentRepo.GetByIdStringAsync(fav.EquipmentId);
-                if (equipment != null && equipment.IsActive) // Фильтруем неактивную технику
+                using (var scope = _serviceProvider.CreateScope())
                 {
-                    equipmentList.Add(equipment);
+                    var userFavoriteRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<UserFavorite>>();
+                    var equipmentRepo = scope.ServiceProvider.GetRequiredService<IEquipmentRepository>();
+
+                    // Получаем записи избранного для пользователя
+                    var favorites = await userFavoriteRepo.FindAsync(f => f.UserId == userId);
+
+                    // Получаем технику для каждой записи
+                    var equipmentList = new List<Equipment>();
+                    foreach (var favorite in favorites)
+                    {
+                        var equipment = await equipmentRepo.GetByIdAsync(favorite.EquipmentId);
+                        if (equipment != null && equipment.IsActive)
+                        {
+                            equipmentList.Add(equipment);
+                        }
+                    }
+
+                    return equipmentList;
                 }
             }
-            return equipmentList;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при получении избранной техники: {ex.Message}");
+                return new List<Equipment>();
+            }
         }
 
-        public async Task<bool> AddToFavoritesAsync(string userId, string equipmentId, int sortOrder = 0)
+        /// <summary>
+        /// Добавляет технику в избранное
+        /// </summary>
+        public async Task AddToFavoriteAsync(string userId, string equipmentId)
         {
-            // Проверим, существует ли техника и активна ли она
-            var equipment = await _equipmentRepo.GetByIdStringAsync(equipmentId);
-            if (equipment == null || !equipment.IsActive)
-            {
-                Console.WriteLine("Техника не найдена или не активна.");
-                return false;
-            }
-
-            // Проверим, нет ли уже в избранном
-            var existing = await _userFavoriteRepo.GetByUserEquipmentAsync(userId, equipmentId);
-            if (existing != null)
-            {
-                Console.WriteLine("Техника уже в избранном.");
-                return false;
-            }
-
-            var newFavorite = new UserFavorite
-            {
-                UserId = userId,
-                EquipmentId = equipmentId,
-                SortOrder = sortOrder
-            };
-
             try
             {
-                await _userFavoriteRepo.AddAsync(newFavorite);
-                await _userFavoriteRepo.SaveChangesAsync();
-                return true;
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var userFavoriteRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<UserFavorite>>();
+                    var equipmentRepo = scope.ServiceProvider.GetRequiredService<IEquipmentRepository>();
+
+                    // Проверяем, существует ли уже такая запись
+                    var existing = await userFavoriteRepo.FindAsync(f =>
+                        f.UserId == userId && f.EquipmentId == equipmentId);
+
+                    if (!existing.Any())
+                    {
+                        // Получаем следующий порядок сортировки
+                        var allFavorites = await userFavoriteRepo.FindAsync(f => f.UserId == userId);
+                        int sortOrder = allFavorites.Any() ? allFavorites.Max(f => f.SortOrder) + 1 : 0;
+
+                        // Создаем новую запись
+                        var favorite = new UserFavorite
+                        {
+                            UserId = userId,
+                            EquipmentId = equipmentId,
+                            SortOrder = sortOrder
+                        };
+
+                        await userFavoriteRepo.AddAsync(favorite);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка добавления в избранное: {ex.Message}");
-                return false;
+                Console.WriteLine($"Ошибка при добавлении в избранное: {ex.Message}");
+                throw;
             }
         }
 
-        public async Task<bool> RemoveFromFavoritesAsync(string userId, string equipmentId)
+        /// <summary>
+        /// Удаляет технику из избранного
+        /// </summary>
+        public async Task RemoveFromFavoriteAsync(string userId, string equipmentId)
         {
-            var record = await _userFavoriteRepo.GetByUserEquipmentAsync(userId, equipmentId);
-            if (record == null)
-            {
-                Console.WriteLine("Техника не найдена в избранном.");
-                return false;
-            }
-
             try
             {
-                _userFavoriteRepo.Delete(record);
-                await _userFavoriteRepo.SaveChangesAsync();
-                return true;
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var userFavoriteRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<UserFavorite>>();
+
+                    // Находим запись
+                    var favorites = await userFavoriteRepo.FindAsync(f =>
+                        f.UserId == userId && f.EquipmentId == equipmentId);
+
+                    if (favorites.Any())
+                    {
+                        await userFavoriteRepo.RemoveAsync(favorites.First());
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка удаления из избранного: {ex.Message}");
-                return false;
+                Console.WriteLine($"Ошибка при удалении из избранного: {ex.Message}");
+                throw;
             }
         }
 
+        /// <summary>
+        /// Проверяет, находится ли техника в избранном
+        /// </summary>
         public async Task<bool> IsFavoriteAsync(string userId, string equipmentId)
         {
-            var record = await _userFavoriteRepo.GetByUserEquipmentAsync(userId, equipmentId);
-            return record != null;
+            try
+            {
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var userFavoriteRepo = scope.ServiceProvider.GetRequiredService<IGenericRepository<UserFavorite>>();
+
+                    var existing = await userFavoriteRepo.FindAsync(f =>
+                        f.UserId == userId && f.EquipmentId == equipmentId);
+
+                    return existing.Any();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при проверке избранного: {ex.Message}");
+                return false;
+            }
         }
     }
 }

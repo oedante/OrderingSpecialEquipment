@@ -1,116 +1,122 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Windows;
 
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Реализация IThemeService для управления темой оформления.
+    /// Реализация сервиса управления темами оформления
+    /// Загружает и применяет темы из файлов ресурсов
+    /// Сохраняет предпочтения в appsettings.json
     /// </summary>
     public class ThemeService : IThemeService
     {
         private readonly IConfiguration _configuration;
-        private readonly string _appSettingsPath; // Путь к appsettings.json
+        private readonly string _configFilePath;
 
-        public ThemeService(IConfiguration configuration) // Принимаем IConfiguration через DI
+        /// <summary>
+        /// Конструктор с внедрением зависимости
+        /// </summary>
+        public ThemeService(IConfiguration configuration)
         {
             _configuration = configuration;
-            // Получаем путь к appsettings.json. Host.CreateDefaultBuilder загружает его из базовой директории.
-            // Базовая директория для WPF приложения - это папка bin\x64\Debug\net10.0-windows\ или Release.
-            // Путь к файлу конфигурации обычно не доступен напрямую через IConfiguration.
-            // Найдём его вручную.
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            _appSettingsPath = Path.Combine(baseDir, "appsettings.json");
-            Console.WriteLine($"ThemeService: Ожидаемый путь к appsettings.json: {_appSettingsPath}");
+            _configFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
         }
 
+        /// <summary>
+        /// Применяет указанную тему
+        /// Загружает файл темы и добавляет его в ресурсы приложения
+        /// </summary>
         public void ApplyTheme(string themeName)
         {
             try
             {
-                // Найдём и удалим старую тему из MergedDictionaries
-                var dictsToRemove = new List<ResourceDictionary>();
-                foreach (var dict in Application.Current.Resources.MergedDictionaries)
+                // Определяем путь к файлу темы
+                string themeFile = themeName.ToLower() switch
                 {
-                    if (dict.Source?.OriginalString.Contains("LightTheme.xaml") == true ||
-                        dict.Source?.OriginalString.Contains("DarkTheme.xaml") == true)
+                    "dark" => "Themes/DarkTheme.xaml",
+                    _ => "Themes/LightTheme.xaml" // По умолчанию светлая тема
+                };
+
+                // Создаем новый ресурсный словарь для темы
+                ResourceDictionary themeDict = new ResourceDictionary
+                {
+                    Source = new Uri(themeFile, UriKind.Relative)
+                };
+
+                // Получаем текущие объединенные словари
+                var mergedDictionaries = Application.Current.Resources.MergedDictionaries;
+
+                // Удаляем старые темы (если есть)
+                for (int i = mergedDictionaries.Count - 1; i >= 0; i--)
+                {
+                    if (mergedDictionaries[i].Source?.ToString().Contains("Theme.xaml") == true)
                     {
-                        dictsToRemove.Add(dict);
+                        mergedDictionaries.RemoveAt(i);
                     }
                 }
-                foreach (var dict in dictsToRemove)
-                {
-                    Application.Current.Resources.MergedDictionaries.Remove(dict);
-                }
 
-                // Определим путь к новой теме
-                string themeResourcePath = "/Themes/";
-                switch (themeName.ToLower())
-                {
-                    case "light":
-                        themeResourcePath += "LightTheme.xaml";
-                        break;
-                    case "dark":
-                        themeResourcePath += "DarkTheme.xaml";
-                        break;
-                    default:
-                        themeResourcePath += "LightTheme.xaml"; // Значение по умолчанию
-                        Console.WriteLine($"ThemeService: Неизвестная тема '{themeName}', используется 'Light'.");
-                        break;
-                }
+                // Добавляем новую тему
+                mergedDictionaries.Add(themeDict);
 
-                // Загрузим и добавим новую тему
-                var newThemeDict = new ResourceDictionary { Source = new Uri(themeResourcePath, UriKind.Relative) };
-                Application.Current.Resources.MergedDictionaries.Add(newThemeDict);
-
-                Console.WriteLine($"ThemeService: Применена тема '{themeName}'.");
+                Console.WriteLine($"Тема '{themeName}' успешно применена");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ThemeService: Ошибка применения темы '{themeName}': {ex.Message}");
-                // Логировать через ILogger
+                Console.WriteLine($"Ошибка при применении темы {themeName}: {ex.Message}");
+                // Применяем светлую тему по умолчанию
+                ApplyTheme("Light");
             }
         }
 
+        /// <summary>
+        /// Загружает предпочтения темы из конфигурации
+        /// </summary>
         public string LoadThemePreference()
-        {
-            // Получаем сохранённую тему из IConfiguration (appsettings.json)
-            var savedTheme = _configuration["AppSettings:Theme"] ?? "Light"; // Значение по умолчанию
-            Console.WriteLine($"ThemeService: Загружена предпочтительная тема: {savedTheme}");
-            return savedTheme;
-        }
-
-        // В ThemeService.cs
-        public void SaveThemePreference(string themeName)
         {
             try
             {
-                var path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");
-                var jsonString = File.ReadAllText(path);
-                var jsonObj = JObject.Parse(jsonString);
-
-                jsonObj["AppSettings"]["Theme"] = themeName;
-
-                File.WriteAllText(path, jsonObj.ToString(Formatting.Indented));
-
-                Console.WriteLine($"ThemeService: Предпочтение темы '{themeName}' сохранено в appsettings.json.");
+                string? theme = _configuration["AppSettings:Theme"];
+                return string.IsNullOrEmpty(theme) ? "Light" : theme;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ThemeService: Ошибка сохранения темы в appsettings.json: {ex.Message}");
-                // Логировать через ILogger
+                Console.WriteLine($"Ошибка при загрузке темы: {ex.Message}");
+                return "Light"; // По умолчанию светлая тема
             }
         }
 
-        public string[] GetAvailableThemes()
+        /// <summary>
+        /// Сохраняет предпочтения темы в appsettings.json
+        /// </summary>
+        public async Task SaveThemePreferenceAsync(string themeName)
         {
-            return new[] { "Light", "Dark" };
+            try
+            {
+                // Читаем текущий файл конфигурации
+                string json = await File.ReadAllTextAsync(_configFilePath);
+                JObject config = JObject.Parse(json);
+
+                // Обновляем значение темы
+                if (config["AppSettings"] == null)
+                {
+                    config["AppSettings"] = new JObject();
+                }
+                config["AppSettings"]["Theme"] = themeName;
+
+                // Записываем обратно в файл
+                string updatedJson = JsonConvert.SerializeObject(config, Formatting.Indented);
+                await File.WriteAllTextAsync(_configFilePath, updatedJson);
+
+                Console.WriteLine($"Тема '{themeName}' сохранена в конфигурации");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при сохранении темы: {ex.Message}");
+            }
         }
     }
 }

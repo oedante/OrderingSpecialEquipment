@@ -1,0 +1,246 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.EditTransportProgramView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2006"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1400">
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToWidthConverter x:Key="BoolToWidth"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:NumberFormatConverter x:Key="NumberFormat"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Панель управления -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource PanelBackground}" 
+                BorderBrush="{DynamicResource BorderBrush}" 
+                BorderThickness="1" 
+                Padding="10" 
+                Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="Транспортная программа" 
+                           FontSize="16" 
+                           FontWeight="Bold" 
+                           Foreground="{DynamicResource TextForeground}"
+                           Margin="0,0,0,10"/>
+
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Обновить" 
+                            Command="{Binding LoadProgramCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Добавить" 
+                            Command="{Binding AddProgramCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Редактировать" 
+                            Command="{Binding EditProgramCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Удалить" 
+                            Command="{Binding DeleteProgramCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Сохранить" 
+                            Command="{Binding SaveProgramCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Отмена" 
+                            Command="{Binding CancelEditCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <Label Content="Год:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox ItemsSource="{Binding Years}" 
+                              SelectedItem="{Binding SelectedYear}"
+                              Style="{StaticResource ThemedComboBoxStyle}"
+                              Margin="0,0,10,0"/>
+
+                    <Label Content="Отдел:" Style="{StaticResource ThemedLabelStyle}"/>
+                    <ComboBox ItemsSource="{Binding Departments}" 
+                              SelectedItem="{Binding SelectedDepartment}"
+                              DisplayMemberPath="Name"
+                              SelectedValuePath="Id"
+                              Style="{StaticResource ThemedComboBoxStyle}"
+                              Margin="0,0,10,0"/>
+
+                    <Button Content="Поиск" 
+                            Command="{Binding SearchCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Основное содержимое -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Таблица транспортной программы -->
+            <Border Grid.Column="0" 
+                    Background="{DynamicResource PanelBackground}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    Padding="10">
+                <DataGrid ItemsSource="{Binding TransportProgram}"
+                          SelectedItem="{Binding SelectedProgram}"
+                          Style="{StaticResource ThemedDataGridStyle}"
+                          RowStyle="{StaticResource ThemedDataGridRowStyle}"
+                          CellStyle="{StaticResource ThemedDataGridCellStyle}"
+                          ColumnHeaderStyle="{StaticResource ThemedDataGridColumnHeaderStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Key}" Width="60"/>
+                        <DataGridTextColumn Header="Отдел" Binding="{Binding Department.Name}" Width="150"/>
+                        <DataGridTextColumn Header="Год" Binding="{Binding Year}" Width="60"/>
+                        <DataGridTextColumn Header="Техника" Binding="{Binding Equipment.Name}" Width="200"/>
+                        <DataGridTextColumn Header="Стоимость часа" Binding="{Binding HourlyCost, Converter={StaticResource CurrencyConverter}}" Width="100"/>
+                        <DataGridTextColumn Header="Янв" Binding="{Binding JanuaryHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Фев" Binding="{Binding FebruaryHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Мар" Binding="{Binding MarchHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Апр" Binding="{Binding AprilHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Май" Binding="{Binding MayHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Июн" Binding="{Binding JuneHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Июл" Binding="{Binding JulyHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Авг" Binding="{Binding AugustHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Сен" Binding="{Binding SeptemberHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Окт" Binding="{Binding OctoberHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Ноя" Binding="{Binding NovemberHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Дек" Binding="{Binding DecemberHours, Converter={StaticResource NumberFormat}}" Width="60"/>
+                        <DataGridTextColumn Header="Всего часов" Binding="{Binding TotalYearHours, Converter={StaticResource NumberFormat}}" Width="100"/>
+                        <DataGridTextColumn Header="Общая стоимость" Binding="{Binding TotalYearCost, Converter={StaticResource CurrencyConverter}}" Width="120"/>
+                        <DataGridTextColumn Header="Дата создания" Binding="{Binding CreatedAt}" Width="150"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+
+            <!-- Панель редактирования -->
+            <Border Grid.Column="1" 
+                    Width="450"
+                    Background="{DynamicResource PanelBackground}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    Padding="10"
+                    Visibility="{Binding IsEditMode, Converter={StaticResource BoolToVis}}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <TextBlock Text="Редактирование транспортной программы" 
+                                   FontSize="14" 
+                                   FontWeight="Bold" 
+                                   Foreground="{DynamicResource TextForeground}"
+                                   Margin="0,0,0,10"/>
+
+                        <Label Content="Отдел:" Style="{StaticResource ThemedLabelStyle}"/>
+                        <ComboBox ItemsSource="{Binding Departments}"
+                                  SelectedItem="{Binding SelectedProgram.Department}"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                        <Label Content="Год:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <ComboBox ItemsSource="{Binding Years}"
+                                  SelectedItem="{Binding SelectedProgram.Year}"
+                                  Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                        <Label Content="Техника:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <ComboBox ItemsSource="{Binding Equipments}"
+                                  SelectedItem="{Binding SelectedProgram.Equipment}"
+                                  DisplayMemberPath="Name"
+                                  Style="{StaticResource ThemedComboBoxStyle}"/>
+
+                        <Label Content="Стоимость часа:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                        <TextBox Text="{Binding SelectedProgram.HourlyCost, StringFormat=C}"
+                                 Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                        <TextBlock Text="Плановые часы по месяцам:" 
+                                   FontWeight="Bold"
+                                   Margin="0,10,0,5"/>
+
+                        <!-- Плановые часы по месяцам -->
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <Label Content="Январь:" Style="{StaticResource ThemedLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedProgram.JanuaryHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Февраль:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.FebruaryHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Март:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.MarchHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Апрель:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.AprilHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Май:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.MayHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Июнь:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.JuneHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <Label Content="Июль:" Style="{StaticResource ThemedLabelStyle}"/>
+                                <TextBox Text="{Binding SelectedProgram.JulyHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Август:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.AugustHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Сентябрь:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.SeptemberHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Октябрь:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.OctoberHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Ноябрь:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.NovemberHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+
+                                <Label Content="Декабрь:" Style="{StaticResource ThemedLabelStyle}" Margin="0,10,0,0"/>
+                                <TextBox Text="{Binding SelectedProgram.DecemberHours, Converter={StaticResource NumberFormat}}"
+                                         Style="{StaticResource ThemedTextBoxStyle}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                            <Button Content="Сохранить" 
+                                    Command="{Binding SaveProgramCommand}"
+                                    Style="{StaticResource ThemedButtonStyle}"
+                                    Width="100"
+                                    Margin="0,0,10,0"/>
+                            <Button Content="Отмена" 
+                                    Command="{Binding CancelEditCommand}"
+                                    Style="{StaticResource ThemedButtonStyle}"
+                                    Width="100"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

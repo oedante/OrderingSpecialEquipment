@@ -1,0 +1,313 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Views.MainContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2006"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="600" d:DesignWidth="1400">
+
+    <UserControl.Resources>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BoolToWidthConverter x:Key="BoolToWidth"/>
+        <converters:BoolToYesNoConverter x:Key="BoolToYesNo"/>
+        <converters:ShiftConverter x:Key="ShiftConverter"/>
+        <converters:DateTimeFormatConverter x:Key="DateTimeFormat"/>
+        <converters:NumberFormatConverter x:Key="NumberFormat"/>
+        <converters:CurrencyConverter x:Key="CurrencyConverter"/>
+    </UserControl.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Заголовок и панель управления -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource PanelBackground}" 
+                BorderBrush="{DynamicResource BorderBrush}" 
+                BorderThickness="1" 
+                Padding="10" 
+                Margin="0,0,0,10">
+            <StackPanel>
+                <TextBlock Text="{Binding HeaderText}" 
+                           FontSize="16" 
+                           FontWeight="Bold" 
+                           Foreground="{DynamicResource TextForeground}"/>
+
+                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <Calendar SelectedDate="{Binding SelectedDate}" 
+                              Margin="0,0,20,0"
+                              DisplayMode="Month"/>
+
+                    <Button Content="Сегодня" 
+                            Command="{Binding SetTodayDateCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,10,0"/>
+                    <Button Content="Обновить" 
+                            Command="{Binding RefreshShiftRequestsCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,10,0"/>
+                    <Button Content="Панель техники" 
+                            Command="{Binding ToggleEquipmentPanelCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Background="{Binding IsEquipmentPanelVisible, Converter={StaticResource InverseBooleanConverter}, ConverterParameter={StaticResource ButtonBackground}, FallbackValue={StaticResource ButtonBackground}}"
+                            Margin="0,0,10,0"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- Основное содержимое -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="{Binding IsEquipmentPanelVisible, Converter={StaticResource BoolToWidth}, ConverterParameter=400}"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Таблица заявок -->
+            <Border Grid.Column="0" 
+                    Background="{DynamicResource PanelBackground}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" 
+                               Text="Заявки на технику" 
+                               FontWeight="Bold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource TextForeground}"
+                               Margin="0,0,0,10"/>
+
+                    <DataGrid Grid.Row="1" 
+                              ItemsSource="{Binding ShiftRequestsToShow}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              Background="{DynamicResource DataGridBackground}"
+                              Foreground="{DynamicResource TextForeground}"
+                              RowBackground="{DynamicResource DataGridRowBackground}"
+                              AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBackground}"
+                              BorderBrush="{DynamicResource BorderBrush}"
+                              Style="{StaticResource ThemedDataGridStyle}"
+                              RowStyle="{StaticResource ThemedDataGridRowStyle}"
+                              CellStyle="{StaticResource ThemedDataGridCellStyle}"
+                              ColumnHeaderStyle="{StaticResource ThemedDataGridColumnHeaderStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat=d}" Width="Auto"/>
+                            <DataGridTextColumn Header="Смена" Binding="{Binding Shift, Converter={StaticResource ShiftConverter}}" Width="Auto"/>
+                            <DataGridTextColumn Header="Отдел" Binding="{Binding Department.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Склад" Binding="{Binding Warehouse.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Территория" Binding="{Binding Area.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Техника" Binding="{Binding Equipment.Name}" Width="2*"/>
+                            <DataGridTextColumn Header="Госномер" Binding="{Binding LicensePlate.PlateNumber}" Width="*"/>
+                            <DataGridTextColumn Header="Организация" Binding="{Binding LessorOrganization.Name}" Width="2*"/>
+                            <DataGridTextColumn Header="Марка" Binding="{Binding LicensePlate.Brand}" Width="*"/>
+                            <DataGridTextColumn Header="Кол-во" Binding="{Binding RequestedCount}" Width="Auto"/>
+                            <DataGridTextColumn Header="Часы" Binding="{Binding WorkedHours, Converter={StaticResource NumberFormat}}" Width="Auto"/>
+                            <DataGridCheckBoxColumn Header="Отработала" Binding="{Binding IsWorked}" Width="Auto"/>
+                            <DataGridTextColumn Header="Стоимость" Binding="{Binding ActualCost, Converter={StaticResource CurrencyConverter}}" Width="Auto"/>
+                            <DataGridTextColumn Header="Комментарий" Binding="{Binding Comment}" Width="3*"/>
+                            <DataGridTextColumn Header="Пользователь" Binding="{Binding CreatedByUser.FullName}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Панель техники -->
+            <Grid Grid.Column="1" 
+                  Visibility="{Binding IsEquipmentPanelVisible, Converter={StaticResource BoolToVis}}"
+                  Style="{StaticResource AnimatedVisibilityStyle}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Заголовок панели -->
+                <Border Grid.Row="0" 
+                        Background="{DynamicResource HeaderBackground}" 
+                        Padding="10">
+                    <TextBlock Text="Доступная техника" 
+                               FontWeight="Bold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource TextForeground}"/>
+                </Border>
+
+                <!-- Кнопки управления -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10">
+                    <Button Content="Обновить" 
+                            Command="{Binding RefreshAvailableEquipmentCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"
+                            Margin="0,0,5,0"/>
+                    <Button Content="Избранное" 
+                            Command="{Binding RefreshFavoriteEquipmentCommand}"
+                            Style="{StaticResource ThemedButtonStyle}"/>
+                </StackPanel>
+
+                <!-- Список доступной техники -->
+                <Border Grid.Row="2" 
+                        Background="{DynamicResource PanelBackground}" 
+                        BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="1" 
+                        Margin="10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" 
+                                   Text="Все техника" 
+                                   FontWeight="Bold" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextForeground}"
+                                   Margin="10"/>
+
+                        <ListBox Grid.Row="1"
+                                 ItemsSource="{Binding AvailableEquipment}"
+                                 SelectedItem="{Binding SelectedEquipment}"
+                                 Background="{DynamicResource PanelBackground}"
+                                 Foreground="{DynamicResource TextForeground}"
+                                 BorderBrush="{DynamicResource BorderBrush}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="5">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Button Grid.Column="0"
+                                                Content="★" 
+                                                Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                Foreground="Gold"
+                                                FontSize="16"
+                                                ToolTip="Добавить/удалить из избранного"/>
+
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding Name}" 
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+
+                                        <Button Grid.Column="2"
+                                                Content="Ночь" 
+                                                Command="{Binding DataContext.AddRequestFromEquipmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Tag="0"
+                                                Style="{StaticResource ThemedButtonStyle}"
+                                                Width="60"
+                                                Height="25"
+                                                Margin="5,0,5,0"/>
+
+                                        <Button Grid.Column="3"
+                                                Content="День" 
+                                                Command="{Binding DataContext.AddRequestFromEquipmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Tag="1"
+                                                Style="{StaticResource ThemedButtonStyle}"
+                                                Width="60"
+                                                Height="25"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <!-- Заголовок избранного -->
+                <Border Grid.Row="3" 
+                        Background="{DynamicResource HoverBackground}"
+                        CornerRadius="6"
+                        Margin="10,8"
+                        Padding="12">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="★" 
+                                   FontSize="16"
+                                   Foreground="{DynamicResource AccentColor}"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock Text="Избранное" 
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Список избранной техники -->
+                <Border Grid.Row="4" 
+                        Background="{DynamicResource PanelBackground}" 
+                        BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="1" 
+                        Margin="10">
+                    <ListBox ItemsSource="{Binding FavoriteEquipment}"
+                             SelectedItem="{Binding SelectedFavoriteEquipment}"
+                             Background="{DynamicResource PanelBackground}"
+                             Foreground="{DynamicResource TextForeground}"
+                             BorderBrush="{DynamicResource BorderBrush}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0"
+                                               Text="{Binding Name}" 
+                                               VerticalAlignment="Center"
+                                               TextTrimming="CharacterEllipsis"/>
+
+                                    <Button Grid.Column="1"
+                                            Content="Ночь" 
+                                            Command="{Binding DataContext.AddRequestFromEquipmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Tag="0"
+                                            Style="{StaticResource ThemedButtonStyle}"
+                                            Width="60"
+                                            Height="25"
+                                            Margin="5,0,5,0"/>
+
+                                    <Button Grid.Column="2"
+                                            Content="День" 
+                                            Command="{Binding DataContext.AddRequestFromEquipmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Tag="1"
+                                            Style="{StaticResource ThemedButtonStyle}"
+                                            Width="60"
+                                            Height="25"
+                                            Margin="0,0,5,0"/>
+
+                                    <Button Grid.Column="3"
+                                            Content="×" 
+                                            Command="{Binding DataContext.ToggleFavoriteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Style="{StaticResource ThemedButtonStyle}"
+                                            Width="30"
+                                            Height="25"
+                                            ToolTip="Удалить из избранного"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

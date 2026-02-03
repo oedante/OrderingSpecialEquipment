@@ -1,73 +1,59 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования государственных номеров техники.
+    /// ViewModel для редактирования госномеров
     /// </summary>
-    public class EditLicensePlatesViewModel : ViewModelBase
+    public class EditLicensePlatesViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
         private readonly ILicensePlateRepository _licensePlateRepository;
-        private readonly IEquipmentRepositoryBase _equipmentRepository;
+        private readonly IEquipmentRepository _equipmentRepository;
         private readonly ILessorOrganizationRepository _lessorOrgRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
 
         private ObservableCollection<LicensePlate> _licensePlates;
         private LicensePlate? _selectedLicensePlate;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editPlateNumber = string.Empty;
-        private string _editEquipmentId = string.Empty; // Привязка к технике
-        private string _editLessorOrganizationId = string.Empty; // Привязка к арендодателю
-        private string? _editBrand;
-        private int? _editYear;
-        private string? _editCapacity;
-        private string? _editVIN;
-        private bool _editIsActive = true;
+        private bool _isEditMode;
+        private string _searchText;
+        private ObservableCollection<Equipment> _equipments;
+        private ObservableCollection<LessorOrganization> _lessorOrganizations;
 
-        // Для выбора в ComboBox
-        private ObservableCollection<Equipment> _equipmentsForSelection;
-        private ObservableCollection<LessorOrganization> _lessorOrgsForSelection;
-
-        public EditLicensePlatesViewModel(
-            ILicensePlateRepository licensePlateRepository,
-            IEquipmentRepositoryBase equipmentRepository,
-            ILessorOrganizationRepository lessorOrgRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditLicensePlatesViewModel(IServiceProvider serviceProvider)
         {
-            _licensePlateRepository = licensePlateRepository;
-            _equipmentRepository = equipmentRepository;
-            _lessorOrgRepository = lessorOrgRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _licensePlateRepository = serviceProvider.GetRequiredService<ILicensePlateRepository>();
+            _equipmentRepository = serviceProvider.GetRequiredService<IEquipmentRepository>();
+            _lessorOrgRepository = serviceProvider.GetRequiredService<ILessorOrganizationRepository>();
 
-            _licensePlates = new ObservableCollection<LicensePlate>();
-            _equipmentsForSelection = new ObservableCollection<Equipment>();
-            _lessorOrgsForSelection = new ObservableCollection<LessorOrganization>();
+            LicensePlates = new ObservableCollection<LicensePlate>();
+            Equipments = new ObservableCollection<Equipment>();
+            LessorOrganizations = new ObservableCollection<LessorOrganization>();
+            SearchText = string.Empty;
 
-            LoadLicensePlatesCommand = new RelayCommand(async _ => await LoadLicensePlatesAsync(), _ => _authorizationService.CanReadTable("LicensePlates"));
-            SaveLicensePlateCommand = new RelayCommand(async _ => await SaveLicensePlateAsync(), _ => CanSaveLicensePlate());
-            DeleteLicensePlateCommand = new RelayCommand(async _ => await DeleteLicensePlateAsync(), _ => CanDeleteLicensePlate());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            // Команды
+            LoadLicensePlatesCommand = new RelayCommand(LoadLicensePlates);
+            AddLicensePlateCommand = new RelayCommand(AddLicensePlate);
+            EditLicensePlateCommand = new RelayCommand(EditLicensePlate, CanEditLicensePlate);
+            DeleteLicensePlateCommand = new RelayCommand(DeleteLicensePlate, CanDeleteLicensePlate);
+            SaveLicensePlateCommand = new RelayCommand(SaveLicensePlate, CanSaveLicensePlate);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchLicensePlates);
 
-            // Загрузка зависимых данных
-            Task.Run(async () =>
-            {
-                await LoadEquipmentsForSelectionAsync();
-                await LoadLessorOrgsForSelectionAsync();
-            });
-
-            Task.Run(async () => await LoadLicensePlatesAsync());
+            // Загрузка данных
+            _ = LoadDataAsync();
         }
+
+        // ========== Свойства ==========
 
         public ObservableCollection<LicensePlate> LicensePlates
         {
@@ -78,311 +64,294 @@ namespace OrderingSpecialEquipment.ViewModels
         public LicensePlate? SelectedLicensePlate
         {
             get => _selectedLicensePlate;
-            set
+            set => SetProperty(ref _selectedLicensePlate, value);
+        }
+
+        public bool IsEditMode
+        {
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
+        }
+
+        public string SearchText
+        {
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
+        }
+
+        public ObservableCollection<Equipment> Equipments
+        {
+            get => _equipments;
+            set => SetProperty(ref _equipments, value);
+        }
+
+        public ObservableCollection<LessorOrganization> LessorOrganizations
+        {
+            get => _lessorOrganizations;
+            set => SetProperty(ref _lessorOrganizations, value);
+        }
+
+        // ========== Команды ==========
+
+        public RelayCommand LoadLicensePlatesCommand { get; }
+        public RelayCommand AddLicensePlateCommand { get; }
+        public RelayCommand EditLicensePlateCommand { get; }
+        public RelayCommand DeleteLicensePlateCommand { get; }
+        public RelayCommand SaveLicensePlateCommand { get; }
+        public RelayCommand CancelEditCommand { get; }
+        public RelayCommand SearchCommand { get; }
+
+        // ========== Методы ==========
+
+        /// <summary>
+        /// Загружает все данные (госномера, техника, организации)
+        /// </summary>
+        private async Task LoadDataAsync()
+        {
+            try
             {
-                if (SetProperty(ref _selectedLicensePlate, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editPlateNumber = value.PlateNumber;
-                        _editEquipmentId = value.EquipmentId;
-                        _editLessorOrganizationId = value.LessorOrganizationId;
-                        _editBrand = value.Brand;
-                        _editYear = value.Year;
-                        _editCapacity = value.Capacity;
-                        _editVIN = value.VIN;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditPlateNumber));
-                    OnPropertyChanged(nameof(EditEquipmentId));
-                    OnPropertyChanged(nameof(EditLessorOrganizationId));
-                    OnPropertyChanged(nameof(EditBrand));
-                    OnPropertyChanged(nameof(EditYear));
-                    OnPropertyChanged(nameof(EditCapacity));
-                    OnPropertyChanged(nameof(EditVIN));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    ((RelayCommand)SaveLicensePlateCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteLicensePlateCommand).RaiseCanExecuteChanged();
-                }
+                await LoadLicensePlatesAsync();
+                await LoadEquipmentsAsync();
+                await LoadLessorOrganizationsAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки данных: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        public string EditId
-        {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    ((RelayCommand)SaveLicensePlateCommand).RaiseCanExecuteChanged();
-                }
-            }
-        }
-
-        public string EditPlateNumber
-        {
-            get => _editPlateNumber;
-            set => SetProperty(ref _editPlateNumber, value);
-        }
-
-        public string EditEquipmentId
-        {
-            get => _editEquipmentId;
-            set => SetProperty(ref _editEquipmentId, value);
-        }
-
-        public string EditLessorOrganizationId
-        {
-            get => _editLessorOrganizationId;
-            set => SetProperty(ref _editLessorOrganizationId, value);
-        }
-
-        public string? EditBrand
-        {
-            get => _editBrand;
-            set => SetProperty(ref _editBrand, value);
-        }
-
-        public int? EditYear
-        {
-            get => _editYear;
-            set => SetProperty(ref _editYear, value);
-        }
-
-        public string? EditCapacity
-        {
-            get => _editCapacity;
-            set => SetProperty(ref _editCapacity, value);
-        }
-
-        public string? EditVIN
-        {
-            get => _editVIN;
-            set => SetProperty(ref _editVIN, value);
-        }
-
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
-
-        // --- Свойства для выбора ---
-        public ObservableCollection<Equipment> EquipmentsForSelection
-        {
-            get => _equipmentsForSelection;
-            set => SetProperty(ref _equipmentsForSelection, value);
-        }
-
-        public ObservableCollection<LessorOrganization> LessorOrgsForSelection
-        {
-            get => _lessorOrgsForSelection;
-            set => SetProperty(ref _lessorOrgsForSelection, value);
-        }
-
-        public ICommand LoadLicensePlatesCommand { get; }
-        public ICommand SaveLicensePlateCommand { get; }
-        public ICommand DeleteLicensePlateCommand { get; }
-        public ICommand CancelEditCommand { get; }
-
+        /// <summary>
+        /// Загружает госномера
+        /// </summary>
         private async Task LoadLicensePlatesAsync()
         {
             try
             {
-                var dbPlates = await _licensePlateRepository.GetAllAsync();
-                LicensePlates.Clear();
-                foreach (var plate in dbPlates)
-                {
-                    // Фильтруем неактивные при отображении в основном списке, если нужно
-                    // В данном случае, оставим все, чтобы пользователь мог редактировать IsActive
-                    LicensePlates.Add(plate);
-                }
+                var plates = await _licensePlateRepository.GetAllAsync();
+                LicensePlates = new ObservableCollection<LicensePlate>(plates);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки госномеров: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки госномеров: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveLicensePlate()
+        private void LoadLicensePlates()
         {
-            return _authorizationService.CanWriteTable("LicensePlates") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditPlateNumber) &&
-                   !string.IsNullOrWhiteSpace(EditEquipmentId) &&
-                   !string.IsNullOrWhiteSpace(EditLessorOrganizationId) &&
-                   (!_isEditing || SelectedLicensePlate?.Id == EditId);
+            _ = LoadLicensePlatesAsync();
         }
 
-        private async Task SaveLicensePlateAsync()
+        /// <summary>
+        /// Загружает технику для выпадающего списка
+        /// </summary>
+        private async Task LoadEquipmentsAsync()
         {
-            if (!CanSaveLicensePlate()) return;
-
             try
             {
-                LicensePlate plate;
-                bool isNew = !_isEditing;
-
-                if (isNew)
-                {
-                    if (await _licensePlateRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Госномер с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    plate = new LicensePlate
-                    {
-                        Id = EditId,
-                        PlateNumber = EditPlateNumber,
-                        EquipmentId = EditEquipmentId,
-                        LessorOrganizationId = EditLessorOrganizationId,
-                        Brand = EditBrand,
-                        Year = EditYear,
-                        Capacity = EditCapacity,
-                        VIN = EditVIN,
-                        IsActive = EditIsActive
-                    };
-                    await _licensePlateRepository.AddAsync(plate);
-                }
-                else
-                {
-                    plate = SelectedLicensePlate!;
-                    plate.PlateNumber = EditPlateNumber;
-                    plate.EquipmentId = EditEquipmentId;
-                    plate.LessorOrganizationId = EditLessorOrganizationId;
-                    plate.Brand = EditBrand;
-                    plate.Year = EditYear;
-                    plate.Capacity = EditCapacity;
-                    plate.VIN = EditVIN;
-                    plate.IsActive = EditIsActive;
-                    _licensePlateRepository.Update(plate);
-                }
-
-                await _licensePlateRepository.SaveChangesAsync();
-
-                if (isNew)
-                {
-                    // Добавляем в список, даже если IsActive = false, для видимости
-                    LicensePlates.Add(plate);
-                }
-                else
-                {
-                    await LoadLicensePlatesAsync(); // Обновление списка
-                }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Госномер добавлен." : "Госномер обновлен.", "Успех");
+                var equipments = await _equipmentRepository.GetActiveEquipmentAsync();
+                Equipments = new ObservableCollection<Equipment>(equipments);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка сохранения госномера: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки техники: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Загружает организации для выпадающего списка
+        /// </summary>
+        private async Task LoadLessorOrganizationsAsync()
+        {
+            try
+            {
+                var orgs = await _lessorOrgRepository.GetActiveLessorOrganizationsAsync();
+                LessorOrganizations = new ObservableCollection<LessorOrganization>(orgs);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки организаций: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Добавляет новый госномер
+        /// </summary>
+        private void AddLicensePlate()
+        {
+            SelectedLicensePlate = new LicensePlate
+            {
+                Id = GenerateNewId("LP"),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
+
+        /// <summary>
+        /// Редактирует выбранный госномер
+        /// </summary>
+        private void EditLicensePlate()
+        {
+            if (SelectedLicensePlate != null)
+            {
+                IsEditMode = true;
+            }
+        }
+
+        private bool CanEditLicensePlate()
+        {
+            return SelectedLicensePlate != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Удаляет выбранный госномер
+        /// </summary>
+        private async void DeleteLicensePlate()
+        {
+            if (SelectedLicensePlate == null)
+                return;
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить госномер '{SelectedLicensePlate.PlateNumber}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _licensePlateRepository.RemoveAsync(SelectedLicensePlate);
+                    await LoadLicensePlatesAsync();
+                    SelectedLicensePlate = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления госномера: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
         private bool CanDeleteLicensePlate()
         {
-            return _authorizationService.CanWriteTable("LicensePlates") &&
-                   SelectedLicensePlate != null && SelectedLicensePlate.Key != 0;
+            return SelectedLicensePlate != null && !IsEditMode;
         }
 
-        private async Task DeleteLicensePlateAsync()
+        /// <summary>
+        /// Сохраняет госномер
+        /// </summary>
+        private async void SaveLicensePlate()
         {
-            if (!CanDeleteLicensePlate() || SelectedLicensePlate == null) return;
+            if (SelectedLicensePlate == null)
+                return;
 
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить госномер '{SelectedLicensePlate.PlateNumber}'?")) return;
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedLicensePlate.PlateNumber))
+            {
+                MessageBox.Show("Введите госномер", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedLicensePlate.EquipmentId))
+            {
+                MessageBox.Show("Выберите технику", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SelectedLicensePlate.LessorOrganizationId))
+            {
+                MessageBox.Show("Выберите организацию-арендодателя", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                _licensePlateRepository.Delete(SelectedLicensePlate);
-                await _licensePlateRepository.SaveChangesAsync();
-                LicensePlates.Remove(SelectedLicensePlate);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Госномер удален.", "Успех");
+                if (LicensePlates.Any(lp => lp.Id != SelectedLicensePlate.Id && lp.PlateNumber == SelectedLicensePlate.PlateNumber))
+                {
+                    MessageBox.Show("Госномер с таким номером уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedLicensePlate.Key == 0)
+                {
+                    // Новый госномер - ID будет сгенерирован триггером в БД
+                    SelectedLicensePlate.Id = null; // Устанавливаем в null для генерации триггером
+                    await _licensePlateRepository.AddAsync(SelectedLicensePlate);
+                }
+                else
+                {
+                    // Обновление существующего
+                    _licensePlateRepository.Update(SelectedLicensePlate);
+                }
+
+                await LoadLicensePlatesAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка удаления госномера: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения госномера: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private bool CanSaveLicensePlate()
+        {
+            return SelectedLicensePlate != null && IsEditMode;
+        }
+
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
         private void CancelEdit()
         {
-            ResetEditFields();
-        }
-
-        private void ResetEditFields()
-        {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editPlateNumber = string.Empty;
-            _editEquipmentId = string.Empty; // Сбросить на значение по умолчанию или оставить как есть?
-            _editLessorOrganizationId = string.Empty; // Сбросить на значение по умолчанию или оставить как есть?
-            _editBrand = null;
-            _editYear = null;
-            _editCapacity = null;
-            _editVIN = null;
-            _editIsActive = true;
+            IsEditMode = false;
             SelectedLicensePlate = null;
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditPlateNumber));
-            OnPropertyChanged(nameof(EditEquipmentId));
-            OnPropertyChanged(nameof(EditLessorOrganizationId));
-            OnPropertyChanged(nameof(EditBrand));
-            OnPropertyChanged(nameof(EditYear));
-            OnPropertyChanged(nameof(EditCapacity));
-            OnPropertyChanged(nameof(EditVIN));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveLicensePlateCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteLicensePlateCommand).RaiseCanExecuteChanged();
         }
 
-        // --- Вспомогательные методы ---
-        private async Task LoadEquipmentsForSelectionAsync()
+        /// <summary>
+        /// Поиск госномеров с защитой от SQL инъекций
+        /// </summary>
+        private async void SearchLicensePlates()
         {
             try
             {
-                var dbEq = await _equipmentRepository.GetAllAsync();
-                EquipmentsForSelection.Clear();
-                foreach (var eq in dbEq)
+                if (string.IsNullOrWhiteSpace(SearchText))
                 {
-                    // Фильтрация по IsActive
-                    if (eq.IsActive) // <-- Добавлено
-                    {
-                        EquipmentsForSelection.Add(eq);
-                    }
+                    await LoadLicensePlatesAsync();
+                    return;
                 }
+
+                var results = await _licensePlateRepository.SearchByPlateNumberAsync(SearchText);
+                LicensePlates = new ObservableCollection<LicensePlate>(results);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки техники для выбора: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private async Task LoadLessorOrgsForSelectionAsync()
+        /// <summary>
+        /// Генерирует новый идентификатор в формате префикс + номер
+        /// </summary>
+        private string GenerateNewId(string prefix)
         {
             try
             {
-                var dbOrgs = await _lessorOrgRepository.GetAllAsync();
-                LessorOrgsForSelection.Clear();
-                foreach (var org in dbOrgs)
+                var existingIds = LicensePlates.Select(lp => lp.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
                 {
-                    // Фильтрация по IsActive
-                    if (org.IsActive) // <-- Добавлено
-                    {
-                        LessorOrgsForSelection.Add(org);
-                    }
+                    return $"{prefix}000001";
                 }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
             }
-            catch (Exception ex)
+            catch
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки арендодателей для выбора: {ex.Message}", "Ошибка");
+                return $"{prefix}000001";
             }
         }
     }

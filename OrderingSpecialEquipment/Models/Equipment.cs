@@ -1,102 +1,97 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel;
 
 namespace OrderingSpecialEquipment.Models
 {
     /// <summary>
-    /// Модель для таблицы техники.
+    /// Модель специальной техники и оборудования
     /// </summary>
     [Table("Equipments")]
     public class Equipment
     {
+        /// <summary>
+        /// Внутренний числовой ключ (для связей)
+        /// </summary>
         [Key]
+        [Column("Key")]
+        [Display(Name = "Ключ", Description = "Внутренний числовой идентификатор записи")]
+        public int Key { get; set; }
+
+        /// <summary>
+        /// Уникальный идентификатор техники (формат EQ000001)
+        /// Генерируется базой данных автоматически
+        /// </summary>
         [Column("Id")]
         [StringLength(10)]
-        [Display(Name = "ID техники", Description = "Уникальный идентификатор техники")]
+        [Required]
+        [Display(Name = "ID техники", Description = "Уникальный идентификатор техники в формате EQ000001")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public string Id { get; set; } = string.Empty;
 
-        [Column("Key")]
-        [Display(Name = "Ключ", Description = "Суррогатный ключ (SERIAL)")]
-        public int Key { get; set; } // SERIAL
-
+        /// <summary>
+        /// Наименование техники
+        /// </summary>
         [Column("Name")]
         [StringLength(200)]
-        [Display(Name = "Название", Description = "Название техники")]
+        [Required]
+        [Display(Name = "Наименование", Description = "Полное наименование техники или оборудования")]
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Категория техники (Спецтехника, Рабочий, Оборудование)
+        /// </summary>
         [Column("Category")]
         [StringLength(50)]
-        [Display(Name = "Категория", Description = "Категория техники (например, Спецтехника, Рабочий)")]
+        [Display(Name = "Категория", Description = "Категория техники для группировки")]
         public string? Category { get; set; }
 
+        /// <summary>
+        /// Возможность заказа нескольких единиц в одной заявке
+        /// </summary>
         [Column("CanOrderMultiple")]
-        [Display(Name = "Можно заказать много", Description = "Можно ли заказать больше одной единицы в одной строке")]
+        [Display(Name = "Можно заказать несколько", Description = "Разрешено ли указывать количество >1 в одной заявке (для рабочих - да, для спецтехники - нет)")]
+        [DefaultValue(false)]
         public bool CanOrderMultiple { get; set; } = false;
 
+        /// <summary>
+        /// Стоимость часа работы
+        /// </summary>
         [Column("HourlyCost")]
-        [Display(Name = "Стоимость часа", Description = "Стоимость часа работы в рублях")]
+        [Display(Name = "Стоимость часа", Description = "Стоимость одного часа работы техники в рублях")]
+        [DataType(DataType.Currency)]
         public decimal? HourlyCost { get; set; }
 
+        /// <summary>
+        /// Требуется ли оператор для работы
+        /// </summary>
         [Column("RequiresOperator")]
-        [Display(Name = "Требует оператора", Description = "Требуется ли оператор для управления")]
+        [Display(Name = "Требует оператора", Description = "Требуется ли квалифицированный оператор для управления техникой")]
+        [DefaultValue(false)]
         public bool RequiresOperator { get; set; } = false;
 
+        /// <summary>
+        /// Дополнительное описание
+        /// </summary>
         [Column("Description")]
         [StringLength(500)]
-        [Display(Name = "Описание", Description = "Дополнительное описание техники")]
+        [Display(Name = "Описание", Description = "Дополнительная информация о технике")]
         public string? Description { get; set; }
 
+        /// <summary>
+        /// Флаг активности техники
+        /// </summary>
         [Column("IsActive")]
-        [Display(Name = "Активна", Description = "Активна ли запись техники")]
+        [Display(Name = "Активна", Description = "Признак активности техники (может использоваться в заявках)")]
+        [DefaultValue(true)]
         public bool IsActive { get; set; } = true;
 
+        /// <summary>
+        /// Дата создания записи
+        /// </summary>
         [Column("CreatedAt")]
         [Display(Name = "Дата создания", Description = "Дата и время создания записи")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-
-        // --- НАВИГАЦИОННЫЕ СВОЙСТВА ---
-        // Связь: Один ко многим (Equipment -> EquipmentDependency) как основная техника
-        /// <summary>
-        /// Зависимости, где эта техника является основной.
-        /// </summary>
-        // УБРАНО: [ForeignKey("MainEquipmentId")] - EF Core сам поймёт связь по названию свойства MainEquipmentId в EquipmentDependency
-        public virtual ICollection<EquipmentDependency> EquipmentDependenciesAsMain { get; set; } = new List<EquipmentDependency>();
-
-        // Связь: Один ко многим (Equipment -> EquipmentDependency) как зависимая техника
-        /// <summary>
-        /// Зависимости, где эта техника является зависимой.
-        /// </summary>
-        // УБРАНО: [ForeignKey("DependentEquipmentId")] - EF Core сам поймёт связь по названию свойства DependentEquipmentId в EquipmentDependency
-        public virtual ICollection<EquipmentDependency> EquipmentDependenciesAsDependent { get; set; } = new List<EquipmentDependency>();
-
-        // Связь: Один ко многим (Equipment -> LicensePlate)
-        /// <summary>
-        /// Госномера, связанные с этой техникой.
-        /// </summary>
-        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в LicensePlate
-        public virtual ICollection<LicensePlate> LicensePlates { get; set; } = new List<LicensePlate>();
-
-        // Связь: Один ко многим (Equipment -> ShiftRequest)
-        /// <summary>
-        /// Заявки, связанные с этой техникой.
-        /// </summary>
-        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в ShiftRequest
-        public virtual ICollection<ShiftRequest> ShiftRequests { get; set; } = new List<ShiftRequest>();
-
-        // Связь: Один ко многим (Equipment -> TransportProgram)
-        /// <summary>
-        /// Записи транспортной программы для этой техники.
-        /// </summary>
-        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в TransportProgram
-        public virtual ICollection<TransportProgram> TransportPrograms { get; set; } = new List<TransportProgram>();
-
-        // Связь: Один ко многим (Equipment -> UserFavorite)
-        /// <summary>
-        /// Избранные пользователей для этой техники.
-        /// </summary>
-        // УБРАНО: [ForeignKey("EquipmentId")] - EF Core сам поймёт связь по названию свойства EquipmentId в UserFavorite
-        public virtual ICollection<UserFavorite> UserFavorites { get; set; } = new List<UserFavorite>();
     }
 }

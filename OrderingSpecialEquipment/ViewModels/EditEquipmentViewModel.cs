@@ -1,52 +1,53 @@
-﻿using OrderingSpecialEquipment.Commands;
-using OrderingSpecialEquipment.Data.Repositories;
+﻿using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
-using OrderingSpecialEquipment.Services;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
     /// <summary>
-    /// ViewModel для окна редактирования техники.
+    /// ViewModel для редактирования техники
     /// </summary>
-    public class EditEquipmentViewModel : ViewModelBase
+    public class EditEquipmentsViewModel : BaseViewModel
     {
-        private readonly IEquipmentRepositoryBase _equipmentRepository;
-        private readonly IMessageService _messageService;
-        private readonly IAuthorizationService _authorizationService;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IEquipmentRepository _equipmentRepository;
 
         private ObservableCollection<Equipment> _equipments;
         private Equipment? _selectedEquipment;
-        private bool _isEditing = false;
-        private string _editId = string.Empty;
-        private string _editName = string.Empty;
-        private string? _editCategory;
-        private bool _editCanOrderMultiple = false;
-        private decimal? _editHourlyCost;
-        private bool _editRequiresOperator = false;
-        private string? _editDescription;
-        private bool _editIsActive = true;
+        private bool _isEditMode;
+        private string _searchText;
+        private ObservableCollection<string> _categories;
 
-        public EditEquipmentViewModel(
-            IEquipmentRepositoryBase equipmentRepository,
-            IMessageService messageService,
-            IAuthorizationService authorizationService)
+        public EditEquipmentsViewModel(IServiceProvider serviceProvider)
         {
-            _equipmentRepository = equipmentRepository;
-            _messageService = messageService;
-            _authorizationService = authorizationService;
+            _serviceProvider = serviceProvider;
+            _equipmentRepository = serviceProvider.GetRequiredService<IEquipmentRepository>();
 
-            _equipments = new ObservableCollection<Equipment>();
-            LoadEquipmentsCommand = new RelayCommand(async _ => await LoadEquipmentsAsync(), _ => _authorizationService.CanReadTable("Equipments"));
-            SaveEquipmentCommand = new RelayCommand(async _ => await SaveEquipmentAsync(), _ => CanSaveEquipment());
-            DeleteEquipmentCommand = new RelayCommand(async _ => await DeleteEquipmentAsync(), _ => CanDeleteEquipment());
-            CancelEditCommand = new RelayCommand(_ => CancelEdit());
+            Equipments = new ObservableCollection<Equipment>();
+            Categories = new ObservableCollection<string> { "Спецтехника", "Рабочий", "Оборудование" };
+            SearchText = string.Empty;
 
-            Task.Run(async () => await LoadEquipmentsAsync());
+            // Команды
+            LoadEquipmentsCommand = new RelayCommand(LoadEquipments);
+            AddEquipmentCommand = new RelayCommand(AddEquipment);
+            EditEquipmentCommand = new RelayCommand(EditEquipment, CanEditEquipment);
+            DeleteEquipmentCommand = new RelayCommand(DeleteEquipment, CanDeleteEquipment);
+            SaveEquipmentCommand = new RelayCommand(SaveEquipment, CanSaveEquipment);
+            CancelEditCommand = new RelayCommand(CancelEdit);
+            SearchCommand = new RelayCommand(SearchEquipments);
+
+            // Загрузка данных
+            _ = LoadEquipmentsAsync();
         }
+
+        // ========== Свойства ==========
 
         public ObservableCollection<Equipment> Equipments
         {
@@ -57,245 +58,236 @@ namespace OrderingSpecialEquipment.ViewModels
         public Equipment? SelectedEquipment
         {
             get => _selectedEquipment;
-            set
-            {
-                if (SetProperty(ref _selectedEquipment, value))
-                {
-                    if (value != null)
-                    {
-                        _editId = value.Id;
-                        _editName = value.Name;
-                        _editCategory = value.Category;
-                        _editCanOrderMultiple = value.CanOrderMultiple;
-                        _editHourlyCost = value.HourlyCost;
-                        _editRequiresOperator = value.RequiresOperator;
-                        _editDescription = value.Description;
-                        _editIsActive = value.IsActive;
-                        _isEditing = true;
-                    }
-                    else
-                    {
-                        ResetEditFields();
-                    }
-                    OnPropertyChanged(nameof(EditId));
-                    OnPropertyChanged(nameof(EditName));
-                    OnPropertyChanged(nameof(EditCategory));
-                    OnPropertyChanged(nameof(EditCanOrderMultiple));
-                    OnPropertyChanged(nameof(EditHourlyCost));
-                    OnPropertyChanged(nameof(EditRequiresOperator));
-                    OnPropertyChanged(nameof(EditDescription));
-                    OnPropertyChanged(nameof(EditIsActive));
-                    ((RelayCommand)SaveEquipmentCommand).RaiseCanExecuteChanged();
-                    ((RelayCommand)DeleteEquipmentCommand).RaiseCanExecuteChanged();
-                }
-            }
+            set => SetProperty(ref _selectedEquipment, value);
         }
 
-        public string EditId
+        public bool IsEditMode
         {
-            get => _editId;
-            set
-            {
-                if (SetProperty(ref _editId, value))
-                {
-                    ((RelayCommand)SaveEquipmentCommand).RaiseCanExecuteChanged();
-                }
-            }
+            get => _isEditMode;
+            set => SetProperty(ref _isEditMode, value);
         }
 
-        public string EditName
+        public string SearchText
         {
-            get => _editName;
-            set => SetProperty(ref _editName, value);
+            get => _searchText;
+            set => SetProperty(ref _searchText, value);
         }
 
-        public string? EditCategory
+        public ObservableCollection<string> Categories
         {
-            get => _editCategory;
-            set => SetProperty(ref _editCategory, value);
+            get => _categories;
+            set => SetProperty(ref _categories, value);
         }
 
-        public bool EditCanOrderMultiple
-        {
-            get => _editCanOrderMultiple;
-            set => SetProperty(ref _editCanOrderMultiple, value);
-        }
-
-        public decimal? EditHourlyCost
-        {
-            get => _editHourlyCost;
-            set => SetProperty(ref _editHourlyCost, value);
-        }
-
-        public bool EditRequiresOperator
-        {
-            get => _editRequiresOperator;
-            set => SetProperty(ref _editRequiresOperator, value);
-        }
-
-        public string? EditDescription
-        {
-            get => _editDescription;
-            set => SetProperty(ref _editDescription, value);
-        }
-
-        public bool EditIsActive
-        {
-            get => _editIsActive;
-            set => SetProperty(ref _editIsActive, value);
-        }
+        // ========== Команды ==========
 
         public ICommand LoadEquipmentsCommand { get; }
-        public ICommand SaveEquipmentCommand { get; }
+        public ICommand AddEquipmentCommand { get; }
+        public ICommand EditEquipmentCommand { get; }
         public ICommand DeleteEquipmentCommand { get; }
+        public ICommand SaveEquipmentCommand { get; }
         public ICommand CancelEditCommand { get; }
+        public ICommand SearchCommand { get; }
 
+        // ========== Методы ==========
+
+        /// <summary>
+        /// Загружает всю технику
+        /// </summary>
         private async Task LoadEquipmentsAsync()
         {
             try
             {
-                // Загружаем *все* записи, включая неактивные, если у пользователя есть право на запись
-                // или если нужно показать все для выбора.
-                // Для отображения в основном списке можно фильтровать.
-                var dbEquipments = await _equipmentRepository.GetAllAsync();
-                Equipments.Clear();
-                foreach (var eq in dbEquipments)
-                {
-                    // Фильтруем неактивные при отображении в основном списке, если нужно
-                    // В данном случае, оставим все, чтобы пользователь мог редактировать IsActive
-                    Equipments.Add(eq);
-                }
+                var equipments = await _equipmentRepository.GetAllAsync();
+                Equipments = new ObservableCollection<Equipment>(equipments);
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка загрузки техники: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка загрузки техники: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private bool CanSaveEquipment()
+        private void LoadEquipments()
         {
-            return _authorizationService.CanWriteTable("Equipments") &&
-                   !string.IsNullOrWhiteSpace(EditId) &&
-                   !string.IsNullOrWhiteSpace(EditName) &&
-                   (!_isEditing || SelectedEquipment?.Id == EditId);
+            _ = LoadEquipmentsAsync();
         }
 
-        private async Task SaveEquipmentAsync()
+        /// <summary>
+        /// Добавляет новую технику
+        /// </summary>
+        private void AddEquipment()
         {
-            if (!CanSaveEquipment()) return;
-
-            try
+            SelectedEquipment = new Equipment
             {
-                Equipment equipment;
-                bool isNew = !_isEditing;
+                Id = GenerateNewId("EQ"),
+                IsActive = true,
+                CanOrderMultiple = false,
+                RequiresOperator = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            IsEditMode = true;
+        }
 
-                if (isNew)
-                {
-                    if (await _equipmentRepository.ExistsAsync(EditId))
-                    {
-                        _messageService.ShowErrorMessage($"Техника с ID '{EditId}' уже существует.", "Ошибка");
-                        return;
-                    }
-                    equipment = new Equipment
-                    {
-                        Id = EditId,
-                        Name = EditName,
-                        Category = EditCategory,
-                        CanOrderMultiple = EditCanOrderMultiple,
-                        HourlyCost = EditHourlyCost,
-                        RequiresOperator = EditRequiresOperator,
-                        Description = EditDescription,
-                        IsActive = EditIsActive
-                    };
-                    await _equipmentRepository.AddAsync(equipment);
-                }
-                else
-                {
-                    equipment = SelectedEquipment!;
-                    equipment.Name = EditName;
-                    equipment.Category = EditCategory;
-                    equipment.CanOrderMultiple = EditCanOrderMultiple;
-                    equipment.HourlyCost = EditHourlyCost;
-                    equipment.RequiresOperator = EditRequiresOperator;
-                    equipment.Description = EditDescription;
-                    equipment.IsActive = EditIsActive;
-                    _equipmentRepository.Update(equipment);
-                }
-
-                await _equipmentRepository.SaveChangesAsync();
-
-                if (isNew)
-                {
-                    // Добавляем в список, даже если IsActive = false, для видимости
-                    Equipments.Add(equipment);
-                }
-                else
-                {
-                    await LoadEquipmentsAsync(); // Обновление списка, чтобы отразить изменения
-                }
-
-                ResetEditFields();
-                _messageService.ShowInfoMessage(isNew ? "Техника добавлена." : "Техника обновлена.", "Успех");
+        /// <summary>
+        /// Редактирует выбранную технику
+        /// </summary>
+        private void EditEquipment()
+        {
+            if (SelectedEquipment != null)
+            {
+                IsEditMode = true;
             }
-            catch (Exception ex)
+        }
+
+        private bool CanEditEquipment()
+        {
+            return SelectedEquipment != null && !IsEditMode;
+        }
+
+        /// <summary>
+        /// Удаляет выбранную технику
+        /// </summary>
+        private async void DeleteEquipment()
+        {
+            if (SelectedEquipment == null)
+                return;
+
+            var result = MessageBox.Show(
+                $"Вы уверены, что хотите удалить технику '{SelectedEquipment.Name}'?",
+                "Подтверждение удаления",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
             {
-                _messageService.ShowErrorMessage($"Ошибка сохранения техники: {ex.Message}", "Ошибка");
+                try
+                {
+                    await _equipmentRepository.RemoveAsync(SelectedEquipment);
+                    await LoadEquipmentsAsync();
+                    SelectedEquipment = null;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка удаления техники: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
         private bool CanDeleteEquipment()
         {
-            return _authorizationService.CanWriteTable("Equipments") &&
-                   SelectedEquipment != null && SelectedEquipment.Key != 0;
+            return SelectedEquipment != null && !IsEditMode;
         }
 
-        private async Task DeleteEquipmentAsync()
+        /// <summary>
+        /// Сохраняет технику
+        /// </summary>
+        private async void SaveEquipment()
         {
-            if (!CanDeleteEquipment() || SelectedEquipment == null) return;
+            if (SelectedEquipment == null)
+                return;
 
-            if (!_messageService.ShowConfirmationDialog($"Вы действительно хотите удалить технику '{SelectedEquipment.Name}'?")) return;
+            // Валидация
+            if (string.IsNullOrWhiteSpace(SelectedEquipment.Name))
+            {
+                MessageBox.Show("Введите наименование техники", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
 
             try
             {
-                _equipmentRepository.Delete(SelectedEquipment);
-                await _equipmentRepository.SaveChangesAsync();
-                Equipments.Remove(SelectedEquipment);
-                ResetEditFields();
-                _messageService.ShowInfoMessage("Техника удалена.", "Успех");
+                if (Equipments.Any(e => e.Id != SelectedEquipment.Id && e.Name == SelectedEquipment.Name))
+                {
+                    MessageBox.Show("Техника с таким наименованием уже существует", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedEquipment.Key == 0)
+                {
+                    // Новая техника
+                    await _equipmentRepository.AddAsync(SelectedEquipment);
+                }
+                else
+                {
+                    // Обновление существующей
+                    _equipmentRepository.Update(SelectedEquipment);
+                }
+
+                await LoadEquipmentsAsync();
+                IsEditMode = false;
             }
             catch (Exception ex)
             {
-                _messageService.ShowErrorMessage($"Ошибка удаления техники: {ex.Message}", "Ошибка");
+                MessageBox.Show($"Ошибка сохранения техники: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
-        private void CancelEdit()
+        private bool CanSaveEquipment()
         {
-            ResetEditFields();
+            return SelectedEquipment != null && IsEditMode;
         }
 
-        private void ResetEditFields()
+        /// <summary>
+        /// Отменяет редактирование
+        /// </summary>
+        private void CancelEdit()
         {
-            _isEditing = false;
-            _editId = string.Empty;
-            _editName = string.Empty;
-            _editCategory = null;
-            _editCanOrderMultiple = false;
-            _editHourlyCost = null;
-            _editRequiresOperator = false;
-            _editDescription = null;
-            _editIsActive = true;
+            IsEditMode = false;
             SelectedEquipment = null;
-            OnPropertyChanged(nameof(EditId));
-            OnPropertyChanged(nameof(EditName));
-            OnPropertyChanged(nameof(EditCategory));
-            OnPropertyChanged(nameof(EditCanOrderMultiple));
-            OnPropertyChanged(nameof(EditHourlyCost));
-            OnPropertyChanged(nameof(EditRequiresOperator));
-            OnPropertyChanged(nameof(EditDescription));
-            OnPropertyChanged(nameof(EditIsActive));
-            ((RelayCommand)SaveEquipmentCommand).RaiseCanExecuteChanged();
-            ((RelayCommand)DeleteEquipmentCommand).RaiseCanExecuteChanged();
+        }
+
+        /// <summary>
+        /// Поиск техники
+        /// </summary>
+        private async void SearchEquipments()
+        {
+            try
+            {
+                var allEquipments = await _equipmentRepository.GetAllAsync();
+
+                if (!string.IsNullOrWhiteSpace(SearchText))
+                {
+                    var filtered = allEquipments.Where(e =>
+                        e.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        e.Id.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                        (e.Category != null && e.Category.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
+
+                    Equipments = new ObservableCollection<Equipment>(filtered);
+                }
+                else
+                {
+                    Equipments = new ObservableCollection<Equipment>(allEquipments);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка поиска: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Генерирует новый идентификатор
+        /// </summary>
+        private string GenerateNewId(string prefix)
+        {
+            try
+            {
+                var existingIds = Equipments.Select(e => e.Id).Where(id => id.StartsWith(prefix));
+
+                if (!existingIds.Any())
+                {
+                    return $"{prefix}000001";
+                }
+
+                var maxNumber = existingIds
+                    .Select(id => int.TryParse(id.Substring(prefix.Length), out int num) ? num : 0)
+                    .Max();
+
+                return $"{prefix}{(maxNumber + 1):D6}";
+            }
+            catch
+            {
+                return $"{prefix}000001";
+            }
         }
     }
 }

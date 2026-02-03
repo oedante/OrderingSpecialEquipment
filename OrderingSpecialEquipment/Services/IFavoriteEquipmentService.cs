@@ -5,40 +5,29 @@ using System.Threading.Tasks;
 namespace OrderingSpecialEquipment.Services
 {
     /// <summary>
-    /// Сервис для управления списком избранной техники пользователя.
+    /// Интерфейс сервиса избранной техники
+    /// Управляет добавлением/удалением техники в избранное для пользователя
     /// </summary>
     public interface IFavoriteEquipmentService
     {
         /// <summary>
-        /// Получает список избранной техники для указанного пользователя.
+        /// Получает избранную технику для пользователя
         /// </summary>
-        /// <param name="userId">ID пользователя.</param>
-        /// <returns>Список моделей Equipment, отсортированный по SortOrder.</returns>
-        Task<List<Equipment>> GetFavoriteEquipmentAsync(string userId);
+        Task<IEnumerable<Equipment>> GetFavoriteEquipmentAsync(string userId);
 
         /// <summary>
-        /// Добавляет технику в избранное для пользователя.
+        /// Добавляет технику в избранное
         /// </summary>
-        /// <param name="userId">ID пользователя.</param>
-        /// <param name="equipmentId">ID техники.</param>
-        /// <param name="sortOrder">Порядок сортировки.</param>
-        /// <returns>True, если успешно добавлено.</returns>
-        Task<bool> AddToFavoritesAsync(string userId, string equipmentId, int sortOrder = 0);
+        Task AddToFavoriteAsync(string userId, string equipmentId);
 
         /// <summary>
-        /// Удаляет технику из избранного пользователя.
+        /// Удаляет технику из избранного
         /// </summary>
-        /// <param name="userId">ID пользователя.</param>
-        /// <param name="equipmentId">ID техники.</param>
-        /// <returns>True, если успешно удалено.</returns>
-        Task<bool> RemoveFromFavoritesAsync(string userId, string equipmentId);
+        Task RemoveFromFavoriteAsync(string userId, string equipmentId);
 
         /// <summary>
-        /// Проверяет, находится ли техника в избранном у пользователя.
+        /// Проверяет, находится ли техника в избранном
         /// </summary>
-        /// <param name="userId">ID пользователя.</param>
-        /// <param name="equipmentId">ID техники.</param>
-        /// <returns>True, если в избранном.</returns>
         Task<bool> IsFavoriteAsync(string userId, string equipmentId);
     }
 }
