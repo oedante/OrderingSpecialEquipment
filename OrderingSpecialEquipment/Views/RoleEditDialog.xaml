@@ -1,0 +1,106 @@
+﻿<Window x:Class="OrderingSpecialEquipment.Views.RoleEditDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        mc:Ignorable="d" d:DesignWidth="600"
+        Title="Редактирование роли" 
+        WindowStartupLocation="CenterOwner"
+        Width="600" Height="718"
+        ResizeMode="NoResize">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Основная информация -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="Код роли:" Margin="0,5"/>
+            <TextBox x:Name="txtCode" Height="30" Margin="0,0,0,5"/>
+
+            <TextBlock Text="Наименование:" Margin="0,5"/>
+            <TextBox x:Name="txtName" Height="30" Margin="0,0,0,5"/>
+
+            <TextBlock Text="Описание:" Margin="0,5"/>
+            <TextBox x:Name="txtDescription" Height="60" TextWrapping="Wrap" 
+                     AcceptsReturn="True" Margin="0,0,0,5"/>
+        </StackPanel>
+
+        <!-- Права доступа -->
+        <GroupBox Grid.Row="1" Header="Права доступа к таблицам" Margin="0,5">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <CheckBox x:Name="chkDepartmentsRead" Content="Departments - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkDepartmentsWrite" Content="Departments - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkEquipmentsRead" Content="Equipments - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkEquipmentsWrite" Content="Equipments - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkLessorOrganizationsRead" Content="LessorOrganizations - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkLessorOrganizationsWrite" Content="LessorOrganizations - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkLicensePlatesRead" Content="LicensePlates - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkLicensePlatesWrite" Content="LicensePlates - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkEquipmentDependenciesRead" Content="EquipmentDependencies - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkEquipmentDependenciesWrite" Content="EquipmentDependencies - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkTransportProgramRead" Content="TransportProgram - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkTransportProgramWrite" Content="TransportProgram - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkShiftRequestsRead" Content="ShiftRequests - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkShiftRequestsWrite" Content="ShiftRequests - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkWarehousesRead" Content="Warehouses - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkWarehousesWrite" Content="Warehouses - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkWarehouseAreasRead" Content="WarehouseAreas - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkWarehouseAreasWrite" Content="WarehouseAreas - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkUsersRead" Content="Users - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkUsersWrite" Content="Users - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkRolesRead" Content="Roles - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkRolesWrite" Content="Roles - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkUserDepartmentAccessRead" Content="UserDepartmentAccess - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkUserDepartmentAccessWrite" Content="UserDepartmentAccess - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkUserWarehouseAccessRead" Content="UserWarehouseAccess - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkUserWarehouseAccessWrite" Content="UserWarehouseAccess - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkUserFavoritesRead" Content="UserFavorites - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkUserFavoritesWrite" Content="UserFavorites - запись" Margin="5,0,5,5"/>
+
+                    <CheckBox x:Name="chkAuditLogsRead" Content="AuditLogs - чтение" Margin="5"/>
+                    <CheckBox x:Name="chkAuditLogsWrite" Content="AuditLogs - запись" Margin="5,0,5,5"/>
+                </StackPanel>
+            </ScrollViewer>
+        </GroupBox>
+
+        <!-- Специальные права -->
+        <GroupBox Grid.Row="2" Header="Специальные права" Margin="0,5">
+            <StackPanel>
+                <CheckBox x:Name="chkExportData" Content="Экспорт данных" Margin="5"/>
+                <CheckBox x:Name="chkViewReports" Content="Просмотр отчетов" Margin="5"/>
+                <CheckBox x:Name="chkManageAllDepartments" Content="Управление всеми отделами" Margin="5"/>
+                <CheckBox x:Name="chkManageUsers" Content="Управление пользователями" Margin="5"/>
+                <CheckBox x:Name="chkSystemAdmin" Content="Системный администратор" Margin="5"/>
+                <CheckBox x:Name="chkConfigureConnection" Content="Настройка подключения к БД" Margin="5"/>
+                <CheckBox x:Name="chkIsSystem" Content="Системная роль" Margin="5"/>
+                <CheckBox x:Name="chkIsActive" Content="Активна" IsChecked="True" Margin="5"/>
+            </StackPanel>
+        </GroupBox>
+
+        <!-- Кнопки -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,179,0,0">
+            <Button x:Name="btnSave" Content="Сохранить" Width="100" Height="35" 
+                    Margin="5" Click="BtnSave_Click"/>
+            <Button x:Name="btnCancel" Content="Отмена" Width="100" Height="35" 
+                    Margin="5" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
