@@ -57,11 +57,6 @@ namespace OrderingSpecialEquipment
         {
             try
             {
-
-                // Временная настройка для совместимости с Npgsql 7.x
-                AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-                AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
-
                 _logger.Information("Приложение запускается");
 
                 // Настройка DI контейнера
@@ -118,11 +113,15 @@ namespace OrderingSpecialEquipment
         {
             _logger.Error(e.Exception, "Необработанное исключение");
 
-            MessageBox.Show(
-                $"Произошла ошибка:\n{e.Exception.Message}",
-                "Ошибка",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+            // Показываем сообщение только для критических ошибок
+            if (!e.Exception.Message.Contains("BindingExpression"))
+            {
+                MessageBox.Show(
+                    $"Произошла ошибка:\n{e.Exception.Message}",
+                    "Ошибка",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
 
             e.Handled = true;
         }
@@ -179,6 +178,9 @@ namespace OrderingSpecialEquipment
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
+
+            // Регистрация фабрики контекстов
+            services.AddSingleton<IDbContextFactory, DbContextFactory>();
 
             // Регистрация DataService
             services.AddScoped(typeof(IDataService<>), typeof(DataService<>));

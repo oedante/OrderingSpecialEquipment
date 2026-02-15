@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using OrderingSpecialEquipment.Data;
 using OrderingSpecialEquipment.Models;
 using OrderingSpecialEquipment.Services.Interfaces;
 using OrderingSpecialEquipment.Utils;
@@ -18,7 +19,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private List<ReportItem> _reportData;
 
@@ -33,7 +34,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -89,7 +90,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var years = await _databaseService.Context.TransportProgram
+                using var context = _contextFactory.CreateDbContext();
+
+                var years = await context.TransportProgram
                     .Select(tp => tp.Year)
                     .Distinct()
                     .OrderByDescending(y => y)
@@ -163,8 +166,10 @@ namespace OrderingSpecialEquipment.Views
                 int year = (int)cmbYear.SelectedItem;
                 string periodType = (cmbPeriod.SelectedItem as ComboBoxItem)?.Tag.ToString();
 
+                using var context = _contextFactory.CreateDbContext();
+
                 // Получаем данные транспортной программы
-                var transportQuery = _databaseService.Context.TransportProgram
+                var transportQuery = context.TransportProgram
                     .Include(tp => tp.Equipment)
                     .Include(tp => tp.Department)
                     .Where(tp => tp.Year == year);
@@ -220,7 +225,7 @@ namespace OrderingSpecialEquipment.Views
                     if (planHours == 0) continue;
 
                     // Получаем фактические данные из заявок
-                    var actualData = await GetActualDataAsync(tp.DepartmentId, tp.EquipmentId, year, periodType);
+                    var actualData = await GetActualDataAsync(context, tp.DepartmentId, tp.EquipmentId, year, periodType);
 
                     var item = new ReportItem
                     {
@@ -255,9 +260,9 @@ namespace OrderingSpecialEquipment.Views
         /// Получение фактических данных из заявок
         /// </summary>
         private async System.Threading.Tasks.Task<(decimal ActualHours, decimal ActualCost)> GetActualDataAsync(
-            string departmentId, string equipmentId, int year, string periodType)
+            ApplicationDbContext context, string departmentId, string equipmentId, int year, string periodType)
         {
-            var query = _databaseService.Context.ShiftRequests
+            var query = context.ShiftRequests
                 .Where(sr => sr.DepartmentId == departmentId &&
                             sr.EquipmentId == equipmentId &&
                             sr.Date.Year == year &&

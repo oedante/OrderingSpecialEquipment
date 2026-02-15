@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
@@ -71,7 +72,7 @@ namespace OrderingSpecialEquipment.ViewModels
         /// </summary>
         /// <param name="func">Асинхронное действие</param>
         /// <param name="errorMessage">Сообщение об ошибке</param>
-        protected virtual async System.Threading.Tasks.Task HandleErrorAsync(Func<System.Threading.Tasks.Task> func,
+        protected virtual async Task HandleErrorAsync(Func<Task> func,
             string errorMessage = "Произошла ошибка")
         {
             try

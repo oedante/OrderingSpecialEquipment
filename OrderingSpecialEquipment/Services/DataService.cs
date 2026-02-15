@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Services
     {
         #region Поля
 
-        protected readonly IDatabaseService _databaseService;
+        protected readonly IDbContextFactory _contextFactory;
         protected readonly IAuthorizationService _authorizationService;
 
         #endregion
@@ -26,12 +26,12 @@ namespace OrderingSpecialEquipment.Services
         /// <summary>
         /// Конструктор сервиса данных
         /// </summary>
-        /// <param name="databaseService">Сервис БД</param>
+        /// <param name="contextFactory">Фабрика контекстов БД</param>
         /// <param name="authorizationService">Сервис авторизации</param>
-        public DataService(IDatabaseService databaseService, IAuthorizationService authorizationService)
+        public DataService(IDbContextFactory contextFactory, IAuthorizationService authorizationService)
         {
-            _databaseService = databaseService;
-            _authorizationService = authorizationService;
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
         }
 
         #endregion
@@ -43,7 +43,8 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<List<T>> GetAllAsync()
         {
-            return await _databaseService.Context.Set<T>().ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Set<T>().ToListAsync();
         }
 
         /// <summary>
@@ -51,15 +52,17 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<List<T>> GetAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _databaseService.Context.Set<T>().Where(predicate).ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Set<T>().Where(predicate).ToListAsync();
         }
 
         /// <summary>
         /// Получение записи по ID
         /// </summary>
-        public virtual async Task<T> GetByIdAsync(object id)
+        public virtual async Task<T?> GetByIdAsync(object id)
         {
-            return await _databaseService.Context.Set<T>().FindAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Set<T>().FindAsync(id);
         }
 
         /// <summary>
@@ -67,8 +70,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<T> AddAsync(T entity)
         {
-            var entry = await _databaseService.Context.Set<T>().AddAsync(entity);
-            await _databaseService.Context.SaveChangesAsync();
+            using var context = _contextFactory.CreateDbContext();
+            var entry = await context.Set<T>().AddAsync(entity);
+            await context.SaveChangesAsync();
             return entry.Entity;
         }
 
@@ -77,9 +81,10 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<List<T>> AddRangeAsync(IEnumerable<T> entities)
         {
+            using var context = _contextFactory.CreateDbContext();
             var list = entities.ToList();
-            await _databaseService.Context.Set<T>().AddRangeAsync(list);
-            await _databaseService.Context.SaveChangesAsync();
+            await context.Set<T>().AddRangeAsync(list);
+            await context.SaveChangesAsync();
             return list;
         }
 
@@ -88,8 +93,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<T> UpdateAsync(T entity)
         {
-            var entry = _databaseService.Context.Set<T>().Update(entity);
-            await _databaseService.Context.SaveChangesAsync();
+            using var context = _contextFactory.CreateDbContext();
+            var entry = context.Set<T>().Update(entity);
+            await context.SaveChangesAsync();
             return entry.Entity;
         }
 
@@ -98,11 +104,14 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<bool> DeleteAsync(object id)
         {
-            var entity = await GetByIdAsync(id);
+            using var context = _contextFactory.CreateDbContext();
+            var entity = await context.Set<T>().FindAsync(id);
             if (entity == null)
                 return false;
 
-            return await DeleteAsync(entity);
+            context.Set<T>().Remove(entity);
+            var result = await context.SaveChangesAsync();
+            return result > 0;
         }
 
         /// <summary>
@@ -110,8 +119,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<bool> DeleteAsync(T entity)
         {
-            _databaseService.Context.Set<T>().Remove(entity);
-            var result = await _databaseService.Context.SaveChangesAsync();
+            using var context = _contextFactory.CreateDbContext();
+            context.Set<T>().Remove(entity);
+            var result = await context.SaveChangesAsync();
             return result > 0;
         }
 
@@ -120,8 +130,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<bool> DeleteRangeAsync(IEnumerable<T> entities)
         {
-            _databaseService.Context.Set<T>().RemoveRange(entities);
-            var result = await _databaseService.Context.SaveChangesAsync();
+            using var context = _contextFactory.CreateDbContext();
+            context.Set<T>().RemoveRange(entities);
+            var result = await context.SaveChangesAsync();
             return result > 0;
         }
 
@@ -130,26 +141,20 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public virtual async Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate)
         {
-            return await _databaseService.Context.Set<T>().AnyAsync(predicate);
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Set<T>().AnyAsync(predicate);
         }
 
         /// <summary>
         /// Количество записей
         /// </summary>
-        public virtual async Task<int> CountAsync(Expression<Func<T, bool>> predicate = null)
+        public virtual async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null)
         {
+            using var context = _contextFactory.CreateDbContext();
             if (predicate == null)
-                return await _databaseService.Context.Set<T>().CountAsync();
+                return await context.Set<T>().CountAsync();
 
-            return await _databaseService.Context.Set<T>().CountAsync(predicate);
-        }
-
-        /// <summary>
-        /// Сохранение изменений
-        /// </summary>
-        public virtual async Task<int> SaveChangesAsync()
-        {
-            return await _databaseService.Context.SaveChangesAsync();
+            return await context.Set<T>().CountAsync(predicate);
         }
 
         #endregion

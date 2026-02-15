@@ -15,7 +15,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly User _user;
         private readonly bool _isEditMode;
 
@@ -30,7 +30,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _user = new User { IsActive = true };
             _isEditMode = false;
 
@@ -44,7 +44,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _user = user;
             _isEditMode = true;
 
@@ -73,7 +73,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var roles = await _databaseService.Context.Roles
+                using var context = _contextFactory.CreateDbContext();
+
+                var roles = await context.Roles
                     .Where(r => r.IsActive)
                     .OrderBy(r => r.Name)
                     .ToListAsync();
@@ -94,7 +96,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var departments = await _databaseService.Context.Departments
+                using var context = _contextFactory.CreateDbContext();
+
+                var departments = await context.Departments
                     .Where(d => d.IsActive)
                     .OrderBy(d => d.Name)
                     .ToListAsync();
@@ -153,6 +157,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _user.WindowsLogin = txtWindowsLogin.Text.Trim();
                 _user.FullName = txtFullName.Text.Trim();
                 _user.Email = string.IsNullOrWhiteSpace(txtEmail.Text) ? null : txtEmail.Text.Trim();
@@ -165,7 +171,7 @@ namespace OrderingSpecialEquipment.Views
                 if (!_isEditMode)
                 {
                     // Проверка уникальности логина
-                    bool loginExists = await _databaseService.Context.Users
+                    bool loginExists = await context.Users
                         .AnyAsync(u => u.WindowsLogin == _user.WindowsLogin);
 
                     if (loginExists)
@@ -176,12 +182,12 @@ namespace OrderingSpecialEquipment.Views
                     }
 
                     _user.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.Users.AddAsync(_user);
+                    await context.Users.AddAsync(_user);
                 }
                 else
                 {
                     // Проверка уникальности логина (исключая текущего пользователя)
-                    bool loginExists = await _databaseService.Context.Users
+                    bool loginExists = await context.Users
                         .AnyAsync(u => u.WindowsLogin == _user.WindowsLogin && u.Id != _user.Id);
 
                     if (loginExists)
@@ -191,10 +197,10 @@ namespace OrderingSpecialEquipment.Views
                         return;
                     }
 
-                    _databaseService.Context.Users.Update(_user);
+                    context.Users.Update(_user);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 DialogResult = true;
                 Close();

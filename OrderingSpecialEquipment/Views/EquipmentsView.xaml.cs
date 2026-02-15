@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private Equipment _editingEquipment;
         private bool _isEditMode;
@@ -33,7 +33,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -76,7 +76,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Загрузка...";
 
-                IQueryable<Equipment> query = _databaseService.Context.Equipments;
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<Equipment> query = context.Equipments;
 
                 if (!chkShowInactive.IsChecked == true)
                 {
@@ -105,7 +107,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var equipments = await _databaseService.Context.Equipments
+                using var context = _contextFactory.CreateDbContext();
+
+                var equipments = await context.Equipments
                     .Where(e => e.IsActive)
                     .OrderBy(e => e.Name)
                     .ToListAsync();
@@ -208,21 +212,24 @@ namespace OrderingSpecialEquipment.Views
                     {
                         txtStatus.Text = "Удаление...";
 
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Проверяем, есть ли связанные данные
-                        bool hasLicensePlates = await _databaseService.Context.LicensePlates
+                        bool hasLicensePlates = await context.LicensePlates
                             .AnyAsync(lp => lp.EquipmentId == selected.Id);
 
-                        bool hasShiftRequests = await _databaseService.Context.ShiftRequests
+                        bool hasShiftRequests = await context.ShiftRequests
                             .AnyAsync(sr => sr.EquipmentId == selected.Id);
 
-                        bool hasDependencies = await _databaseService.Context.EquipmentDependencies
+                        bool hasDependencies = await context.EquipmentDependencies
                             .AnyAsync(ed => ed.MainEquipmentId == selected.Id || ed.DependentEquipmentId == selected.Id);
 
                         if (hasLicensePlates || hasShiftRequests || hasDependencies)
                         {
                             // Если есть связи, просто деактивируем
                             selected.IsActive = false;
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Equipments.Update(selected);
+                            await context.SaveChangesAsync();
 
                             MessageBox.Show("Техника деактивирована, так как есть связанные данные.",
                                 "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -230,8 +237,8 @@ namespace OrderingSpecialEquipment.Views
                         else
                         {
                             // Если связей нет, удаляем физически
-                            _databaseService.Context.Equipments.Remove(selected);
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Equipments.Remove(selected);
+                            await context.SaveChangesAsync();
                         }
 
                         await LoadDataAsync();
@@ -279,7 +286,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var dependencies = await _databaseService.Context.EquipmentDependencies
+                using var context = _contextFactory.CreateDbContext();
+
+                var dependencies = await context.EquipmentDependencies
                     .Include(ed => ed.DependentEquipment)
                     .Where(ed => ed.MainEquipmentId == equipmentId)
                     .ToListAsync();
@@ -327,6 +336,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingEquipment.Name = txtName.Text.Trim();
                 _editingEquipment.Category = string.IsNullOrWhiteSpace(txtCategory.Text) ? null : txtCategory.Text.Trim();
                 _editingEquipment.Description = string.IsNullOrWhiteSpace(txtDescription.Text) ? null : txtDescription.Text.Trim();
@@ -347,15 +358,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление нового
                     _editingEquipment.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.Equipments.AddAsync(_editingEquipment);
+                    await context.Equipments.AddAsync(_editingEquipment);
                 }
                 else
                 {
                     // Обновление существующего
-                    _databaseService.Context.Equipments.Update(_editingEquipment);
+                    context.Equipments.Update(_editingEquipment);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 EditPopup.IsOpen = false;
                 await LoadDataAsync();
@@ -411,8 +422,9 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
-                        _databaseService.Context.EquipmentDependencies.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        using var context = _contextFactory.CreateDbContext();
+                        context.EquipmentDependencies.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         await LoadDependenciesAsync(_selectedEquipmentForDependencies.Id);
                     }
@@ -466,20 +478,22 @@ namespace OrderingSpecialEquipment.Views
                 return;
             }
 
-            // Проверка на существование такой зависимости
-            bool exists = await _databaseService.Context.EquipmentDependencies
-                .AnyAsync(ed => ed.MainEquipmentId == _selectedEquipmentForDependencies.Id &&
-                               ed.DependentEquipmentId == dependentEquipment.Id);
-
-            if (exists)
-            {
-                MessageBox.Show("Такая зависимость уже существует", "Ошибка",
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
+                // Проверка на существование такой зависимости
+                bool exists = await context.EquipmentDependencies
+                    .AnyAsync(ed => ed.MainEquipmentId == _selectedEquipmentForDependencies.Id &&
+                                   ed.DependentEquipmentId == dependentEquipment.Id);
+
+                if (exists)
+                {
+                    MessageBox.Show("Такая зависимость уже существует", "Ошибка",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
                 var dependency = new EquipmentDependency
                 {
                     MainEquipmentId = _selectedEquipmentForDependencies.Id,
@@ -489,8 +503,8 @@ namespace OrderingSpecialEquipment.Views
                     CreatedAt = DateTime.UtcNow
                 };
 
-                await _databaseService.Context.EquipmentDependencies.AddAsync(dependency);
-                await _databaseService.Context.SaveChangesAsync();
+                await context.EquipmentDependencies.AddAsync(dependency);
+                await context.SaveChangesAsync();
 
                 AddDependencyPopup.IsOpen = false;
                 await LoadDependenciesAsync(_selectedEquipmentForDependencies.Id);

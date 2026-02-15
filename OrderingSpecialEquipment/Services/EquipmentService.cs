@@ -18,8 +18,8 @@ namespace OrderingSpecialEquipment.Services
         /// <summary>
         /// Конструктор сервиса техники
         /// </summary>
-        public EquipmentService(IDatabaseService databaseService, IAuthorizationService authorizationService)
-            : base(databaseService, authorizationService)
+        public EquipmentService(IDbContextFactory contextFactory, IAuthorizationService authorizationService)
+            : base(contextFactory, authorizationService)
         {
         }
 
@@ -32,7 +32,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task<List<EquipmentDependency>> GetDependenciesAsync(string equipmentId)
         {
-            return await _databaseService.Context.EquipmentDependencies
+            using var context = _contextFactory.CreateDbContext();
+
+            return await context.EquipmentDependencies
                 .Include(ed => ed.DependentEquipment)
                 .Where(ed => ed.MainEquipmentId == equipmentId)
                 .ToListAsync();
@@ -43,12 +45,14 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task<List<Equipment>> GetEquipmentsWithFavoritesAsync(string userId, bool onlyFavorites = false)
         {
-            var query = _databaseService.Context.Equipments
+            using var context = _contextFactory.CreateDbContext();
+
+            var query = context.Equipments
                 .Where(e => e.IsActive)
                 .Select(e => new
                 {
                     Equipment = e,
-                    IsFavorite = _databaseService.Context.UserFavorites
+                    IsFavorite = context.UserFavorites
                         .Any(uf => uf.UserId == userId && uf.EquipmentId == e.Id)
                 });
 
@@ -70,7 +74,9 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task<List<Equipment>> GetActiveEquipmentsAsync()
         {
-            return await _databaseService.Context.Equipments
+            using var context = _contextFactory.CreateDbContext();
+
+            return await context.Equipments
                 .Where(e => e.IsActive)
                 .OrderBy(e => e.Name)
                 .ToListAsync();
@@ -81,12 +87,14 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task AddToFavoritesAsync(string userId, string equipmentId)
         {
-            var exists = await _databaseService.Context.UserFavorites
+            using var context = _contextFactory.CreateDbContext();
+
+            var exists = await context.UserFavorites
                 .AnyAsync(uf => uf.UserId == userId && uf.EquipmentId == equipmentId);
 
             if (!exists)
             {
-                var maxOrder = await _databaseService.Context.UserFavorites
+                var maxOrder = await context.UserFavorites
                     .Where(uf => uf.UserId == userId)
                     .MaxAsync(uf => (int?)uf.SortOrder) ?? 0;
 
@@ -97,8 +105,8 @@ namespace OrderingSpecialEquipment.Services
                     SortOrder = maxOrder + 1
                 };
 
-                await _databaseService.Context.UserFavorites.AddAsync(favorite);
-                await _databaseService.Context.SaveChangesAsync();
+                await context.UserFavorites.AddAsync(favorite);
+                await context.SaveChangesAsync();
             }
         }
 
@@ -107,13 +115,15 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task RemoveFromFavoritesAsync(string userId, string equipmentId)
         {
-            var favorite = await _databaseService.Context.UserFavorites
+            using var context = _contextFactory.CreateDbContext();
+
+            var favorite = await context.UserFavorites
                 .FirstOrDefaultAsync(uf => uf.UserId == userId && uf.EquipmentId == equipmentId);
 
             if (favorite != null)
             {
-                _databaseService.Context.UserFavorites.Remove(favorite);
-                await _databaseService.Context.SaveChangesAsync();
+                context.UserFavorites.Remove(favorite);
+                await context.SaveChangesAsync();
             }
         }
 
@@ -122,8 +132,48 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         public async Task<bool> IsFavoriteAsync(string userId, string equipmentId)
         {
-            return await _databaseService.Context.UserFavorites
+            using var context = _contextFactory.CreateDbContext();
+
+            return await context.UserFavorites
                 .AnyAsync(uf => uf.UserId == userId && uf.EquipmentId == equipmentId);
+        }
+
+        #endregion
+
+        #region Переопределенные методы
+
+        /// <summary>
+        /// Добавление техники
+        /// </summary>
+        public override async Task<Equipment> AddAsync(Equipment entity)
+        {
+            if (!_authorizationService.CanWriteTable("Equipments"))
+                throw new UnauthorizedAccessException("Нет прав на добавление техники");
+
+            entity.CreatedAt = DateTime.UtcNow;
+            return await base.AddAsync(entity);
+        }
+
+        /// <summary>
+        /// Обновление техники
+        /// </summary>
+        public override async Task<Equipment> UpdateAsync(Equipment entity)
+        {
+            if (!_authorizationService.CanWriteTable("Equipments"))
+                throw new UnauthorizedAccessException("Нет прав на редактирование техники");
+
+            return await base.UpdateAsync(entity);
+        }
+
+        /// <summary>
+        /// Удаление техники
+        /// </summary>
+        public override async Task<bool> DeleteAsync(object id)
+        {
+            if (!_authorizationService.CanWriteTable("Equipments"))
+                throw new UnauthorizedAccessException("Нет прав на удаление техники");
+
+            return await base.DeleteAsync(id);
         }
 
         #endregion

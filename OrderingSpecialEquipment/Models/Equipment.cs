@@ -25,7 +25,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Id")]
         [Display(Name = "Идентификатор", Description = "Уникальный идентификатор техники")]
         [StringLength(10)]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Числовой ключ (автоинкремент)
@@ -41,7 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Name")]
         [Display(Name = "Наименование", Description = "Наименование техники")]
         [StringLength(200)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Категория техники
@@ -49,7 +49,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Category")]
         [Display(Name = "Категория", Description = "Категория техники")]
         [StringLength(50)]
-        public string Category { get; set; }
+        public string? Category { get; set; }
 
         /// <summary>
         /// Можно ли заказать несколько единиц в одной заявке
@@ -81,7 +81,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Description")]
         [Display(Name = "Описание", Description = "Описание техники")]
         [StringLength(500)]
-        public string Description { get; set; }
+        public string? Description { get; set; }  // Сделано nullable
 
         /// <summary>
         /// Активна ли техника

@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Services
         #region Поля
 
         private ApplicationDbContext _context;
-        private string _connectionString;
+        private string _connectionString = string.Empty;
         private DbConnectionFactory.DatabaseType? _databaseType;
         private bool _isConnected;
         private System.Timers.Timer _reconnectionTimer;
@@ -74,6 +74,14 @@ namespace OrderingSpecialEquipment.Services
         }
 
         /// <summary>
+        /// Получение строки подключения
+        /// </summary>
+        public string GetConnectionString()
+        {
+            return _connectionString;
+        }
+
+        /// <summary>
         /// Освобождение ресурсов
         /// </summary>
         public void Dispose()
@@ -82,6 +90,7 @@ namespace OrderingSpecialEquipment.Services
             _reconnectionTimer?.Dispose();
             _context?.Dispose();
         }
+
 
         #endregion
 

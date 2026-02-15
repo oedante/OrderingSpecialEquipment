@@ -17,7 +17,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private TransportProgram _editingProgram;
         private bool _isEditMode;
@@ -33,7 +33,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -76,7 +76,12 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var departments = await _authorizationService.GetAccessibleDepartmentsAsync();
+                using var context = _contextFactory.CreateDbContext();
+
+                var departments = await context.Departments
+                    .Where(d => d.IsActive)
+                    .OrderBy(d => d.Name)
+                    .ToListAsync();
 
                 departments.Insert(0, new Department { Id = "", Name = "Все отделы" });
                 cmbDepartmentFilter.ItemsSource = departments;
@@ -101,7 +106,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var years = await _databaseService.Context.TransportProgram
+                using var context = _contextFactory.CreateDbContext();
+
+                var years = await context.TransportProgram
                     .Select(tp => tp.Year)
                     .Distinct()
                     .OrderByDescending(y => y)
@@ -130,7 +137,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var equipments = await _databaseService.Context.Equipments
+                using var context = _contextFactory.CreateDbContext();
+
+                var equipments = await context.Equipments
                     .Where(e => e.IsActive)
                     .OrderBy(e => e.Name)
                     .ToListAsync();
@@ -153,7 +162,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Загрузка...";
 
-                IQueryable<TransportProgram> query = _databaseService.Context.TransportProgram
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<TransportProgram> query = context.TransportProgram
                     .Include(tp => tp.Department)
                     .Include(tp => tp.Equipment);
 
@@ -300,8 +311,9 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
-                        _databaseService.Context.TransportProgram.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        using var context = _contextFactory.CreateDbContext();
+                        context.TransportProgram.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         await LoadDataAsync();
                         await LoadYearsAsync();
@@ -372,8 +384,10 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Копирование...";
 
+                using var context = _contextFactory.CreateDbContext();
+
                 // Получаем записи из исходного года
-                var sourcePrograms = await _databaseService.Context.TransportProgram
+                var sourcePrograms = await context.TransportProgram
                     .Where(tp => tp.DepartmentId == departmentId && tp.Year == fromYear)
                     .ToListAsync();
 
@@ -386,7 +400,7 @@ namespace OrderingSpecialEquipment.Views
                 }
 
                 // Проверяем, нет ли уже записей в целевом году
-                var existingPrograms = await _databaseService.Context.TransportProgram
+                var existingPrograms = await context.TransportProgram
                     .Where(tp => tp.DepartmentId == departmentId && tp.Year == toYear)
                     .ToListAsync();
 
@@ -400,8 +414,8 @@ namespace OrderingSpecialEquipment.Views
 
                     if (overwriteResult == MessageBoxResult.Yes)
                     {
-                        _databaseService.Context.TransportProgram.RemoveRange(existingPrograms);
-                        await _databaseService.Context.SaveChangesAsync();
+                        context.TransportProgram.RemoveRange(existingPrograms);
+                        await context.SaveChangesAsync();
                     }
                     else
                     {
@@ -437,8 +451,8 @@ namespace OrderingSpecialEquipment.Views
                     newPrograms.Add(newProgram);
                 }
 
-                await _databaseService.Context.TransportProgram.AddRangeAsync(newPrograms);
-                await _databaseService.Context.SaveChangesAsync();
+                await context.TransportProgram.AddRangeAsync(newPrograms);
+                await context.SaveChangesAsync();
 
                 CopyPopup.IsOpen = false;
                 await LoadYearsAsync();
@@ -498,6 +512,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingProgram.DepartmentId = cmbDepartment.SelectedValue.ToString();
                 _editingProgram.Year = (int)cmbYear.SelectedItem;
                 _editingProgram.EquipmentId = cmbEquipment.SelectedValue.ToString();
@@ -520,7 +536,7 @@ namespace OrderingSpecialEquipment.Views
                 if (!_isEditMode)
                 {
                     // Проверка на дубликат
-                    bool exists = await _databaseService.Context.TransportProgram
+                    bool exists = await context.TransportProgram
                         .AnyAsync(tp => tp.DepartmentId == _editingProgram.DepartmentId &&
                                        tp.Year == _editingProgram.Year &&
                                        tp.EquipmentId == _editingProgram.EquipmentId);
@@ -533,14 +549,14 @@ namespace OrderingSpecialEquipment.Views
                     }
 
                     _editingProgram.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.TransportProgram.AddAsync(_editingProgram);
+                    await context.TransportProgram.AddAsync(_editingProgram);
                 }
                 else
                 {
-                    _databaseService.Context.TransportProgram.Update(_editingProgram);
+                    context.TransportProgram.Update(_editingProgram);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 EditPopup.IsOpen = false;
                 await LoadYearsAsync();

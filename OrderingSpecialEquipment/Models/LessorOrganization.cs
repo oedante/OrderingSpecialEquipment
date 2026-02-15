@@ -25,7 +25,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Id")]
         [Display(Name = "Идентификатор", Description = "Уникальный идентификатор организации")]
         [StringLength(10)]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Числовой ключ (автоинкремент)
@@ -41,7 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Name")]
         [Display(Name = "Наименование", Description = "Наименование организации")]
         [StringLength(200)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// ИНН организации
@@ -49,7 +49,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("INN")]
         [Display(Name = "ИНН", Description = "Идентификационный номер налогоплательщика")]
         [StringLength(12)]
-        public string INN { get; set; }
+        public string? INN { get; set; }
 
         /// <summary>
         /// Контактное лицо
@@ -57,7 +57,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("ContactPerson")]
         [Display(Name = "Контактное лицо", Description = "Контактное лицо организации")]
         [StringLength(150)]
-        public string ContactPerson { get; set; }
+        public string? ContactPerson { get; set; }
 
         /// <summary>
         /// Телефон
@@ -66,7 +66,7 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Телефон", Description = "Контактный телефон")]
         [DataType(DataType.PhoneNumber)]
         [StringLength(20)]
-        public string Phone { get; set; }
+        public string? Phone { get; set; }
 
         /// <summary>
         /// Email
@@ -75,7 +75,7 @@ namespace OrderingSpecialEquipment.Models
         [Display(Name = "Email", Description = "Адрес электронной почты")]
         [DataType(DataType.EmailAddress)]
         [StringLength(100)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         /// <summary>
         /// Адрес организации
@@ -83,7 +83,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Address")]
         [Display(Name = "Адрес", Description = "Физический адрес организации")]
         [StringLength(500)]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         /// <summary>
         /// Активна ли организация

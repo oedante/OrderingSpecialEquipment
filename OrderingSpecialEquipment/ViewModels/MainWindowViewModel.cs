@@ -1,4 +1,5 @@
-﻿using OrderingSpecialEquipment.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using OrderingSpecialEquipment.Models;
 using OrderingSpecialEquipment.Services.Interfaces;
 using OrderingSpecialEquipment.Utils;
 using System;
@@ -32,35 +33,19 @@ namespace OrderingSpecialEquipment.ViewModels
         private bool _isEditMode;
         private ShiftRequestViewModel _editingRequest;
         private bool _isPopupOpen;
+        private bool _isLoading;
+        private string _statusMessage = "Готов";
+
+        // Свойства для выпадающих списков
+        private List<Department> _accessibleDepartments = new List<Department>();
+        private List<Warehouse> _accessibleWarehouses = new List<Warehouse>();
+        private List<Equipment> _equipments = new List<Equipment>();
+        private List<LicensePlate> _licensePlates = new List<LicensePlate>();
+        private List<LessorOrganization> _lessorOrganizations = new List<LessorOrganization>();
 
         #endregion
 
         #region Свойства
-
-        /// <summary>
-        /// Доступные отделы для выпадающих списков
-        /// </summary>
-        public List<Department> AccessibleDepartments { get; set; }
-
-        /// <summary>
-        /// Доступные склады для выпадающих списков
-        /// </summary>
-        public List<Warehouse> AccessibleWarehouses { get; set; }
-
-        /// <summary>
-        /// Техника для выпадающих списков
-        /// </summary>
-        public List<Equipment> Equipments { get; set; }
-
-        /// <summary>
-        /// Госномера для выпадающих списков
-        /// </summary>
-        public List<LicensePlate> LicensePlates { get; set; }
-
-        /// <summary>
-        /// Арендодатели для выпадающих списков
-        /// </summary>
-        public List<LessorOrganization> LessorOrganizations { get; set; }
 
         /// <summary>
         /// Видимость левой панели
@@ -94,7 +79,7 @@ namespace OrderingSpecialEquipment.ViewModels
             get => _selectedDate;
             set
             {
-                if (SetProperty(ref _selectedDate, value))
+                if (SetProperty(ref _selectedDate, value.ToUniversalTime().Date))
                 {
                     _ = LoadShiftRequestsAsync();
                 }
@@ -177,6 +162,24 @@ namespace OrderingSpecialEquipment.ViewModels
         }
 
         /// <summary>
+        /// Флаг загрузки данных
+        /// </summary>
+        public bool IsLoading
+        {
+            get => _isLoading;
+            set => SetProperty(ref _isLoading, value);
+        }
+
+        /// <summary>
+        /// Статусное сообщение
+        /// </summary>
+        public string StatusMessage
+        {
+            get => _statusMessage;
+            set => SetProperty(ref _statusMessage, value);
+        }
+
+        /// <summary>
         /// Текущий пользователь
         /// </summary>
         public User CurrentUser => _authenticationService.CurrentUser;
@@ -191,85 +194,59 @@ namespace OrderingSpecialEquipment.ViewModels
         /// </summary>
         public string WindowTitle => $"Управление заявками на спецтехнику - {CurrentUser?.FullName ?? "Не авторизован"}";
 
+        // Свойства для выпадающих списков
+        public List<Department> AccessibleDepartments
+        {
+            get => _accessibleDepartments;
+            set => SetProperty(ref _accessibleDepartments, value);
+        }
+
+        public List<Warehouse> AccessibleWarehouses
+        {
+            get => _accessibleWarehouses;
+            set => SetProperty(ref _accessibleWarehouses, value);
+        }
+
+        public List<Equipment> EquipmentsList
+        {
+            get => _equipments;
+            set => SetProperty(ref _equipments, value);
+        }
+
+        public List<LicensePlate> LicensePlates
+        {
+            get => _licensePlates;
+            set => SetProperty(ref _licensePlates, value);
+        }
+
+        public List<LessorOrganization> LessorOrganizations
+        {
+            get => _lessorOrganizations;
+            set => SetProperty(ref _lessorOrganizations, value);
+        }
+
         #endregion
 
         #region Команды
 
-        /// <summary>
-        /// Команда переключения видимости левой панели
-        /// </summary>
         public ICommand ToggleLeftPanelCommand { get; }
-
-        /// <summary>
-        /// Команда добавления заявки
-        /// </summary>
         public ICommand AddRequestCommand { get; }
-
-        /// <summary>
-        /// Команда редактирования заявки
-        /// </summary>
         public ICommand EditRequestCommand { get; }
-
-        /// <summary>
-        /// Команда сохранения заявки
-        /// </summary>
         public ICommand SaveRequestCommand { get; }
-
-        /// <summary>
-        /// Команда отмены редактирования
-        /// </summary>
         public ICommand CancelEditCommand { get; }
-
-        /// <summary>
-        /// Команда удаления заявки
-        /// </summary>
         public ICommand DeleteRequestCommand { get; }
-
-        /// <summary>
-        /// Команда экспорта в Excel
-        /// </summary>
         public ICommand ExportToExcelCommand { get; }
-
-        /// <summary>
-        /// Команда добавления в избранное
-        /// </summary>
         public ICommand ToggleFavoriteCommand { get; }
-
-        /// <summary>
-        /// Команда перехода к предыдущему дню
-        /// </summary>
         public ICommand PreviousDayCommand { get; }
-
-        /// <summary>
-        /// Команда перехода к следующему дню
-        /// </summary>
         public ICommand NextDayCommand { get; }
-
-        /// <summary>
-        /// Команда открытия настроек подключения
-        /// </summary>
         public ICommand OpenConnectionSettingsCommand { get; }
-
-        /// <summary>
-        /// Команда открытия справочников
-        /// </summary>
         public ICommand OpenDepartmentsCommand { get; }
-
         public ICommand OpenEquipmentsCommand { get; }
-
         public ICommand OpenWarehousesCommand { get; }
-
         public ICommand OpenLessorsCommand { get; }
-
         public ICommand OpenTransportProgramCommand { get; }
-
         public ICommand OpenUsersCommand { get; }
-
-        /// <summary>
-        /// Команда открытия отчетов
-        /// </summary>
         public ICommand OpenTransportReportCommand { get; }
-
         public ICommand OpenShiftReportCommand { get; }
 
         #endregion
@@ -336,7 +313,7 @@ namespace OrderingSpecialEquipment.ViewModels
             };
 
             // Установка начальной даты
-            _selectedDate = DateTime.Today;
+            _selectedDate = DateTime.UtcNow.Date;
         }
 
         #endregion
@@ -351,6 +328,7 @@ namespace OrderingSpecialEquipment.ViewModels
             if (_databaseService.IsConnected && _authenticationService.IsAuthenticated)
             {
                 await LoadDataAsync();
+                await LoadComboBoxDataAsync();
             }
         }
 
@@ -359,8 +337,54 @@ namespace OrderingSpecialEquipment.ViewModels
         /// </summary>
         private async Task LoadDataAsync()
         {
-            await LoadEquipmentAsync();
-            await LoadShiftRequestsAsync();
+            IsLoading = true;
+            try
+            {
+                StatusMessage = "Загрузка данных...";
+                await Task.WhenAll(
+                    LoadEquipmentAsync(),
+                    LoadShiftRequestsAsync()
+                );
+                StatusMessage = "Готов";
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "Ошибка загрузки";
+                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки данных: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// Загрузка данных для выпадающих списков
+        /// </summary>
+        private async Task LoadComboBoxDataAsync()
+        {
+            try
+            {
+                if (!_databaseService.IsConnected) return;
+
+                var departmentsTask = _authorizationService.GetAccessibleDepartmentsAsync();
+                var warehousesTask = _authorizationService.GetAccessibleWarehousesAsync();
+                var equipmentsTask = _databaseService.Context.Equipments.ToListAsync();
+                var platesTask = _databaseService.Context.LicensePlates.ToListAsync();
+                var lessorsTask = _databaseService.Context.LessorOrganizations.ToListAsync();
+
+                await Task.WhenAll(departmentsTask, warehousesTask, equipmentsTask, platesTask, lessorsTask);
+
+                AccessibleDepartments = await departmentsTask;
+                AccessibleWarehouses = await warehousesTask;
+                EquipmentsList = await equipmentsTask;
+                LicensePlates = await platesTask;
+                LessorOrganizations = await lessorsTask;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки данных для combo: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -382,7 +406,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 var departmentIds = departments.Select(d => d.Id).ToList();
 
                 // Получаем текущие заявки для расчета количества
-                var today = DateTime.Today;
+                var today = DateTime.UtcNow.Date;
                 var nightShiftDate = GetNightShiftDate();
 
                 var nightRequests = await _shiftRequestService.GetByDateAndShiftAsync(
@@ -391,20 +415,25 @@ namespace OrderingSpecialEquipment.ViewModels
                 var dayRequests = await _shiftRequestService.GetByDateAndShiftAsync(
                     _isLeftPanelVisible ? today.AddDays(1) : today, 0); // Дневная смена
 
-                var equipmentItems = equipments.Select(e => new EquipmentItemViewModel
-                {
-                    Equipment = e,
-                    IsFavorite = _equipmentService.IsFavoriteAsync(_authenticationService.CurrentUser.Id, e.Id).Result,
-                    NightCount = nightRequests.Count(r => r.EquipmentId == e.Id && departmentIds.Contains(r.DepartmentId)),
-                    DayCount = dayRequests.Count(r => r.EquipmentId == e.Id && departmentIds.Contains(r.DepartmentId))
-                }).ToList();
+                var equipmentItems = new ObservableCollection<EquipmentItemViewModel>();
 
-                EquipmentItems = new ObservableCollection<EquipmentItemViewModel>(equipmentItems);
+                foreach (var e in equipments)
+                {
+                    var isFavorite = await _equipmentService.IsFavoriteAsync(_authenticationService.CurrentUser.Id, e.Id);
+                    equipmentItems.Add(new EquipmentItemViewModel
+                    {
+                        Equipment = e,
+                        IsFavorite = isFavorite,
+                        NightCount = nightRequests.Count(r => r.EquipmentId == e.Id && departmentIds.Contains(r.DepartmentId)),
+                        DayCount = dayRequests.Count(r => r.EquipmentId == e.Id && departmentIds.Contains(r.DepartmentId))
+                    });
+                }
+
+                EquipmentItems = equipmentItems;
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Ошибка при загрузке техники: {ex.Message}",
-                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке техники: {ex.Message}");
             }
         }
 
@@ -435,14 +464,15 @@ namespace OrderingSpecialEquipment.ViewModels
                     targetShift = 1; // Ночная
                 }
 
-                // Загружаем обе смены
-                var nightRequests = await _shiftRequestService.GetByDateAndShiftAsync(targetDate, targetShift);
+                // Загружаем обе смены параллельно
+                var nightTask = _shiftRequestService.GetByDateAndShiftAsync(targetDate, targetShift);
+                var dayTask = _shiftRequestService.GetByDateAndShiftAsync(
+                    _isLeftPanelVisible ? _selectedDate.AddDays(1) : _selectedDate, 0);
 
-                DateTime dayDate = _isLeftPanelVisible ? _selectedDate.AddDays(1) : _selectedDate;
-                var dayRequests = await _shiftRequestService.GetByDateAndShiftAsync(dayDate, 0);
+                await Task.WhenAll(nightTask, dayTask);
 
                 // Объединяем и преобразуем
-                var allRequests = nightRequests.Concat(dayRequests)
+                var allRequests = nightTask.Result.Concat(dayTask.Result)
                     .Select(r => new ShiftRequestViewModel(r, _authorizationService))
                     .OrderBy(r => r.Date)
                     .ThenBy(r => r.Shift)
@@ -453,8 +483,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Ошибка при загрузке заявок: {ex.Message}",
-                    "Ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке заявок: {ex.Message}");
             }
         }
 
@@ -473,32 +502,13 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #region Команды левой панели
 
-        /// <summary>
-        /// Переключение видимости левой панели
-        /// </summary>
         private void ToggleLeftPanel(object parameter)
         {
             IsLeftPanelVisible = !IsLeftPanelVisible;
-
-            // При переключении панели автоматически меняем отображаемую дату
-            if (IsLeftPanelVisible)
-            {
-                // При открытии панели показываем ночь текущего дня и день следующего
-                // Дата уже правильная
-            }
-            else
-            {
-                // При закрытии панели показываем ночь предыдущего дня и день текущего
-                // Дата уже правильная
-            }
-
             _ = LoadShiftRequestsAsync();
             _ = LoadEquipmentAsync();
         }
 
-        /// <summary>
-        /// Переключение избранного
-        /// </summary>
         private async void ToggleFavorite(EquipmentItemViewModel equipmentItem)
         {
             if (equipmentItem == null) return;
@@ -520,7 +530,6 @@ namespace OrderingSpecialEquipment.ViewModels
                     equipmentItem.IsFavorite = true;
                 }
 
-                // Обновляем порядок, если включен фильтр "Только избранное"
                 if (_isOnlyFavorites)
                 {
                     await LoadEquipmentAsync();
@@ -537,24 +546,18 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #region Команды заявок
 
-        /// <summary>
-        /// Проверка возможности добавления заявки
-        /// </summary>
         private bool CanAddRequest(object parameter)
         {
             return _authorizationService.CanWriteTable("ShiftRequests") &&
                    _databaseService.IsConnected;
         }
 
-        /// <summary>
-        /// Добавление новой заявки
-        /// </summary>
         private void AddNewRequest(object parameter)
         {
             var newRequest = new ShiftRequest
             {
                 Date = _selectedDate,
-                Shift = _isLeftPanelVisible ? 1 : 0, // Если панель открыта - ночь, если закрыта - день
+                Shift = _isLeftPanelVisible ? 1 : 0,
                 RequestedCount = 1,
                 CreatedByUserId = _authenticationService.CurrentUser.Id,
                 CreatedAt = DateTime.UtcNow
@@ -566,40 +569,28 @@ namespace OrderingSpecialEquipment.ViewModels
             IsPopupOpen = true;
         }
 
-        /// <summary>
-        /// Проверка возможности редактирования заявки
-        /// </summary>
         private bool CanEditRequest(ShiftRequestViewModel request)
         {
             if (request == null || !_authorizationService.CanWriteTable("ShiftRequests"))
                 return false;
 
-            // Проверяем блокировку
             if (request.IsBlocked && request.LockedByUserId != _authenticationService.CurrentUser.Id)
                 return false;
 
             return true;
         }
 
-        /// <summary>
-        /// Начало редактирования заявки
-        /// </summary>
-        private void StartEditRequest(ShiftRequestViewModel request)
+        private async void StartEditRequest(ShiftRequestViewModel request)
         {
             if (request == null) return;
 
-            // Блокируем заявку
-            _ = _shiftRequestService.LockRequestAsync(request.Key, _authenticationService.CurrentUser.Id);
-
+            await _shiftRequestService.LockRequestAsync(request.Key, _authenticationService.CurrentUser.Id);
             EditingRequest = new ShiftRequestViewModel(request.OriginalRequest, _authorizationService);
             EditingRequest.IsEdit = true;
             IsEditMode = true;
             IsPopupOpen = true;
         }
 
-        /// <summary>
-        /// Проверка возможности сохранения заявки
-        /// </summary>
         private bool CanSaveRequest(object parameter)
         {
             return EditingRequest != null &&
@@ -608,9 +599,6 @@ namespace OrderingSpecialEquipment.ViewModels
                    _databaseService.IsConnected;
         }
 
-        /// <summary>
-        /// Сохранение заявки
-        /// </summary>
         private async void SaveRequest(object parameter)
         {
             try
@@ -619,21 +607,16 @@ namespace OrderingSpecialEquipment.ViewModels
 
                 if (EditingRequest.IsNew)
                 {
-                    // Новая заявка
                     await _shiftRequestService.AddAsync(request);
                 }
                 else
                 {
-                    // Обновление существующей
                     await _shiftRequestService.UpdateAsync(request);
-
-                    // Снимаем блокировку
                     await _shiftRequestService.UnlockRequestAsync(request.Key);
                 }
 
                 CancelEdit(null);
-                await LoadShiftRequestsAsync();
-                await LoadEquipmentAsync();
+                await LoadDataAsync();
             }
             catch (Exception ex)
             {
@@ -642,9 +625,6 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        /// <summary>
-        /// Отмена редактирования
-        /// </summary>
         private async void CancelEdit(object parameter)
         {
             if (EditingRequest != null && !EditingRequest.IsNew)
@@ -657,9 +637,6 @@ namespace OrderingSpecialEquipment.ViewModels
             IsPopupOpen = false;
         }
 
-        /// <summary>
-        /// Проверка возможности удаления заявки
-        /// </summary>
         private bool CanDeleteRequest(ShiftRequestViewModel request)
         {
             return request != null &&
@@ -667,9 +644,6 @@ namespace OrderingSpecialEquipment.ViewModels
                    _databaseService.IsConnected;
         }
 
-        /// <summary>
-        /// Удаление заявки
-        /// </summary>
         private async void DeleteRequest(ShiftRequestViewModel request)
         {
             if (request == null) return;
@@ -685,8 +659,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 try
                 {
                     await _shiftRequestService.DeleteAsync(request.Key);
-                    await LoadShiftRequestsAsync();
-                    await LoadEquipmentAsync();
+                    await LoadDataAsync();
                 }
                 catch (Exception ex)
                 {
@@ -696,9 +669,6 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        /// <summary>
-        /// Создание новой заявки из выбранной техники
-        /// </summary>
         private void CreateNewRequestFromEquipment(EquipmentItemViewModel equipment)
         {
             var newRequest = new ShiftRequest
@@ -717,9 +687,6 @@ namespace OrderingSpecialEquipment.ViewModels
             IsPopupOpen = true;
         }
 
-        /// <summary>
-        /// Экспорт в Excel
-        /// </summary>
         private bool CanExportToExcel(object parameter)
         {
             return _authorizationService.HasSpecialPermission("ExportData") &&
@@ -738,17 +705,11 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #region Навигация по датам
 
-        /// <summary>
-        /// Переход к предыдущему дню
-        /// </summary>
         private void PreviousDay(object parameter)
         {
             SelectedDate = SelectedDate.AddDays(-1);
         }
 
-        /// <summary>
-        /// Переход к следующему дню
-        /// </summary>
         private void NextDay(object parameter)
         {
             SelectedDate = SelectedDate.AddDays(1);
@@ -758,18 +719,12 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #region Настройки подключения
 
-        /// <summary>
-        /// Проверка возможности открытия настроек подключения
-        /// </summary>
         private bool CanOpenConnectionSettings(object parameter)
         {
             return _authorizationService.HasSpecialPermission("ConfigureConnection") ||
                    _authorizationService.IsSystemAdmin;
         }
 
-        /// <summary>
-        /// Открытие окна настроек подключения
-        /// </summary>
         private void OpenConnectionSettings(object parameter)
         {
             var settingsWindow = new Views.ConnectionSettingsWindow();
@@ -779,11 +734,8 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #endregion
 
-        #region Открытие справочников
+        #region Открытие справочников и отчетов
 
-        /// <summary>
-        /// Открытие окна справочника
-        /// </summary>
         private void OpenReference(string referenceName)
         {
             System.Windows.Window window = null;
@@ -814,15 +766,10 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 window.Owner = System.Windows.Application.Current.MainWindow;
                 window.ShowDialog();
-
-                // Обновляем данные после закрытия справочника
                 _ = LoadDataAsync();
             }
         }
 
-        /// <summary>
-        /// Открытие окна отчета
-        /// </summary>
         private void OpenReport(string reportName)
         {
             System.Windows.Window window = null;
@@ -881,7 +828,7 @@ namespace OrderingSpecialEquipment.ViewModels
             set => SetProperty(ref _dayCount, value);
         }
 
-        public string DisplayName => Equipment?.Name;
+        public string DisplayName => Equipment?.Name ?? "";
         public string DisplayCounts => $"Н:{NightCount} Д:{DayCount}";
     }
 
@@ -923,13 +870,12 @@ namespace OrderingSpecialEquipment.ViewModels
             set => SetProperty(ref _isExpanded, value);
         }
 
-        // Свойства для отображения
         public DateTime Date
         {
             get => _request.Date;
             set
             {
-                _request.Date = value;
+                _request.Date = value.ToUniversalTime();
                 OnPropertyChanged();
             }
         }
@@ -958,7 +904,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string EquipmentName => _request.Equipment?.Name;
+        public string EquipmentName => _request.Equipment?.Name ?? "";
 
         public string LicensePlateId
         {
@@ -971,7 +917,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string PlateNumber => _request.LicensePlate?.PlateNumber;
+        public string PlateNumber => _request.LicensePlate?.PlateNumber ?? "";
 
         public string WarehouseId
         {
@@ -984,7 +930,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string WarehouseName => _request.Warehouse?.Name;
+        public string WarehouseName => _request.Warehouse?.Name ?? "";
 
         public string AreaId
         {
@@ -997,7 +943,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string AreaName => _request.Area?.Name;
+        public string AreaName => _request.Area?.Name ?? "";
 
         public string LessorOrganizationId
         {
@@ -1010,7 +956,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string LessorName => _request.LessorOrganization?.Name;
+        public string LessorName => _request.LessorOrganization?.Name ?? "";
 
         public int RequestedCount
         {
@@ -1111,7 +1057,7 @@ namespace OrderingSpecialEquipment.ViewModels
         }
 
         public string CreatedByUserId => _request.CreatedByUserId;
-        public string CreatedByUser => _request.CreatedByUser?.FullName;
+        public string CreatedByUser => _request.CreatedByUser?.FullName ?? "";
         public DateTime CreatedAt => _request.CreatedAt;
 
         public string DepartmentId
@@ -1125,9 +1071,8 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string DepartmentName => _request.Department?.Name;
+        public string DepartmentName => _request.Department?.Name ?? "";
 
-        // Валидация
         public bool IsValid
         {
             get
@@ -1138,7 +1083,6 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        // Доступность полей для редактирования
         public bool CanEditEquipment => _authorizationService.CanWriteTable("Equipments");
         public bool CanEditWarehouse => _authorizationService.CanWriteTable("Warehouses");
         public bool CanEditLessor => _authorizationService.CanWriteTable("LessorOrganizations");

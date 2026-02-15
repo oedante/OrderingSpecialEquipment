@@ -100,6 +100,9 @@ namespace OrderingSpecialEquipment.Views
                     borderError.Visibility = Visibility.Collapsed;
                     _testSuccessful = true;
                     btnSave.IsEnabled = true;
+
+                    // Используем _testSuccessful для отображения дополнительной информации
+                    txtSuccess.Text = "Подключение успешно установлено!";
                 }
                 else
                 {
@@ -130,6 +133,13 @@ namespace OrderingSpecialEquipment.Views
         /// </summary>
         private async void BtnSave_Click(object sender, RoutedEventArgs e)
         {
+            if (!_testSuccessful)
+            {
+                MessageBox.Show("Сначала выполните успешную проверку подключения",
+                    "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             try
             {
                 string connectionString = BuildConnectionString();

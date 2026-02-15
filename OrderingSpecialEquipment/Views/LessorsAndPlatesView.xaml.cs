@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private LessorOrganization _editingLessor;
         private LicensePlate _editingPlate;
@@ -34,7 +34,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -80,7 +80,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Загрузка арендодателей...";
 
-                IQueryable<LessorOrganization> query = _databaseService.Context.LessorOrganizations;
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<LessorOrganization> query = context.LessorOrganizations;
 
                 if (!chkShowInactive.IsChecked == true)
                 {
@@ -109,7 +111,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var equipments = await _databaseService.Context.Equipments
+                using var context = _contextFactory.CreateDbContext();
+
+                var equipments = await context.Equipments
                     .Where(e => e.IsActive)
                     .OrderBy(e => e.Name)
                     .ToListAsync();
@@ -137,12 +141,14 @@ namespace OrderingSpecialEquipment.Views
                     return;
                 }
 
-                var lessor = await _databaseService.Context.LessorOrganizations
+                using var context = _contextFactory.CreateDbContext();
+
+                var lessor = await context.LessorOrganizations
                     .FirstOrDefaultAsync(lo => lo.Id == lessorId);
 
                 txtPlatesTitle.Text = $"Госномера организации: {lessor?.Name}";
 
-                IQueryable<LicensePlate> query = _databaseService.Context.LicensePlates
+                IQueryable<LicensePlate> query = context.LicensePlates
                     .Include(lp => lp.Equipment)
                     .Where(lp => lp.LessorOrganizationId == lessorId);
 
@@ -267,18 +273,20 @@ namespace OrderingSpecialEquipment.Views
                     {
                         txtStatus.Text = "Удаление...";
 
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Удаляем связанные госномера
-                        var plates = await _databaseService.Context.LicensePlates
+                        var plates = await context.LicensePlates
                             .Where(lp => lp.LessorOrganizationId == selected.Id)
                             .ToListAsync();
 
                         if (plates.Any())
                         {
-                            _databaseService.Context.LicensePlates.RemoveRange(plates);
+                            context.LicensePlates.RemoveRange(plates);
                         }
 
-                        _databaseService.Context.LessorOrganizations.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        context.LessorOrganizations.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         await LoadLessorsAsync();
                         await LoadPlatesAsync(null);
@@ -314,6 +322,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingLessor.Name = txtLessorName.Text.Trim();
                 _editingLessor.INN = string.IsNullOrWhiteSpace(txtLessorINN.Text) ? null : txtLessorINN.Text.Trim();
                 _editingLessor.ContactPerson = string.IsNullOrWhiteSpace(txtLessorContact.Text) ? null : txtLessorContact.Text.Trim();
@@ -326,15 +336,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление нового
                     _editingLessor.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.LessorOrganizations.AddAsync(_editingLessor);
+                    await context.LessorOrganizations.AddAsync(_editingLessor);
                 }
                 else
                 {
                     // Обновление существующего
-                    _databaseService.Context.LessorOrganizations.Update(_editingLessor);
+                    context.LessorOrganizations.Update(_editingLessor);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 LessorEditPopup.IsOpen = false;
                 await LoadLessorsAsync();
@@ -462,8 +472,9 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
-                        _databaseService.Context.LicensePlates.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        using var context = _contextFactory.CreateDbContext();
+                        context.LicensePlates.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         if (dgLessors.SelectedItem is LessorOrganization lessor)
                         {
@@ -508,6 +519,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingPlate.PlateNumber = txtPlateNumber.Text.Trim().ToUpper();
                 _editingPlate.EquipmentId = cmbPlateEquipment.SelectedValue.ToString();
                 _editingPlate.Brand = string.IsNullOrWhiteSpace(txtPlateBrand.Text) ? null : txtPlateBrand.Text.Trim();
@@ -529,15 +542,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление нового
                     _editingPlate.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.LicensePlates.AddAsync(_editingPlate);
+                    await context.LicensePlates.AddAsync(_editingPlate);
                 }
                 else
                 {
                     // Обновление существующего
-                    _databaseService.Context.LicensePlates.Update(_editingPlate);
+                    context.LicensePlates.Update(_editingPlate);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 PlateEditPopup.IsOpen = false;
 

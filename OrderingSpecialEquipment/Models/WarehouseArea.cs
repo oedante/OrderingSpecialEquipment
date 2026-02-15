@@ -58,7 +58,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("AreaType")]
         [Display(Name = "Тип территории", Description = "Тип территории (разгрузка, хранение и т.д.)")]
         [StringLength(50)]
-        public string AreaType { get; set; }
+        public string? AreaType { get; set; }
 
         /// <summary>
         /// Максимальная вместимость

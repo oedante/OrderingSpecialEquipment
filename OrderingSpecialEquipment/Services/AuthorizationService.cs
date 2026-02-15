@@ -16,11 +16,12 @@ namespace OrderingSpecialEquipment.Services
         #region Поля
 
         private readonly IAuthenticationService _authenticationService;
-        private readonly IDatabaseService _databaseService;
-        private List<Department> _cachedDepartments;
-        private List<Warehouse> _cachedWarehouses;
+        private readonly IDbContextFactory _contextFactory;
+        private List<Department>? _cachedDepartments;
+        private List<Warehouse>? _cachedWarehouses;
         private DateTime _cacheTime = DateTime.MinValue;
         private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
+        private readonly object _cacheLock = new object();
 
         #endregion
 
@@ -41,13 +42,13 @@ namespace OrderingSpecialEquipment.Services
         /// Конструктор сервиса авторизации
         /// </summary>
         /// <param name="authenticationService">Сервис аутентификации</param>
-        /// <param name="databaseService">Сервис БД</param>
+        /// <param name="contextFactory">Фабрика контекстов БД</param>
         public AuthorizationService(
             IAuthenticationService authenticationService,
-            IDatabaseService databaseService)
+            IDbContextFactory contextFactory)
         {
             _authenticationService = authenticationService;
-            _databaseService = databaseService;
+            _contextFactory = contextFactory;
 
             // Подписываемся на изменение пользователя для сброса кэша
             _authenticationService.UserChanged += (s, e) => ClearCache();
@@ -141,8 +142,10 @@ namespace OrderingSpecialEquipment.Services
                 return true;
             }
 
+            using var context = _contextFactory.CreateDbContext();
+
             // Проверяем наличие доступа
-            return await _databaseService.Context.UserDepartmentAccesses
+            return await context.UserDepartmentAccesses
                 .AnyAsync(uda => uda.UserId == user.Id && uda.DepartmentId == departmentId);
         }
 
@@ -155,39 +158,46 @@ namespace OrderingSpecialEquipment.Services
                 return new List<Department>();
 
             // Проверяем кэш
-            if (_cachedDepartments != null && DateTime.Now - _cacheTime < _cacheDuration)
+            lock (_cacheLock)
             {
-                return _cachedDepartments;
+                if (_cachedDepartments != null && DateTime.Now - _cacheTime < _cacheDuration)
+                {
+                    return _cachedDepartments;
+                }
             }
 
             var user = _authenticationService.CurrentUser;
             if (user == null)
                 return new List<Department>();
 
-            IQueryable<Department> query;
+            using var context = _contextFactory.CreateDbContext();
+            List<Department> departments;
 
             // Администратор или право на все отделы
             if (IsSystemAdmin || user.HasAllDepartments ||
                 _authenticationService.CurrentUserRole?.SPEC_ManageAllDepartments == true)
             {
-                query = _databaseService.Context.Departments.Where(d => d.IsActive);
+                departments = await context.Departments
+                    .Where(d => d.IsActive)
+                    .OrderBy(d => d.Name)
+                    .ToListAsync();
             }
             else
             {
                 // Получаем отделы, к которым есть доступ
-                query = from uda in _databaseService.Context.UserDepartmentAccesses
-                        join d in _databaseService.Context.Departments on uda.DepartmentId equals d.Id
-                        where uda.UserId == user.Id && d.IsActive
-                        select d;
+                departments = await (from uda in context.UserDepartmentAccesses
+                                     join d in context.Departments on uda.DepartmentId equals d.Id
+                                     where uda.UserId == user.Id && d.IsActive
+                                     orderby d.Name
+                                     select d).ToListAsync();
             }
 
-            var departments = await query
-                .OrderBy(d => d.Name)
-                .ToListAsync();
-
             // Обновляем кэш
-            _cachedDepartments = departments;
-            _cacheTime = DateTime.Now;
+            lock (_cacheLock)
+            {
+                _cachedDepartments = departments;
+                _cacheTime = DateTime.Now;
+            }
 
             return departments;
         }
@@ -211,10 +221,12 @@ namespace OrderingSpecialEquipment.Services
                 return true;
             }
 
+            using var context = _contextFactory.CreateDbContext();
+
             // Получаем доступ к отделу
-            var departmentAccess = await _databaseService.Context.UserDepartmentAccesses
+            var departmentAccess = await context.UserDepartmentAccesses
                 .FirstOrDefaultAsync(uda => uda.UserId == user.Id &&
-                    _databaseService.Context.Warehouses.Any(w => w.Id == warehouseId && w.DepartmentId == uda.DepartmentId));
+                    context.Warehouses.Any(w => w.Id == warehouseId && w.DepartmentId == uda.DepartmentId));
 
             if (departmentAccess == null)
                 return false;
@@ -224,7 +236,7 @@ namespace OrderingSpecialEquipment.Services
                 return true;
 
             // Проверяем доступ к конкретному складу
-            return await _databaseService.Context.UserWarehouseAccesses
+            return await context.UserWarehouseAccesses
                 .AnyAsync(uwa => uwa.UserDepartmentAccessKey == departmentAccess.Key &&
                                  uwa.WarehouseId == warehouseId);
         }
@@ -232,38 +244,52 @@ namespace OrderingSpecialEquipment.Services
         /// <summary>
         /// Получение списка доступных складов
         /// </summary>
-        public async Task<List<Warehouse>> GetAccessibleWarehousesAsync(string departmentId = null)
+        public async Task<List<Warehouse>> GetAccessibleWarehousesAsync(string? departmentId = null)
         {
             if (!_authenticationService.IsAuthenticated)
                 return new List<Warehouse>();
 
             // Проверяем кэш
-            if (_cachedWarehouses != null && DateTime.Now - _cacheTime < _cacheDuration)
+            lock (_cacheLock)
             {
-                if (departmentId == null)
-                    return _cachedWarehouses;
-                else
-                    return _cachedWarehouses.Where(w => w.DepartmentId == departmentId).ToList();
+                if (_cachedWarehouses != null && DateTime.Now - _cacheTime < _cacheDuration)
+                {
+                    if (departmentId == null)
+                        return _cachedWarehouses;
+                    else
+                        return _cachedWarehouses.Where(w => w.DepartmentId == departmentId).ToList();
+                }
             }
 
             var user = _authenticationService.CurrentUser;
             if (user == null)
                 return new List<Warehouse>();
 
-            IQueryable<Warehouse> query;
+            using var context = _contextFactory.CreateDbContext();
+            List<Warehouse> warehouses;
 
             // Администратор или право на все отделы
             if (IsSystemAdmin || user.HasAllDepartments ||
                 _authenticationService.CurrentUserRole?.SPEC_ManageAllDepartments == true)
             {
-                query = _databaseService.Context.Warehouses
+                var query = context.Warehouses
                     .Include(w => w.Department)
                     .Where(w => w.IsActive);
+
+                if (!string.IsNullOrEmpty(departmentId))
+                {
+                    query = query.Where(w => w.DepartmentId == departmentId);
+                }
+
+                warehouses = await query
+                    .OrderBy(w => w.Department.Name)
+                    .ThenBy(w => w.Name)
+                    .ToListAsync();
             }
             else
             {
                 // Получаем склады через доступ к отделам
-                var departmentAccesses = await _databaseService.Context.UserDepartmentAccesses
+                var departmentAccesses = await context.UserDepartmentAccesses
                     .Where(uda => uda.UserId == user.Id)
                     .ToListAsync();
 
@@ -274,7 +300,7 @@ namespace OrderingSpecialEquipment.Services
                     if (access.HasAllWarehouses)
                     {
                         // Все склады отдела
-                        var deptWarehouses = await _databaseService.Context.Warehouses
+                        var deptWarehouses = await context.Warehouses
                             .Where(w => w.DepartmentId == access.DepartmentId && w.IsActive)
                             .Select(w => w.Id)
                             .ToListAsync();
@@ -283,7 +309,7 @@ namespace OrderingSpecialEquipment.Services
                     else
                     {
                         // Конкретные склады
-                        var accessWarehouses = await _databaseService.Context.UserWarehouseAccesses
+                        var accessWarehouses = await context.UserWarehouseAccesses
                             .Where(uwa => uwa.UserDepartmentAccessKey == access.Key)
                             .Select(uwa => uwa.WarehouseId)
                             .ToListAsync();
@@ -293,24 +319,27 @@ namespace OrderingSpecialEquipment.Services
 
                 warehouseIds = warehouseIds.Distinct().ToList();
 
-                query = _databaseService.Context.Warehouses
+                var query = context.Warehouses
                     .Include(w => w.Department)
                     .Where(w => warehouseIds.Contains(w.Id) && w.IsActive);
-            }
 
-            if (!string.IsNullOrEmpty(departmentId))
-            {
-                query = query.Where(w => w.DepartmentId == departmentId);
-            }
+                if (!string.IsNullOrEmpty(departmentId))
+                {
+                    query = query.Where(w => w.DepartmentId == departmentId);
+                }
 
-            var warehouses = await query
-                .OrderBy(w => w.Department.Name)
-                .ThenBy(w => w.Name)
-                .ToListAsync();
+                warehouses = await query
+                    .OrderBy(w => w.Department.Name)
+                    .ThenBy(w => w.Name)
+                    .ToListAsync();
+            }
 
             // Обновляем кэш
-            _cachedWarehouses = warehouses;
-            _cacheTime = DateTime.Now;
+            lock (_cacheLock)
+            {
+                _cachedWarehouses = warehouses;
+                _cacheTime = DateTime.Now;
+            }
 
             return warehouses;
         }
@@ -324,9 +353,12 @@ namespace OrderingSpecialEquipment.Services
         /// </summary>
         private void ClearCache()
         {
-            _cachedDepartments = null;
-            _cachedWarehouses = null;
-            _cacheTime = DateTime.MinValue;
+            lock (_cacheLock)
+            {
+                _cachedDepartments = null;
+                _cachedWarehouses = null;
+                _cacheTime = DateTime.MinValue;
+            }
         }
 
         #endregion

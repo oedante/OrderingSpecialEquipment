@@ -18,7 +18,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private List<ReportItem> _reportData;
 
@@ -33,7 +33,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -90,7 +90,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var equipments = await _databaseService.Context.Equipments
+                using var context = _contextFactory.CreateDbContext();
+
+                var equipments = await context.Equipments
                     .Where(e => e.IsActive)
                     .OrderBy(e => e.Name)
                     .ToListAsync();
@@ -157,14 +159,16 @@ namespace OrderingSpecialEquipment.Views
 
                 txtStatus.Text = "Формирование отчета...";
 
-                DateTime dateFrom = dpDateFrom.SelectedDate.Value.Date;
-                DateTime dateTo = dpDateTo.SelectedDate.Value.Date.AddDays(1).AddSeconds(-1);
+                DateTime dateFrom = dpDateFrom.SelectedDate.Value.ToUniversalTime().Date;
+                DateTime dateTo = dpDateTo.SelectedDate.Value.ToUniversalTime().Date.AddDays(1).AddSeconds(-1);
 
                 string departmentId = cmbDepartment.SelectedValue as string;
                 string equipmentId = cmbEquipment.SelectedValue as string;
 
+                using var context = _contextFactory.CreateDbContext();
+
                 // Запрос заявок
-                var query = _databaseService.Context.ShiftRequests
+                var query = context.ShiftRequests
                     .Include(sr => sr.Equipment)
                     .Include(sr => sr.Warehouse)
                     .Include(sr => sr.Area)
@@ -314,7 +318,7 @@ namespace OrderingSpecialEquipment.Views
 
                 columns = new List<(string, Func<ReportItem, object>)>
                 {
-                    ("Дата", r => r.Date),
+                    ("Дата", r => r.Date.ToString("dd.MM.yyyy")),
                     ("Смена", r => r.ShiftName),
                     ("Отдел", r => r.DepartmentName),
                     ("Склад", r => r.WarehouseName),
@@ -342,7 +346,7 @@ namespace OrderingSpecialEquipment.Views
             {
                 columns = new List<(string, Func<ReportItem, object>)>
                 {
-                    ("Дата", r => r.Date),
+                    ("Дата", r => r.Date.ToString("dd.MM.yyyy")),
                     ("Смена", r => r.ShiftName),
                     ("Отдел", r => r.DepartmentName),
                     ("Склад", r => r.WarehouseName),

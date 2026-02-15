@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private Warehouse _editingWarehouse;
         private WarehouseArea _editingArea;
@@ -34,7 +34,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -78,7 +78,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var departments = await _databaseService.Context.Departments
+                using var context = _contextFactory.CreateDbContext();
+
+                var departments = await context.Departments
                     .Where(d => d.IsActive)
                     .OrderBy(d => d.Name)
                     .ToListAsync();
@@ -107,7 +109,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Загрузка складов...";
 
-                IQueryable<Warehouse> query = _databaseService.Context.Warehouses
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<Warehouse> query = context.Warehouses
                     .Include(w => w.Department);
 
                 string selectedDepartmentId = cmbDepartmentFilter.SelectedValue as string;
@@ -146,12 +150,14 @@ namespace OrderingSpecialEquipment.Views
                     return;
                 }
 
-                var warehouse = await _databaseService.Context.Warehouses
+                using var context = _contextFactory.CreateDbContext();
+
+                var warehouse = await context.Warehouses
                     .FirstOrDefaultAsync(w => w.Id == warehouseId);
 
                 txtAreasTitle.Text = $"Территории склада: {warehouse?.Name}";
 
-                var areas = await _databaseService.Context.WarehouseAreas
+                var areas = await context.WarehouseAreas
                     .Where(a => a.WarehouseId == warehouseId)
                     .OrderBy(a => a.Name)
                     .ToListAsync();
@@ -270,18 +276,20 @@ namespace OrderingSpecialEquipment.Views
                     {
                         txtStatus.Text = "Удаление...";
 
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Удаляем связанные территории
-                        var areas = await _databaseService.Context.WarehouseAreas
+                        var areas = await context.WarehouseAreas
                             .Where(a => a.WarehouseId == selected.Id)
                             .ToListAsync();
 
                         if (areas.Any())
                         {
-                            _databaseService.Context.WarehouseAreas.RemoveRange(areas);
+                            context.WarehouseAreas.RemoveRange(areas);
                         }
 
-                        _databaseService.Context.Warehouses.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        context.Warehouses.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         await LoadWarehousesAsync();
                         await LoadAreasAsync(null);
@@ -324,6 +332,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingWarehouse.Name = txtWarehouseName.Text.Trim();
                 _editingWarehouse.DepartmentId = cmbWarehouseDepartment.SelectedValue.ToString();
                 _editingWarehouse.Address = string.IsNullOrWhiteSpace(txtWarehouseAddress.Text) ? null : txtWarehouseAddress.Text.Trim();
@@ -333,15 +343,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление нового
                     _editingWarehouse.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.Warehouses.AddAsync(_editingWarehouse);
+                    await context.Warehouses.AddAsync(_editingWarehouse);
                 }
                 else
                 {
                     // Обновление существующего
-                    _databaseService.Context.Warehouses.Update(_editingWarehouse);
+                    context.Warehouses.Update(_editingWarehouse);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 WarehouseEditPopup.IsOpen = false;
                 await LoadWarehousesAsync();
@@ -463,8 +473,9 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
-                        _databaseService.Context.WarehouseAreas.Remove(selected);
-                        await _databaseService.Context.SaveChangesAsync();
+                        using var context = _contextFactory.CreateDbContext();
+                        context.WarehouseAreas.Remove(selected);
+                        await context.SaveChangesAsync();
 
                         if (dgWarehouses.SelectedItem is Warehouse warehouse)
                         {
@@ -502,6 +513,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingArea.Name = txtAreaName.Text.Trim();
                 _editingArea.AreaType = cmbAreaType.SelectedItem is ComboBoxItem item ? item.Content.ToString() : null;
 
@@ -520,15 +533,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление новой
                     _editingArea.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.WarehouseAreas.AddAsync(_editingArea);
+                    await context.WarehouseAreas.AddAsync(_editingArea);
                 }
                 else
                 {
                     // Обновление существующей
-                    _databaseService.Context.WarehouseAreas.Update(_editingArea);
+                    context.WarehouseAreas.Update(_editingArea);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 AreaEditPopup.IsOpen = false;
 

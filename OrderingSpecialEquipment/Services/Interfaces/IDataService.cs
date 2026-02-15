@@ -21,7 +21,7 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// <summary>
         /// Получение записи по ID
         /// </summary>
-        Task<T> GetByIdAsync(object id);
+        Task<T?> GetByIdAsync(object id);
 
         /// <summary>
         /// Добавление записи
@@ -61,11 +61,6 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// <summary>
         /// Количество записей
         /// </summary>
-        Task<int> CountAsync(Expression<Func<T, bool>> predicate = null);
-
-        /// <summary>
-        /// Сохранение изменений
-        /// </summary>
-        Task<int> SaveChangesAsync();
+        Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null);
     }
 }

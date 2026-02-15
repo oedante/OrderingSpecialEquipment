@@ -23,6 +23,11 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         DbConnectionFactory.DatabaseType? DatabaseType { get; }
 
         /// <summary>
+        /// Получение строки подключения
+        /// </summary>
+        string GetConnectionString();
+
+        /// <summary>
         /// Инициализация подключения
         /// </summary>
         Task<bool> InitializeAsync(string connectionString = null);

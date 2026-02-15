@@ -25,7 +25,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Id")]
         [Display(Name = "Идентификатор", Description = "Уникальный идентификатор госномера")]
         [StringLength(10)]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Числовой ключ (автоинкремент)
@@ -41,7 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("PlateNumber")]
         [Display(Name = "Госномер", Description = "Государственный номер техники")]
         [StringLength(20)]
-        public string PlateNumber { get; set; }
+        public string PlateNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Идентификатор техники
@@ -50,7 +50,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("EquipmentId")]
         [Display(Name = "Техника", Description = "Идентификатор техники")]
         [StringLength(10)]
-        public string EquipmentId { get; set; }
+        public string EquipmentId { get; set; } = string.Empty;
 
         /// <summary>
         /// Идентификатор организации-арендодателя
@@ -59,7 +59,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("LessorOrganizationId")]
         [Display(Name = "Арендодатель", Description = "Идентификатор организации-арендодателя")]
         [StringLength(10)]
-        public string LessorOrganizationId { get; set; }
+        public string LessorOrganizationId { get; set; } = string.Empty;
 
         /// <summary>
         /// Марка техники
@@ -67,7 +67,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Brand")]
         [Display(Name = "Марка", Description = "Марка техники")]
         [StringLength(100)]
-        public string Brand { get; set; }
+        public string? Brand { get; set; }
 
         /// <summary>
         /// Год выпуска
@@ -83,7 +83,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Capacity")]
         [Display(Name = "Грузоподъемность", Description = "Грузоподъемность или емкость")]
         [StringLength(50)]
-        public string Capacity { get; set; }
+        public string? Capacity { get; set; }
 
         /// <summary>
         /// VIN номер
@@ -91,7 +91,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("VIN")]
         [Display(Name = "VIN", Description = "Идентификационный номер транспортного средства")]
         [StringLength(50)]
-        public string VIN { get; set; }
+        public string? VIN { get; set; }
 
         /// <summary>
         /// Активен ли госномер
@@ -116,13 +116,13 @@ namespace OrderingSpecialEquipment.Models
         /// Техника
         /// </summary>
         [ForeignKey("EquipmentId")]
-        public virtual Equipment Equipment { get; set; }
+        public virtual Equipment? Equipment { get; set; }
 
         /// <summary>
         /// Организация-арендодатель
         /// </summary>
         [ForeignKey("LessorOrganizationId")]
-        public virtual LessorOrganization LessorOrganization { get; set; }
+        public virtual LessorOrganization? LessorOrganization { get; set; }
 
         /// <summary>
         /// Список заявок с этим госномером

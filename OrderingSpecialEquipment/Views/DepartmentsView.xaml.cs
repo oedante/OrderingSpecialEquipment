@@ -16,7 +16,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private Department _editingDepartment;
         private bool _isEditMode;
@@ -32,7 +32,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
 
             // Проверка прав
@@ -73,7 +73,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtStatus.Text = "Загрузка...";
 
-                IQueryable<Department> query = _databaseService.Context.Departments;
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<Department> query = context.Departments;
 
                 if (!chkShowInactive.IsChecked == true)
                 {
@@ -172,21 +174,24 @@ namespace OrderingSpecialEquipment.Views
                     {
                         txtStatus.Text = "Удаление...";
 
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Проверяем, есть ли связанные данные
-                        bool hasWarehouses = await _databaseService.Context.Warehouses
+                        bool hasWarehouses = await context.Warehouses
                             .AnyAsync(w => w.DepartmentId == selected.Id);
 
-                        bool hasUsers = await _databaseService.Context.Users
+                        bool hasUsers = await context.Users
                             .AnyAsync(u => u.DefaultDepartmentId == selected.Id);
 
-                        bool hasAccess = await _databaseService.Context.UserDepartmentAccesses
+                        bool hasAccess = await context.UserDepartmentAccesses
                             .AnyAsync(uda => uda.DepartmentId == selected.Id);
 
                         if (hasWarehouses || hasUsers || hasAccess)
                         {
                             // Если есть связи, просто деактивируем
                             selected.IsActive = false;
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Departments.Update(selected);
+                            await context.SaveChangesAsync();
 
                             MessageBox.Show("Отдел деактивирован, так как есть связанные данные.",
                                 "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -194,8 +199,8 @@ namespace OrderingSpecialEquipment.Views
                         else
                         {
                             // Если связей нет, удаляем физически
-                            _databaseService.Context.Departments.Remove(selected);
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Departments.Remove(selected);
+                            await context.SaveChangesAsync();
                         }
 
                         await LoadDataAsync();
@@ -245,6 +250,8 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 _editingDepartment.Name = txtName.Text.Trim();
                 _editingDepartment.IsActive = chkIsActive.IsChecked == true;
 
@@ -252,15 +259,15 @@ namespace OrderingSpecialEquipment.Views
                 {
                     // Добавление нового
                     _editingDepartment.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.Departments.AddAsync(_editingDepartment);
+                    await context.Departments.AddAsync(_editingDepartment);
                 }
                 else
                 {
                     // Обновление существующего
-                    _databaseService.Context.Departments.Update(_editingDepartment);
+                    context.Departments.Update(_editingDepartment);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 EditPopup.IsOpen = false;
                 await LoadDataAsync();

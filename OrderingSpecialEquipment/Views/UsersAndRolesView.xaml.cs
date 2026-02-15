@@ -13,22 +13,13 @@ namespace OrderingSpecialEquipment.Views
     /// <summary>
     /// Логика взаимодействия для UsersAndRolesView.xaml
     /// </summary>
-    /// <summary>
-    /// Логика взаимодействия для UsersAndRolesView.xaml
-    /// </summary>
     public partial class UsersAndRolesView : Window
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly IAuthorizationService _authorizationService;
         private readonly IAuthenticationService _authenticationService;
-
-        // Эти поля не используются, но оставим для будущего использования
-        // private Role _editingRole;
-        // private User _editingUser;
-        // private bool _isRoleEditMode;
-        // private bool _isUserEditMode;
 
         private string _selectedUserId = string.Empty;
         private string _selectedDepartmentId = string.Empty;
@@ -44,7 +35,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _authorizationService = App.Services.GetRequiredService<IAuthorizationService>();
             _authenticationService = App.Services.GetRequiredService<IAuthenticationService>();
 
@@ -80,7 +71,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtRolesStatus.Text = "Загрузка...";
 
-                var roles = await _databaseService.Context.Roles
+                using var context = _contextFactory.CreateDbContext();
+
+                var roles = await context.Roles
                     .OrderBy(r => r.Name)
                     .ToListAsync();
 
@@ -104,7 +97,9 @@ namespace OrderingSpecialEquipment.Views
             {
                 txtUsersStatus.Text = "Загрузка...";
 
-                IQueryable<User> query = _databaseService.Context.Users
+                using var context = _contextFactory.CreateDbContext();
+
+                IQueryable<User> query = context.Users
                     .Include(u => u.Role)
                     .Include(u => u.DefaultDepartment);
 
@@ -135,7 +130,9 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                var users = await _databaseService.Context.Users
+                using var context = _contextFactory.CreateDbContext();
+
+                var users = await context.Users
                     .Where(u => u.IsActive)
                     .OrderBy(u => u.FullName)
                     .ToListAsync();
@@ -162,14 +159,16 @@ namespace OrderingSpecialEquipment.Views
                     return;
                 }
 
+                using var context = _contextFactory.CreateDbContext();
+
                 // Получаем все отделы
-                var allDepartments = await _databaseService.Context.Departments
+                var allDepartments = await context.Departments
                     .Where(d => d.IsActive)
                     .OrderBy(d => d.Name)
                     .ToListAsync();
 
                 // Получаем доступы пользователя
-                var userAccesses = await _databaseService.Context.UserDepartmentAccesses
+                var userAccesses = await context.UserDepartmentAccesses
                     .Where(uda => uda.UserId == userId)
                     .ToDictionaryAsync(uda => uda.DepartmentId);
 
@@ -210,13 +209,15 @@ namespace OrderingSpecialEquipment.Views
                     return;
                 }
 
-                var department = await _databaseService.Context.Departments
+                using var context = _contextFactory.CreateDbContext();
+
+                var department = await context.Departments
                     .FirstOrDefaultAsync(d => d.Id == departmentId);
 
                 txtWarehousesTitle.Text = $"Склады отдела: {department?.Name}";
 
                 // Получаем доступ к отделу
-                var departmentAccess = await _databaseService.Context.UserDepartmentAccesses
+                var departmentAccess = await context.UserDepartmentAccesses
                     .FirstOrDefaultAsync(uda => uda.UserId == userId && uda.DepartmentId == departmentId);
 
                 if (departmentAccess == null)
@@ -228,13 +229,13 @@ namespace OrderingSpecialEquipment.Views
                 chkHasAllWarehouses.IsChecked = departmentAccess.HasAllWarehouses;
 
                 // Получаем все склады отдела
-                var allWarehouses = await _databaseService.Context.Warehouses
+                var allWarehouses = await context.Warehouses
                     .Where(w => w.DepartmentId == departmentId && w.IsActive)
                     .OrderBy(w => w.Name)
                     .ToListAsync();
 
-                // Получаем доступы пользователя к складам - ИСПРАВЛЕНО
-                var userWarehouseAccesses = await _databaseService.Context.UserWarehouseAccesses
+                // Получаем доступы пользователя к складам
+                var userWarehouseAccesses = await context.UserWarehouseAccesses
                     .Where(uwa => uwa.UserDepartmentAccessKey == departmentAccess.Key)
                     .Select(uwa => uwa.WarehouseId)
                     .ToListAsync();
@@ -328,23 +329,26 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Проверяем, есть ли пользователи с этой ролью
-                        bool hasUsers = await _databaseService.Context.Users
+                        bool hasUsers = await context.Users
                             .AnyAsync(u => u.RoleId == selected.Id);
 
                         if (hasUsers)
                         {
                             // Если есть пользователи, просто деактивируем
                             selected.IsActive = false;
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Roles.Update(selected);
+                            await context.SaveChangesAsync();
 
                             MessageBox.Show("Роль деактивирована, так как есть пользователи с этой ролью",
                                 "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
                         }
                         else
                         {
-                            _databaseService.Context.Roles.Remove(selected);
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Roles.Remove(selected);
+                            await context.SaveChangesAsync();
                         }
 
                         await LoadRolesAsync();
@@ -437,15 +441,18 @@ namespace OrderingSpecialEquipment.Views
                 {
                     try
                     {
+                        using var context = _contextFactory.CreateDbContext();
+
                         // Проверяем, есть ли связанные данные
-                        bool hasShiftRequests = await _databaseService.Context.ShiftRequests
+                        bool hasShiftRequests = await context.ShiftRequests
                             .AnyAsync(sr => sr.CreatedByUserId == selected.Id);
 
                         if (hasShiftRequests)
                         {
                             // Если есть заявки, просто деактивируем
                             selected.IsActive = false;
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Users.Update(selected);
+                            await context.SaveChangesAsync();
 
                             MessageBox.Show("Пользователь деактивирован, так как есть связанные заявки",
                                 "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -453,17 +460,17 @@ namespace OrderingSpecialEquipment.Views
                         else
                         {
                             // Удаляем связанные доступы
-                            var accesses = await _databaseService.Context.UserDepartmentAccesses
+                            var accesses = await context.UserDepartmentAccesses
                                 .Where(uda => uda.UserId == selected.Id)
                                 .ToListAsync();
 
                             if (accesses.Any())
                             {
-                                _databaseService.Context.UserDepartmentAccesses.RemoveRange(accesses);
+                                context.UserDepartmentAccesses.RemoveRange(accesses);
                             }
 
-                            _databaseService.Context.Users.Remove(selected);
-                            await _databaseService.Context.SaveChangesAsync();
+                            context.Users.Remove(selected);
+                            await context.SaveChangesAsync();
                         }
 
                         await LoadUsersAsync();
@@ -541,7 +548,9 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
-                var existingAccess = await _databaseService.Context.UserDepartmentAccesses
+                using var context = _contextFactory.CreateDbContext();
+
+                var existingAccess = await context.UserDepartmentAccesses
                     .FirstOrDefaultAsync(uda => uda.UserId == _selectedUserId &&
                                                 uda.DepartmentId == selected.Department.Id);
 
@@ -551,7 +560,7 @@ namespace OrderingSpecialEquipment.Views
                     if (existingAccess != null)
                     {
                         existingAccess.HasAllWarehouses = chkHasAllWarehouses.IsChecked == true;
-                        _databaseService.Context.UserDepartmentAccesses.Update(existingAccess);
+                        context.UserDepartmentAccesses.Update(existingAccess);
                     }
                 }
                 else
@@ -566,11 +575,11 @@ namespace OrderingSpecialEquipment.Views
                             HasAllWarehouses = chkHasAllWarehouses.IsChecked == true,
                             CreatedAt = DateTime.UtcNow
                         };
-                        await _databaseService.Context.UserDepartmentAccesses.AddAsync(newAccess);
+                        await context.UserDepartmentAccesses.AddAsync(newAccess);
                     }
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 await LoadUserDepartmentsAsync(_selectedUserId);
 
                 MessageBox.Show("Доступ сохранен", "Успешно",
@@ -594,7 +603,9 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
-                var departmentAccess = await _databaseService.Context.UserDepartmentAccesses
+                using var context = _contextFactory.CreateDbContext();
+
+                var departmentAccess = await context.UserDepartmentAccesses
                     .FirstOrDefaultAsync(uda => uda.UserId == _selectedUserId &&
                                                 uda.DepartmentId == _selectedDepartmentId);
 
@@ -608,13 +619,13 @@ namespace OrderingSpecialEquipment.Views
                 // Если установлен флаг "все склады", удаляем все конкретные доступы
                 if (chkHasAllWarehouses.IsChecked == true)
                 {
-                    var existingAccesses = await _databaseService.Context.UserWarehouseAccesses
+                    var existingAccesses = await context.UserWarehouseAccesses
                         .Where(uwa => uwa.UserDepartmentAccessKey == departmentAccess.Key)
                         .ToListAsync();
 
                     if (existingAccesses.Any())
                     {
-                        _databaseService.Context.UserWarehouseAccesses.RemoveRange(existingAccesses);
+                        context.UserWarehouseAccesses.RemoveRange(existingAccesses);
                     }
                 }
                 else
@@ -626,7 +637,7 @@ namespace OrderingSpecialEquipment.Views
                         .ToHashSet();
 
                     // Получаем существующие доступы
-                    var existingAccesses = await _databaseService.Context.UserWarehouseAccesses
+                    var existingAccesses = await context.UserWarehouseAccesses
                         .Where(uwa => uwa.UserDepartmentAccessKey == departmentAccess.Key)
                         .ToListAsync();
 
@@ -637,7 +648,7 @@ namespace OrderingSpecialEquipment.Views
 
                     if (toRemove.Any())
                     {
-                        _databaseService.Context.UserWarehouseAccesses.RemoveRange(toRemove);
+                        context.UserWarehouseAccesses.RemoveRange(toRemove);
                     }
 
                     // Добавляем новые
@@ -653,11 +664,11 @@ namespace OrderingSpecialEquipment.Views
 
                     if (toAdd.Any())
                     {
-                        await _databaseService.Context.UserWarehouseAccesses.AddRangeAsync(toAdd);
+                        await context.UserWarehouseAccesses.AddRangeAsync(toAdd);
                     }
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
                 await LoadWarehousesForDepartmentAsync(_selectedUserId, _selectedDepartmentId);
 
                 MessageBox.Show("Доступ к складам сохранен", "Успешно",

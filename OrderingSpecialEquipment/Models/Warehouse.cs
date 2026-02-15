@@ -58,7 +58,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Address")]
         [Display(Name = "Адрес", Description = "Физический адрес склада")]
         [StringLength(500)]
-        public string Address { get; set; }
+        public string? Address { get; set; }
 
         /// <summary>
         /// Активен ли склад

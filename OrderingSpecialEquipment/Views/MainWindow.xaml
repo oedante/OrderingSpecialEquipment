@@ -363,6 +363,17 @@
             </StatusBarItem>
         </StatusBar>
 
+        <!-- Индикатор загрузки -->
+        <Border Grid.Row="3" Background="#80FFFFFF" 
+        Visibility="{Binding IsLoading, Converter={StaticResource BoolToVis}}"
+        Panel.ZIndex="1000">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Загрузка данных..." FontSize="24" FontWeight="Bold" 
+                   Foreground="#FF333333" Margin="0,0,0,20"/>
+                <ProgressBar IsIndeterminate="True" Height="20" Width="300"/>
+            </StackPanel>
+        </Border>
+
         <!-- Всплывающее окно для добавления/редактирования заявки -->
         <Popup x:Name="EditPopup" 
                IsOpen="{Binding IsPopupOpen}"

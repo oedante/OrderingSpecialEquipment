@@ -15,7 +15,7 @@ namespace OrderingSpecialEquipment.Views
     {
         #region Поля
 
-        private readonly IDatabaseService _databaseService;
+        private readonly IDbContextFactory _contextFactory;
         private readonly Role _role;
         private readonly bool _isEditMode;
 
@@ -30,7 +30,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _role = new Role { IsActive = true };
             _isEditMode = false;
         }
@@ -42,7 +42,7 @@ namespace OrderingSpecialEquipment.Views
         {
             InitializeComponent();
 
-            _databaseService = App.Services.GetRequiredService<IDatabaseService>();
+            _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _role = role;
             _isEditMode = true;
 
@@ -190,12 +190,14 @@ namespace OrderingSpecialEquipment.Views
 
             try
             {
+                using var context = _contextFactory.CreateDbContext();
+
                 SaveRoleData();
 
                 if (!_isEditMode)
                 {
                     // Проверка уникальности кода
-                    bool codeExists = await _databaseService.Context.Roles
+                    bool codeExists = await context.Roles
                         .AnyAsync(r => r.Code == _role.Code);
 
                     if (codeExists)
@@ -206,12 +208,12 @@ namespace OrderingSpecialEquipment.Views
                     }
 
                     _role.CreatedAt = DateTime.UtcNow;
-                    await _databaseService.Context.Roles.AddAsync(_role);
+                    await context.Roles.AddAsync(_role);
                 }
                 else
                 {
                     // Проверка уникальности кода (исключая текущую роль)
-                    bool codeExists = await _databaseService.Context.Roles
+                    bool codeExists = await context.Roles
                         .AnyAsync(r => r.Code == _role.Code && r.Id != _role.Id);
 
                     if (codeExists)
@@ -221,10 +223,10 @@ namespace OrderingSpecialEquipment.Views
                         return;
                     }
 
-                    _databaseService.Context.Roles.Update(_role);
+                    context.Roles.Update(_role);
                 }
 
-                await _databaseService.Context.SaveChangesAsync();
+                await context.SaveChangesAsync();
 
                 DialogResult = true;
                 Close();
