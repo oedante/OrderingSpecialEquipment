@@ -17,8 +17,8 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// Получение заявок с пагинацией
         /// </summary>
         Task<List<ShiftRequest>> GetPagedAsync(int page, int pageSize,
-            Expression<Func<ShiftRequest, bool>> predicate = null,
-            Func<IQueryable<ShiftRequest>, IOrderedQueryable<ShiftRequest>> orderBy = null);
+            Expression<Func<ShiftRequest, bool>>? predicate = null,
+            Func<IQueryable<ShiftRequest>, IOrderedQueryable<ShiftRequest>>? orderBy = null);
 
         /// <summary>
         /// Получение количества часов по транспортной программе для техники

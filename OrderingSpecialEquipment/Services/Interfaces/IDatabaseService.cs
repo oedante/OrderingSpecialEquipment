@@ -28,6 +28,11 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         string GetConnectionString();
 
         /// <summary>
+        /// Создание нового экземпляра контекста БД
+        /// </summary>
+        ApplicationDbContext CreateDbContext();
+
+        /// <summary>
         /// Инициализация подключения
         /// </summary>
         Task<bool> InitializeAsync(string connectionString = null);

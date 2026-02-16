@@ -41,11 +41,18 @@ namespace OrderingSpecialEquipment.ViewModels
         /// <returns>True, если значение изменилось</returns>
         protected virtual bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
         {
+            // Добавьте защиту от рекурсии
             if (EqualityComparer<T>.Default.Equals(field, value))
                 return false;
 
             field = value;
-            OnPropertyChanged(propertyName);
+
+            // Проверка на пустое имя свойства
+            if (!string.IsNullOrEmpty(propertyName))
+            {
+                OnPropertyChanged(propertyName);
+            }
+
             return true;
         }
 

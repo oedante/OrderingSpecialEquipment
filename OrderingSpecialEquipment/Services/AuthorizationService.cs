@@ -47,8 +47,8 @@ namespace OrderingSpecialEquipment.Services
             IAuthenticationService authenticationService,
             IDbContextFactory contextFactory)
         {
-            _authenticationService = authenticationService;
-            _contextFactory = contextFactory;
+            _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
+            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
 
             // Подписываемся на изменение пользователя для сброса кэша
             _authenticationService.UserChanged += (s, e) => ClearCache();

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrderingSpecialEquipment.Models;
+using OrderingSpecialEquipment.Converters;
 
 namespace OrderingSpecialEquipment.Data
 {
@@ -115,6 +116,26 @@ namespace OrderingSpecialEquipment.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            // Глобальный конвертер для всех DateTime полей
+            var utcConverter = new UtcDateTimeConverter();
+            var nullableUtcConverter = new UtcNullableDateTimeConverter();
+
+            // Применяем ко всем свойствам DateTime в модели
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        property.SetValueConverter(utcConverter);
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetValueConverter(nullableUtcConverter);
+                    }
+                }
+            }
+
             #region Конфигурация Departments
 
             modelBuilder.Entity<Department>(entity =>
@@ -227,7 +248,7 @@ namespace OrderingSpecialEquipment.Data
 
             modelBuilder.Entity<Role>(entity =>
             {
-                entity.HasKey(e => e.Id); // Первичный ключ - Id, а не Key
+                entity.HasKey(e => e.Id);
                 entity.HasIndex(e => e.Key).IsUnique();
                 entity.HasIndex(e => e.Code).IsUnique();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
@@ -244,13 +265,11 @@ namespace OrderingSpecialEquipment.Data
                 entity.HasIndex(e => e.WindowsLogin).IsUnique();
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Связь с Role - явно указываем, что используем Id роли
                 entity.HasOne(e => e.Role)
                     .WithMany(e => e.Users)
                     .HasForeignKey(e => e.RoleId)
-                    .HasPrincipalKey(e => e.Id); // Явно указываем, что связь по Id
+                    .HasPrincipalKey(e => e.Id);
 
-                // Связь с Department
                 entity.HasOne(e => e.DefaultDepartment)
                     .WithMany(e => e.Users)
                     .HasForeignKey(e => e.DefaultDepartmentId)

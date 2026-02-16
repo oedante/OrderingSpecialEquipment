@@ -5,62 +5,33 @@
              Startup="Application_Startup"
              DispatcherUnhandledException="Application_DispatcherUnhandledException">
     <Application.Resources>
-        <!-- Общие ресурсы приложения -->
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Здесь можно подключить темы или стили -->
+                <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Базовые стили для всех окон -->
             <Style TargetType="Window">
                 <Setter Property="FontFamily" Value="Segoe UI"/>
                 <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
             </Style>
 
-            <Style TargetType="Button">
-                <Setter Property="Padding" Value="8,4"/>
-                <Setter Property="Margin" Value="2"/>
-                <Setter Property="Cursor" Value="Hand"/>
-            </Style>
+            <!-- Глобальные стили по умолчанию -->
+            <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
+            <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}"/>
+            <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBox}"/>
+            <Style TargetType="DatePicker" BasedOn="{StaticResource ModernDatePicker}"/>
+            <Style TargetType="CheckBox" BasedOn="{StaticResource ModernCheckBox}"/>
+            <Style TargetType="DataGrid" BasedOn="{StaticResource ModernDataGrid}"/>
+            <Style TargetType="ListBox" BasedOn="{StaticResource ModernListBox}"/>
+            <Style TargetType="ListBoxItem" BasedOn="{StaticResource ModernListBoxItem}"/>
+            <Style TargetType="GroupBox" BasedOn="{StaticResource ModernGroupBox}"/>
+            <Style TargetType="StatusBar" BasedOn="{StaticResource ModernStatusBar}"/>
+            <Style TargetType="ToolBar" BasedOn="{StaticResource ModernToolBar}"/>
 
-            <Style TargetType="TextBox">
-                <Setter Property="Padding" Value="4"/>
-                <Setter Property="Margin" Value="2"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-                <Setter Property="Validation.ErrorTemplate">
-                    <Setter.Value>
-                        <ControlTemplate>
-                            <DockPanel LastChildFill="True">
-                                <Border Background="Red" Width="20" Height="20" 
-                                        CornerRadius="10" Margin="2" 
-                                        ToolTip="{Binding ElementName=adorner, Path=AdornedElement.(Validation.Errors)[0].ErrorContent}">
-                                    <TextBlock Text="!" Foreground="White" 
-                                               HorizontalAlignment="Center" 
-                                               VerticalAlignment="Center"
-                                               FontWeight="Bold"/>
-                                </Border>
-                                <AdornedElementPlaceholder x:Name="adorner"/>
-                            </DockPanel>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style TargetType="ComboBox">
-                <Setter Property="Padding" Value="4"/>
-                <Setter Property="Margin" Value="2"/>
-                <Setter Property="VerticalAlignment" Value="Center"/>
-            </Style>
-
-            <Style TargetType="DataGrid">
-                <Setter Property="AutoGenerateColumns" Value="False"/>
-                <Setter Property="AlternatingRowBackground" Value="#FFF5F5F5"/>
-                <Setter Property="HeadersVisibility" Value="Column"/>
-                <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-                <Setter Property="BorderBrush" Value="#FFD0D0D0"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="RowHeight" Value="30"/>
-            </Style>
+            <!-- DropShadowEffect для использования во всем приложении -->
+            <DropShadowEffect x:Key="DropShadowEffect" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

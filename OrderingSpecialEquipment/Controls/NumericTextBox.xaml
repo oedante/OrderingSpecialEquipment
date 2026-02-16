@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="OrderingSpecialEquipment.Controls.NumericTextBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="32" d:DesignWidth="150">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <TextBox x:Name="ValueTextBox"
+                 Grid.Column="0"
+                 Text="{Binding TextValue, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}"
+                 Style="{StaticResource ModernTextBox}"
+                 Height="32"
+                 PreviewTextInput="ValueTextBox_PreviewTextInput"
+                 LostFocus="ValueTextBox_LostFocus"/>
+        <Button Grid.Column="1"
+                Content="▲"
+                Width="24"
+                Height="16"
+                FontSize="10"
+                Padding="0"
+                Margin="2,0,0,0"
+                Click="Increase_Click"/>
+        <Button Grid.Column="2"
+                Content="▼"
+                Width="24"
+                Height="16"
+                FontSize="10"
+                Padding="0"
+                Margin="2,0,0,0"
+                Click="Decrease_Click"/>
+    </Grid>
+</UserControl>

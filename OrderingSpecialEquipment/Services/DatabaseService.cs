@@ -91,10 +91,21 @@ namespace OrderingSpecialEquipment.Services
             _context?.Dispose();
         }
 
-
         #endregion
 
         #region Публичные методы
+
+        /// <summary>
+        /// Создание нового экземпляра контекста БД
+        /// </summary>
+        public ApplicationDbContext CreateDbContext()
+        {
+            if (!_isConnected || _databaseType == null)
+                throw new InvalidOperationException("База данных не подключена");
+
+            var options = DbConnectionFactory.CreateDbContextOptions(_connectionString, _databaseType.Value);
+            return new ApplicationDbContext(options);
+        }
 
         /// <summary>
         /// Инициализация подключения

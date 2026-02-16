@@ -31,6 +31,10 @@ namespace OrderingSpecialEquipment.Data
             switch (dbType)
             {
                 case DatabaseType.PostgreSQL:
+                    // Настройка для PostgreSQL с правильной обработкой DateTime
+                    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+                    AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
                     optionsBuilder.UseNpgsql(connectionString, options =>
                     {
                         options.CommandTimeout(60);
@@ -82,8 +86,9 @@ namespace OrderingSpecialEquipment.Data
                         return false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Ошибка проверки подключения: {ex.Message}");
                 return false;
             }
         }
@@ -96,13 +101,30 @@ namespace OrderingSpecialEquipment.Data
             if (string.IsNullOrEmpty(connectionString))
                 return null;
 
-            if (connectionString.Contains("Host=") || connectionString.Contains("Database=") && connectionString.Contains("Username="))
+            if (connectionString.Contains("Host=") ||
+                (connectionString.Contains("Database=") && connectionString.Contains("Username=")))
                 return DatabaseType.PostgreSQL;
 
             if (connectionString.Contains("Server=") || connectionString.Contains("Initial Catalog="))
                 return DatabaseType.SqlServer;
 
             return null;
+        }
+
+        /// <summary>
+        /// Формирование строки подключения для PostgreSQL из параметров
+        /// </summary>
+        public static string BuildPostgreSqlConnectionString(string host, string port, string database, string username, string password)
+        {
+            return $"Host={host};Port={port};Database={database};Username={username};Password={password};";
+        }
+
+        /// <summary>
+        /// Формирование строки подключения для SQL Server из параметров
+        /// </summary>
+        public static string BuildSqlServerConnectionString(string server, string database, string username, string password)
+        {
+            return $"Server={server};Database={database};User Id={username};Password={password};TrustServerCertificate=True;";
         }
     }
 }

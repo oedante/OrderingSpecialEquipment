@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
-using System.IO;
+using System;
 
 namespace OrderingSpecialEquipment.Data
 {
@@ -18,7 +17,17 @@ namespace OrderingSpecialEquipment.Data
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
             // По умолчанию используем PostgreSQL для разработки
-            optionsBuilder.UseNpgsql("Host=217.114.43.126;Port=5432;Database=OrderingSpecialEquipment;Username=student;Password=Qq587655!;");
+            var connectionString = "Host=217.114.43.126;Port=5432;Database=OrderingSpecialEquipment;Username=student;Password=Qq587655!";
+
+            // Настройка для PostgreSQL с правильной обработкой DateTime
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+            AppContext.SetSwitch("Npgsql.DisableDateTimeInfinityConversions", true);
+
+            optionsBuilder.UseNpgsql(connectionString, options =>
+            {
+                options.CommandTimeout(60);
+                options.EnableRetryOnFailure(3);
+            });
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

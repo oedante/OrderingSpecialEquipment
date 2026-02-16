@@ -15,8 +15,8 @@ namespace OrderingSpecialEquipment.Services
         #region Поля
 
         private readonly IDatabaseService _databaseService;
-        private User _currentUser;
-        private Role _currentUserRole;
+        private User? _currentUser;
+        private Role? _currentUserRole;
 
         #endregion
 
@@ -25,12 +25,12 @@ namespace OrderingSpecialEquipment.Services
         /// <summary>
         /// Текущий пользователь
         /// </summary>
-        public User CurrentUser => _currentUser;
+        public User? CurrentUser => _currentUser;
 
         /// <summary>
         /// Роль текущего пользователя
         /// </summary>
-        public Role CurrentUserRole => _currentUserRole;
+        public Role? CurrentUserRole => _currentUserRole;
 
         /// <summary>
         /// Выполнен ли вход
@@ -44,7 +44,7 @@ namespace OrderingSpecialEquipment.Services
         /// <summary>
         /// Событие изменения пользователя
         /// </summary>
-        public event EventHandler<User> UserChanged;
+        public event EventHandler<User?>? UserChanged;
 
         #endregion
 
@@ -56,7 +56,7 @@ namespace OrderingSpecialEquipment.Services
         /// <param name="databaseService">Сервис БД</param>
         public AuthenticationService(IDatabaseService databaseService)
         {
-            _databaseService = databaseService;
+            _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
         }
 
         #endregion
@@ -155,7 +155,7 @@ namespace OrderingSpecialEquipment.Services
                 var windowsIdentity = WindowsIdentity.GetCurrent();
                 if (windowsIdentity != null)
                 {
-                    string fullLogin = windowsIdentity.Name;
+                    string fullLogin = windowsIdentity.Name ?? string.Empty;
 
                     // Нормализация: удаляем домен, оставляем только имя пользователя
                     if (fullLogin.Contains("\\"))

@@ -14,6 +14,12 @@ namespace OrderingSpecialEquipment.Utils
     /// </summary>
     public static class ExcelExporter
     {
+        static ExcelExporter()
+        {
+            // Устанавливаем лицензию EPPlus (для некоммерческого использования)
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        }
+
         /// <summary>
         /// Экспорт данных в Excel
         /// </summary>
@@ -30,8 +36,12 @@ namespace OrderingSpecialEquipment.Utils
         {
             try
             {
-                // Устанавливаем лицензию EPPlus (для некоммерческого использования)
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                if (data == null || !data.Any())
+                {
+                    MessageBox.Show("Нет данных для экспорта", "Информация",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
 
                 using (var package = new ExcelPackage())
                 {
@@ -59,6 +69,10 @@ namespace OrderingSpecialEquipment.Utils
                                 worksheet.Cells[row, i + 1].Value = dateTime;
                             else if (value is decimal decimalValue)
                                 worksheet.Cells[row, i + 1].Value = decimalValue;
+                            else if (value is double doubleValue)
+                                worksheet.Cells[row, i + 1].Value = doubleValue;
+                            else if (value is int intValue)
+                                worksheet.Cells[row, i + 1].Value = intValue;
                             else if (value is bool boolValue)
                                 worksheet.Cells[row, i + 1].Value = boolValue ? "Да" : "Нет";
                             else
@@ -78,7 +92,8 @@ namespace OrderingSpecialEquipment.Utils
                         var saveDialog = new Microsoft.Win32.SaveFileDialog
                         {
                             Filter = "Excel files (*.xlsx)|*.xlsx|All files (*.*)|*.*",
-                            FileName = $"Экспорт_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx"
+                            FileName = $"Экспорт_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+                            DefaultExt = "xlsx"
                         };
 
                         if (saveDialog.ShowDialog() == true)
@@ -93,15 +108,20 @@ namespace OrderingSpecialEquipment.Utils
 
                     File.WriteAllBytes(fileName, package.GetAsByteArray());
 
-                    MessageBox.Show($"Данные успешно экспортированы в файл:\n{fileName}",
-                        "Экспорт завершен", MessageBoxButton.OK, MessageBoxImage.Information);
+                    var result = MessageBox.Show(
+                        $"Данные успешно экспортированы в файл:\n{fileName}\n\nОткрыть файл?",
+                        "Экспорт завершен",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
 
-                    // Открываем файл
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    if (result == MessageBoxResult.Yes)
                     {
-                        FileName = fileName,
-                        UseShellExecute = true
-                    });
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = fileName,
+                            UseShellExecute = true
+                        });
+                    }
                 }
             }
             catch (Exception ex)
@@ -118,7 +138,7 @@ namespace OrderingSpecialEquipment.Utils
         {
             var columns = new List<(string, Func<Models.ShiftRequest, object>)>
             {
-                ("Дата", r => r.Date),
+                ("Дата", r => r.Date.ToString("dd.MM.yyyy")),
                 ("Смена", r => r.Shift == 0 ? "Дневная" : "Ночная"),
                 ("Отдел", r => r.Department?.Name),
                 ("Склад", r => r.Warehouse?.Name),
@@ -133,8 +153,10 @@ namespace OrderingSpecialEquipment.Utils
                 ("Отработано", r => r.IsWorked),
                 ("Не предоставлена", r => r.IsNotProvided),
                 ("Актировка", r => r.IsWeatherCancellation),
+                ("Причина отмены", r => r.CancellationReason),
                 ("Комментарий", r => r.Comment),
-                ("Создал", r => r.CreatedByUser?.FullName)
+                ("Создал", r => r.CreatedByUser?.FullName),
+                ("Дата создания", r => r.CreatedAt.ToString("dd.MM.yyyy HH:mm"))
             };
 
             ExportToExcel(requests, columns, "Заявки");

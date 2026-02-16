@@ -124,12 +124,16 @@ namespace OrderingSpecialEquipment.Views
         {
             if (cmbPeriod.SelectedItem is ComboBoxItem selected)
             {
-                string periodType = selected.Tag.ToString();
+                string periodType = selected.Tag?.ToString() ?? "";
 
-                panelMonth.Visibility = periodType == "Month" ? Visibility.Visible : Visibility.Collapsed;
-                panelQuarter.Visibility = periodType == "Quarter" ? Visibility.Visible : Visibility.Collapsed;
+                if (panelMonth != null)
+                    panelMonth.Visibility = periodType == "Month" ? Visibility.Visible : Visibility.Collapsed;
 
-                lblYear.Visibility = periodType == "Year" ? Visibility.Collapsed : Visibility.Visible;
+                if (panelQuarter != null)
+                    panelQuarter.Visibility = periodType == "Quarter" ? Visibility.Visible : Visibility.Collapsed;
+
+                if (lblYear != null)
+                    lblYear.Visibility = periodType == "Year" ? Visibility.Collapsed : Visibility.Visible;
             }
         }
 

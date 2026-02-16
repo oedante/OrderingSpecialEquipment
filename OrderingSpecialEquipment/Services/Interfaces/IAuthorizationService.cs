@@ -40,7 +40,7 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// <summary>
         /// Получение списка доступных складов
         /// </summary>
-        Task<List<Warehouse>> GetAccessibleWarehousesAsync(string departmentId = null);
+        Task<List<Warehouse>> GetAccessibleWarehousesAsync(string? departmentId = null);
 
         /// <summary>
         /// Является ли пользователь системным администратором

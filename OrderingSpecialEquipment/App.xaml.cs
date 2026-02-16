@@ -21,8 +21,8 @@ namespace OrderingSpecialEquipment
     {
         #region Поля
 
-        private static IServiceProvider _serviceProvider;
-        private ILogger _logger;
+        private static IServiceProvider? _serviceProvider;
+        private ILogger? _logger;
 
         #endregion
 
@@ -31,7 +31,7 @@ namespace OrderingSpecialEquipment
         /// <summary>
         /// Сервис провайдер для доступа к DI контейнеру
         /// </summary>
-        public static IServiceProvider Services => _serviceProvider;
+        public static IServiceProvider Services => _serviceProvider ?? throw new InvalidOperationException("Service provider not initialized");
 
         #endregion
 
@@ -57,7 +57,7 @@ namespace OrderingSpecialEquipment
         {
             try
             {
-                _logger.Information("Приложение запускается");
+                _logger?.Information("Приложение запускается");
 
                 // Настройка DI контейнера
                 ConfigureServices();
@@ -86,16 +86,16 @@ namespace OrderingSpecialEquipment
                 }
                 else
                 {
-                    _logger.Warning("Аутентификация пропущена - нет подключения к БД");
+                    _logger?.Warning("Аутентификация пропущена - нет подключения к БД");
                 }
 
                 // Запуск главного окна
-                var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+                var mainWindow = Services.GetRequiredService<MainWindow>();
                 mainWindow.Show();
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Критическая ошибка при запуске приложения");
+                _logger?.Error(ex, "Критическая ошибка при запуске приложения");
                 MessageBox.Show(
                     $"Произошла критическая ошибка при запуске приложения:\n{ex.Message}",
                     "Ошибка",
@@ -111,7 +111,7 @@ namespace OrderingSpecialEquipment
         private void Application_DispatcherUnhandledException(object sender,
             System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
-            _logger.Error(e.Exception, "Необработанное исключение");
+            _logger?.Error(e.Exception, "Необработанное исключение");
 
             // Показываем сообщение только для критических ошибок
             if (!e.Exception.Message.Contains("BindingExpression"))
@@ -131,7 +131,7 @@ namespace OrderingSpecialEquipment
         /// </summary>
         protected override void OnExit(ExitEventArgs e)
         {
-            _logger.Information("Приложение завершает работу");
+            _logger?.Information("Приложение завершает работу");
 
             // Освобождение ресурсов
             if (_serviceProvider is IDisposable disposable)
@@ -153,18 +153,33 @@ namespace OrderingSpecialEquipment
         /// </summary>
         private void InitializeLogging()
         {
-            string logPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "OrderingSpecialEquipment",
-                "logs",
-                "log-.txt");
+            try
+            {
+                string logPath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "OrderingSpecialEquipment",
+                    "logs",
+                    "log-.txt");
 
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
-                .CreateLogger();
+                // Создаем директорию для логов
+                string logDirectory = Path.GetDirectoryName(logPath) ?? string.Empty;
+                if (!string.IsNullOrEmpty(logDirectory) && !Directory.Exists(logDirectory))
+                {
+                    Directory.CreateDirectory(logDirectory);
+                }
 
-            _logger = Log.Logger;
+                Log.Logger = new LoggerConfiguration()
+                    .MinimumLevel.Debug()
+                    .WriteTo.File(logPath, rollingInterval: RollingInterval.Day)
+                    .CreateLogger();
+
+                _logger = Log.Logger;
+            }
+            catch (Exception ex)
+            {
+                // Если не удалось инициализировать логирование, используем Debug.WriteLine
+                System.Diagnostics.Debug.WriteLine($"Ошибка инициализации логирования: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -201,10 +216,12 @@ namespace OrderingSpecialEquipment
             services.AddTransient<UsersAndRolesView>();
             services.AddTransient<TransportProgramReportView>();
             services.AddTransient<ShiftRequestsReportView>();
+            services.AddTransient<RoleEditDialog>();
+            services.AddTransient<UserEditDialog>();
 
             _serviceProvider = services.BuildServiceProvider();
 
-            _logger.Information("DI контейнер настроен");
+            _logger?.Information("DI контейнер настроен");
         }
 
         /// <summary>
@@ -217,24 +234,24 @@ namespace OrderingSpecialEquipment
                 // Проверяем, есть ли сохраненная строка подключения
                 if (!ConnectionStringHelper.HasConnectionString())
                 {
-                    _logger.Information("Строка подключения не найдена, создаем по умолчанию");
+                    _logger?.Information("Строка подключения не найдена, создаем по умолчанию");
 
                     // Строка подключения по умолчанию для студента
-                    string defaultConnectionString = "Host=217.114.43.126;Port=5432;Database=OrderingSpecialEquipment;Username=student;Password=Qq587655!";
+                    string defaultConnectionString = ConnectionStringHelper.GetDefaultConnectionString();
 
                     // Сохраняем строку подключения
                     ConnectionStringHelper.SaveConnectionString(defaultConnectionString);
 
-                    _logger.Information("Строка подключения по умолчанию сохранена");
+                    _logger?.Information("Строка подключения по умолчанию сохранена");
                 }
                 else
                 {
-                    _logger.Information("Используется существующая строка подключения");
+                    _logger?.Information("Используется существующая строка подключения");
                 }
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Ошибка при настройке строки подключения по умолчанию");
+                _logger?.Error(ex, "Ошибка при настройке строки подключения по умолчанию");
             }
         }
 
@@ -243,7 +260,7 @@ namespace OrderingSpecialEquipment
         /// </summary>
         private async Task<bool> CheckDatabaseConnectionAsync()
         {
-            var databaseService = _serviceProvider.GetRequiredService<IDatabaseService>();
+            var databaseService = Services.GetRequiredService<IDatabaseService>();
 
             try
             {
@@ -252,18 +269,18 @@ namespace OrderingSpecialEquipment
 
                 if (connected)
                 {
-                    _logger.Information("Подключение к БД установлено");
+                    _logger?.Information("Подключение к БД установлено");
                 }
                 else
                 {
-                    _logger.Warning("Не удалось подключиться к БД при запуске");
+                    _logger?.Warning("Не удалось подключиться к БД при запуске");
                 }
 
                 return connected;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Ошибка при подключении к БД");
+                _logger?.Error(ex, "Ошибка при подключении к БД");
                 return false;
             }
         }
@@ -273,7 +290,7 @@ namespace OrderingSpecialEquipment
         /// </summary>
         private async Task AuthenticateUserAsync()
         {
-            var authService = _serviceProvider.GetRequiredService<IAuthenticationService>();
+            var authService = Services.GetRequiredService<IAuthenticationService>();
 
             try
             {
@@ -281,12 +298,12 @@ namespace OrderingSpecialEquipment
 
                 if (authenticated)
                 {
-                    _logger.Information("Пользователь {User} аутентифицирован",
+                    _logger?.Information("Пользователь {User} аутентифицирован",
                         authService.CurrentUser?.WindowsLogin);
                 }
                 else
                 {
-                    _logger.Warning("Аутентификация не удалась");
+                    _logger?.Warning("Аутентификация не удалась");
 
                     MessageBox.Show(
                         "Не удалось выполнить аутентификацию. Проверьте наличие пользователя в системе.\n\n" +
@@ -298,7 +315,7 @@ namespace OrderingSpecialEquipment
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Ошибка при аутентификации");
+                _logger?.Error(ex, "Ошибка при аутентификации");
             }
         }
 

@@ -37,17 +37,23 @@ namespace OrderingSpecialEquipment.Views
             // Загружаем дополнительные данные для выпадающих списков
             Loaded += async (s, e) =>
             {
-                await _viewModel.InitializeAsync();
-
-                // Проверяем статус подключения
-                var dbService = App.Services.GetRequiredService<IDatabaseService>();
-                if (!dbService.IsConnected)
+                try
                 {
-                    // Если нет подключения, показываем уведомление в статусбаре
-                    System.Diagnostics.Debug.WriteLine("Нет подключения к БД при загрузке главного окна");
-                }
+                    await _viewModel.InitializeAsync();
 
-                await LoadComboBoxDataAsync();
+                    // Проверяем статус подключения
+                    var dbService = App.Services.GetRequiredService<IDatabaseService>();
+                    if (!dbService.IsConnected)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Нет подключения к БД при загрузке главного окна");
+                    }
+
+                    await LoadComboBoxDataAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке окна: {ex.Message}");
+                }
             };
         }
 
@@ -84,13 +90,20 @@ namespace OrderingSpecialEquipment.Views
         /// </summary>
         private void FavoriteStar_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {
-            if (sender is TextBlock textBlock && textBlock.Tag is EquipmentItemViewModel equipment)
+            try
             {
-                if (_viewModel.ToggleFavoriteCommand.CanExecute(equipment))
+                if (sender is TextBlock textBlock && textBlock.Tag is EquipmentItemViewModel equipment)
                 {
-                    _viewModel.ToggleFavoriteCommand.Execute(equipment);
+                    if (_viewModel.ToggleFavoriteCommand.CanExecute(equipment))
+                    {
+                        _viewModel.ToggleFavoriteCommand.Execute(equipment);
+                    }
+                    e.Handled = true;
                 }
-                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка при переключении избранного: {ex.Message}");
             }
         }
 
@@ -101,15 +114,23 @@ namespace OrderingSpecialEquipment.Views
         /// <summary>
         /// Двойной клик по заявке
         /// </summary>
-        private void RequestBorder_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        private void DataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
-            if (sender is Border border && border.Tag is ShiftRequestViewModel request)
+            try
             {
-                if (_viewModel.EditRequestCommand.CanExecute(request))
+                var dataGrid = (DataGrid)sender;
+                if (dataGrid.SelectedItem is ShiftRequestViewModel request)
                 {
-                    _viewModel.EditRequestCommand.Execute(request);
+                    System.Diagnostics.Debug.WriteLine($"Даблклик по заявке: {request.Key}");
+                    if (_viewModel.EditRequestCommand.CanExecute(request))
+                    {
+                        _viewModel.EditRequestCommand.Execute(request);
+                    }
                 }
-                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка двойного клика: {ex.Message}");
             }
         }
 
@@ -133,23 +154,26 @@ namespace OrderingSpecialEquipment.Views
 
                     // Загружаем отделы
                     var departments = await authService.GetAccessibleDepartmentsAsync();
-                    _viewModel.GetType().GetProperty("AccessibleDepartments")?.SetValue(_viewModel, departments);
+                    _viewModel.AccessibleDepartments = departments;
 
                     // Загружаем склады
                     var warehouses = await authService.GetAccessibleWarehousesAsync();
-                    _viewModel.GetType().GetProperty("AccessibleWarehouses")?.SetValue(_viewModel, warehouses);
+                    _viewModel.AccessibleWarehouses = warehouses;
 
                     // Загружаем технику
                     var equipments = await dbService.Context.Equipments.ToListAsync();
-                    _viewModel.GetType().GetProperty("Equipments")?.SetValue(_viewModel, equipments);
+                    _viewModel.AllEquipments = equipments;
 
                     // Загружаем госномера
-                    var plates = await dbService.Context.LicensePlates.ToListAsync();
-                    _viewModel.GetType().GetProperty("LicensePlates")?.SetValue(_viewModel, plates);
+                    var plates = await dbService.Context.LicensePlates
+                        .Include(lp => lp.Equipment)
+                        .Include(lp => lp.LessorOrganization)
+                        .ToListAsync();
+                    _viewModel.AllLicensePlates = plates;
 
                     // Загружаем арендодателей
                     var lessors = await dbService.Context.LessorOrganizations.ToListAsync();
-                    _viewModel.GetType().GetProperty("LessorOrganizations")?.SetValue(_viewModel, lessors);
+                    _viewModel.AllLessorOrganizations = lessors;
 
                     System.Diagnostics.Debug.WriteLine("Данные для выпадающих списков загружены");
                 }
@@ -160,7 +184,6 @@ namespace OrderingSpecialEquipment.Views
             }
             catch (Exception ex)
             {
-                // Логируем ошибку, но не показываем пользователю
                 System.Diagnostics.Debug.WriteLine($"Ошибка загрузки данных для combo: {ex.Message}");
             }
         }

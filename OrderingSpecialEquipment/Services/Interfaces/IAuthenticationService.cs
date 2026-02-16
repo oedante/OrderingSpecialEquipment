@@ -10,12 +10,12 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// <summary>
         /// Текущий пользователь
         /// </summary>
-        User CurrentUser { get; }
+        User? CurrentUser { get; }
 
         /// <summary>
         /// Роль текущего пользователя
         /// </summary>
-        Role CurrentUserRole { get; }
+        Role? CurrentUserRole { get; }
 
         /// <summary>
         /// Выполнен ли вход
@@ -35,6 +35,6 @@ namespace OrderingSpecialEquipment.Services.Interfaces
         /// <summary>
         /// Событие изменения пользователя
         /// </summary>
-        event EventHandler<User> UserChanged;
+        event EventHandler<User?> UserChanged;
     }
 }
