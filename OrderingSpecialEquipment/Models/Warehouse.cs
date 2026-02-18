@@ -25,7 +25,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Id")]
         [Display(Name = "Идентификатор", Description = "Уникальный идентификатор склада")]
         [StringLength(10)]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Числовой ключ (автоинкремент)
@@ -41,7 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Name")]
         [Display(Name = "Наименование", Description = "Наименование склада")]
         [StringLength(100)]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Идентификатор отдела
@@ -50,7 +50,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("DepartmentId")]
         [Display(Name = "Отдел", Description = "Идентификатор отдела, к которому относится склад")]
         [StringLength(10)]
-        public string DepartmentId { get; set; }
+        public string DepartmentId { get; set; } = string.Empty;
 
         /// <summary>
         /// Адрес склада
@@ -83,12 +83,18 @@ namespace OrderingSpecialEquipment.Models
         /// Отдел
         /// </summary>
         [ForeignKey("DepartmentId")]
-        public virtual Department Department { get; set; }
+        public virtual Department Department { get; set; } = null!;
 
         /// <summary>
-        /// Список территорий склада
+        /// Список связей с территориями (через связь многие-ко-многим)
         /// </summary>
-        public virtual ICollection<WarehouseArea> WarehouseAreas { get; set; }
+        public virtual ICollection<WarehouseAreaLink> AreaLinks { get; set; }
+
+        /// <summary>
+        /// Список территорий (для удобства доступа)
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<WarehouseArea> Areas => AreaLinks?.Select(al => al.Area) ?? new List<WarehouseArea>();
 
         /// <summary>
         /// Список заявок на этом складе
@@ -109,7 +115,7 @@ namespace OrderingSpecialEquipment.Models
         /// </summary>
         public Warehouse()
         {
-            WarehouseAreas = new HashSet<WarehouseArea>();
+            AreaLinks = new HashSet<WarehouseAreaLink>();
             ShiftRequests = new HashSet<ShiftRequest>();
             UserWarehouseAccesses = new HashSet<UserWarehouseAccess>();
         }

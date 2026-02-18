@@ -6,6 +6,7 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Animation;
 using System.Windows.Media;
 
 namespace OrderingSpecialEquipment.Views
@@ -18,6 +19,7 @@ namespace OrderingSpecialEquipment.Views
         #region Поля
 
         private readonly MainWindowViewModel _viewModel;
+        private bool _isAnimating = false;
 
         #endregion
 
@@ -34,27 +36,75 @@ namespace OrderingSpecialEquipment.Views
             _viewModel = App.Services.GetRequiredService<MainWindowViewModel>();
             DataContext = _viewModel;
 
-            // Загружаем дополнительные данные для выпадающих списков
+            // Подписываемся на изменение видимости панели для запуска анимации
+            _viewModel.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(MainWindowViewModel.IsLeftPanelVisible) && !_isAnimating)
+                {
+                    StartPanelAnimation(_viewModel.IsLeftPanelVisible);
+                }
+            };
+
+            // Загружаем данные при загрузке окна
             Loaded += async (s, e) =>
             {
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine("MainWindow: Загрузка окна");
                     await _viewModel.InitializeAsync();
-
-                    // Проверяем статус подключения
-                    var dbService = App.Services.GetRequiredService<IDatabaseService>();
-                    if (!dbService.IsConnected)
-                    {
-                        System.Diagnostics.Debug.WriteLine("Нет подключения к БД при загрузке главного окна");
-                    }
-
-                    await LoadComboBoxDataAsync();
+                    System.Diagnostics.Debug.WriteLine("MainWindow: Загрузка завершена");
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке окна: {ex.Message}");
                 }
             };
+        }
+
+        #endregion
+
+        #region Анимация панели
+
+        /// <summary>
+        /// Запуск анимации панели
+        /// </summary>
+        private void StartPanelAnimation(bool show)
+        {
+            try
+            {
+                _isAnimating = true;
+
+                // Создаем анимацию для ширины колонки
+                var animation = new GridLengthAnimation
+                {
+                    From = new GridLength(LeftPanelColumn.Width.Value),
+                    To = show ? new GridLength(250) : new GridLength(0),
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+
+                // Подписываемся на завершение анимации
+                animation.Completed += (s, e) =>
+                {
+                    _isAnimating = false;
+                    _viewModel.UpdateDisplayedShiftsAsync();
+
+                    // Устанавливаем финальное значение в ViewModel
+                    _viewModel.LeftPanelWidth = show ? 250 : 0;
+                };
+
+                // Запускаем анимацию
+                LeftPanelColumn.BeginAnimation(ColumnDefinitionWidthAnimation.WidthProperty, animation);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка при анимации панели: {ex.Message}");
+                // Если анимация не сработала, просто устанавливаем ширину
+                LeftPanelColumn.Width = show ? new GridLength(250) : new GridLength(0);
+                _viewModel.LeftPanelWidth = show ? 250 : 0;
+                _viewModel.UpdateDisplayedShiftsAsync();
+                _isAnimating = false;
+            }
         }
 
         #endregion
@@ -121,7 +171,7 @@ namespace OrderingSpecialEquipment.Views
                 var dataGrid = (DataGrid)sender;
                 if (dataGrid.SelectedItem is ShiftRequestViewModel request)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Даблклик по заявке: {request.Key}");
+                    System.Diagnostics.Debug.WriteLine($"Двойной клик по заявке: {request.Key}");
                     if (_viewModel.EditRequestCommand.CanExecute(request))
                     {
                         _viewModel.EditRequestCommand.Execute(request);
@@ -135,59 +185,103 @@ namespace OrderingSpecialEquipment.Views
         }
 
         #endregion
+    }
 
-        #region Вспомогательные методы
+    /// <summary>
+    /// Класс для анимации GridLength
+    /// </summary>
+    public class GridLengthAnimation : AnimationTimeline
+    {
+        public override Type TargetPropertyType => typeof(GridLength);
 
-        /// <summary>
-        /// Загрузка данных для выпадающих списков в popup
-        /// </summary>
-        private async System.Threading.Tasks.Task LoadComboBoxDataAsync()
+        protected override Freezable CreateInstanceCore()
         {
-            try
-            {
-                var authService = App.Services.GetRequiredService<IAuthorizationService>();
-                var dbService = App.Services.GetRequiredService<IDatabaseService>();
-
-                if (dbService.IsConnected)
-                {
-                    System.Diagnostics.Debug.WriteLine("Загрузка данных для выпадающих списков...");
-
-                    // Загружаем отделы
-                    var departments = await authService.GetAccessibleDepartmentsAsync();
-                    _viewModel.AccessibleDepartments = departments;
-
-                    // Загружаем склады
-                    var warehouses = await authService.GetAccessibleWarehousesAsync();
-                    _viewModel.AccessibleWarehouses = warehouses;
-
-                    // Загружаем технику
-                    var equipments = await dbService.Context.Equipments.ToListAsync();
-                    _viewModel.AllEquipments = equipments;
-
-                    // Загружаем госномера
-                    var plates = await dbService.Context.LicensePlates
-                        .Include(lp => lp.Equipment)
-                        .Include(lp => lp.LessorOrganization)
-                        .ToListAsync();
-                    _viewModel.AllLicensePlates = plates;
-
-                    // Загружаем арендодателей
-                    var lessors = await dbService.Context.LessorOrganizations.ToListAsync();
-                    _viewModel.AllLessorOrganizations = lessors;
-
-                    System.Diagnostics.Debug.WriteLine("Данные для выпадающих списков загружены");
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine("Пропуск загрузки данных для выпадающих списков - нет подключения к БД");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки данных для combo: {ex.Message}");
-            }
+            return new GridLengthAnimation();
         }
 
-        #endregion
+        public GridLength From
+        {
+            get { return (GridLength)GetValue(FromProperty); }
+            set { SetValue(FromProperty, value); }
+        }
+
+        public static readonly DependencyProperty FromProperty =
+            DependencyProperty.Register("From", typeof(GridLength), typeof(GridLengthAnimation));
+
+        public GridLength To
+        {
+            get { return (GridLength)GetValue(ToProperty); }
+            set { SetValue(ToProperty, value); }
+        }
+
+        public static readonly DependencyProperty ToProperty =
+            DependencyProperty.Register("To", typeof(GridLength), typeof(GridLengthAnimation));
+
+        public IEasingFunction EasingFunction
+        {
+            get { return (IEasingFunction)GetValue(EasingFunctionProperty); }
+            set { SetValue(EasingFunctionProperty, value); }
+        }
+
+        public static readonly DependencyProperty EasingFunctionProperty =
+            DependencyProperty.Register("EasingFunction", typeof(IEasingFunction), typeof(GridLengthAnimation));
+
+        public event EventHandler Completed;
+
+        public override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock)
+        {
+            if (animationClock.CurrentProgress == null)
+                return From;
+
+            double progress = animationClock.CurrentProgress.Value;
+
+            if (EasingFunction != null)
+                progress = EasingFunction.Ease(progress);
+
+            if (animationClock.CurrentState == ClockState.Filling)
+            {
+                if (animationClock.CurrentProgress == 1.0)
+                {
+                    Completed?.Invoke(this, EventArgs.Empty);
+                }
+            }
+
+            double fromValue = From.Value;
+            double toValue = To.Value;
+            double newValue = fromValue + (toValue - fromValue) * progress;
+
+            return new GridLength(newValue, From.IsStar ? GridUnitType.Star : GridUnitType.Pixel);
+        }
+    }
+
+    /// <summary>
+    /// Класс для анимации Width свойства ColumnDefinition
+    /// </summary>
+    public static class ColumnDefinitionWidthAnimation
+    {
+        public static readonly DependencyProperty WidthProperty =
+            DependencyProperty.RegisterAttached(
+                "Width",
+                typeof(double),
+                typeof(ColumnDefinitionWidthAnimation),
+                new PropertyMetadata(OnWidthChanged));
+
+        public static void SetWidth(ColumnDefinition element, double value)
+        {
+            element.SetValue(WidthProperty, value);
+        }
+
+        public static double GetWidth(ColumnDefinition element)
+        {
+            return (double)element.GetValue(WidthProperty);
+        }
+
+        private static void OnWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is ColumnDefinition column)
+            {
+                column.Width = new GridLength((double)e.NewValue);
+            }
+        }
     }
 }

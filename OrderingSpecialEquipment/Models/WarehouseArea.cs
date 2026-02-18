@@ -25,7 +25,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Id")]
         [Display(Name = "Идентификатор", Description = "Уникальный идентификатор территории")]
         [StringLength(10)]
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
 
         /// <summary>
         /// Числовой ключ (автоинкремент)
@@ -41,16 +41,7 @@ namespace OrderingSpecialEquipment.Models
         [Column("Name")]
         [Display(Name = "Наименование", Description = "Наименование территории")]
         [StringLength(100)]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Идентификатор склада
-        /// </summary>
-        [Required]
-        [Column("WarehouseId")]
-        [Display(Name = "Склад", Description = "Идентификатор склада")]
-        [StringLength(10)]
-        public string WarehouseId { get; set; }
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Тип территории
@@ -87,10 +78,15 @@ namespace OrderingSpecialEquipment.Models
         #region Навигационные свойства
 
         /// <summary>
-        /// Склад
+        /// Список складов, к которым относится эта территория (через связь многие-ко-многим)
         /// </summary>
-        [ForeignKey("WarehouseId")]
-        public virtual Warehouse Warehouse { get; set; }
+        public virtual ICollection<WarehouseAreaLink> WarehouseLinks { get; set; }
+
+        /// <summary>
+        /// Список складов (для удобства доступа)
+        /// </summary>
+        [NotMapped]
+        public IEnumerable<Warehouse> Warehouses => WarehouseLinks?.Select(wl => wl.Warehouse) ?? new List<Warehouse>();
 
         /// <summary>
         /// Список заявок на этой территории
@@ -106,6 +102,7 @@ namespace OrderingSpecialEquipment.Models
         /// </summary>
         public WarehouseArea()
         {
+            WarehouseLinks = new HashSet<WarehouseAreaLink>();
             ShiftRequests = new HashSet<ShiftRequest>();
         }
 

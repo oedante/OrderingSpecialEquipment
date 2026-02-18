@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OrderingSpecialEquipment.Models;
 using OrderingSpecialEquipment.Services.Interfaces;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -157,8 +158,12 @@ namespace OrderingSpecialEquipment.Views
 
                 txtAreasTitle.Text = $"Территории склада: {warehouse?.Name}";
 
-                var areas = await context.WarehouseAreas
-                    .Where(a => a.WarehouseId == warehouseId)
+                // Загружаем территории через связи (многие-ко-многим)
+                var areas = await context.Set<WarehouseAreaLink>()
+                    .Include(wal => wal.Area)
+                    .Where(wal => wal.WarehouseId == warehouseId)
+                    .Select(wal => wal.Area)
+                    .Where(a => a.IsActive)
                     .OrderBy(a => a.Name)
                     .ToListAsync();
 
@@ -265,7 +270,7 @@ namespace OrderingSpecialEquipment.Views
             {
                 var result = MessageBox.Show(
                     $"Вы действительно хотите удалить склад '{selected.Name}'?\n" +
-                    "Это также удалит все связанные территории!",
+                    "Это также удалит все связи с территориями!",
                     "Подтверждение удаления",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
@@ -278,16 +283,17 @@ namespace OrderingSpecialEquipment.Views
 
                         using var context = _contextFactory.CreateDbContext();
 
-                        // Удаляем связанные территории
-                        var areas = await context.WarehouseAreas
-                            .Where(a => a.WarehouseId == selected.Id)
+                        // Удаляем связи с территориями
+                        var links = await context.Set<WarehouseAreaLink>()
+                            .Where(wal => wal.WarehouseId == selected.Id)
                             .ToListAsync();
 
-                        if (areas.Any())
+                        if (links.Any())
                         {
-                            context.WarehouseAreas.RemoveRange(areas);
+                            context.Set<WarehouseAreaLink>().RemoveRange(links);
                         }
 
+                        // Удаляем склад
                         context.Warehouses.Remove(selected);
                         await context.SaveChangesAsync();
 
@@ -391,7 +397,6 @@ namespace OrderingSpecialEquipment.Views
 
             _editingArea = new WarehouseArea
             {
-                WarehouseId = ((Warehouse)dgWarehouses.SelectedItem).Id,
                 IsActive = true
             };
             _isAreaEditMode = false;
@@ -474,6 +479,17 @@ namespace OrderingSpecialEquipment.Views
                     try
                     {
                         using var context = _contextFactory.CreateDbContext();
+
+                        // Удаляем связи с этой территорией
+                        var links = await context.Set<WarehouseAreaLink>()
+                            .Where(wal => wal.AreaId == selected.Id)
+                            .ToListAsync();
+
+                        if (links.Any())
+                        {
+                            context.Set<WarehouseAreaLink>().RemoveRange(links);
+                        }
+
                         context.WarehouseAreas.Remove(selected);
                         await context.SaveChangesAsync();
 
@@ -534,14 +550,27 @@ namespace OrderingSpecialEquipment.Views
                     // Добавление новой
                     _editingArea.CreatedAt = DateTime.UtcNow;
                     await context.WarehouseAreas.AddAsync(_editingArea);
+                    await context.SaveChangesAsync();
+
+                    // Создаем связь с текущим складом
+                    if (dgWarehouses.SelectedItem is Warehouse warehouses)
+                    {
+                        var link = new WarehouseAreaLink
+                        {
+                            WarehouseId = warehouses.Id,
+                            AreaId = _editingArea.Id,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await context.Set<WarehouseAreaLink>().AddAsync(link);
+                        await context.SaveChangesAsync();
+                    }
                 }
                 else
                 {
                     // Обновление существующей
                     context.WarehouseAreas.Update(_editingArea);
+                    await context.SaveChangesAsync();
                 }
-
-                await context.SaveChangesAsync();
 
                 AreaEditPopup.IsOpen = false;
 
@@ -565,6 +594,141 @@ namespace OrderingSpecialEquipment.Views
         private void BtnCancelArea_Click(object sender, RoutedEventArgs e)
         {
             AreaEditPopup.IsOpen = false;
+        }
+
+        #endregion
+
+        #region Методы для привязки территорий
+
+        /// <summary>
+        /// Открытие окна привязки территорий
+        /// </summary>
+        private async void BtnLinkAreas_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgWarehouses.SelectedItem is not Warehouse selected)
+            {
+                MessageBox.Show("Выберите склад", "Информация",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            await LoadAreasForLinkingAsync(selected.Id);
+            LinkAreasPopup.IsOpen = true;
+        }
+
+        /// <summary>
+        /// Загрузка всех территорий для привязки
+        /// </summary>
+        private async System.Threading.Tasks.Task LoadAreasForLinkingAsync(string warehouseId)
+        {
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+
+                // Получаем все активные территории
+                var allAreas = await context.WarehouseAreas
+                    .Where(a => a.IsActive)
+                    .OrderBy(a => a.Name)
+                    .ToListAsync();
+
+                // Получаем ID уже привязанных территорий (без использования ToHashSetAsync)
+                var linkedAreaIds = await context.Set<WarehouseAreaLink>()
+                    .Where(wal => wal.WarehouseId == warehouseId)
+                    .Select(wal => wal.AreaId)
+                    .ToListAsync();
+
+                var linkedAreaIdsSet = new HashSet<string>(linkedAreaIds);
+
+                // Создаем список с возможностью выбора
+                var areasWithSelection = allAreas.Select(a => new
+                {
+                    Area = a,
+                    IsSelected = linkedAreaIdsSet.Contains(a.Id),
+                    DisplayName = a.Name
+                }).ToList();
+
+                lbAreasForLinking.ItemsSource = areasWithSelection;
+                lbAreasForLinking.DisplayMemberPath = "DisplayName";
+                lbAreasForLinking.SelectedItems.Clear();
+
+                // Выбираем уже привязанные территории
+                foreach (var item in areasWithSelection.Where(x => x.IsSelected))
+                {
+                    lbAreasForLinking.SelectedItems.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка загрузки территорий: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Сохранение привязок территорий
+        /// </summary>
+        private async void BtnSaveLinks_Click(object sender, RoutedEventArgs e)
+        {
+            if (dgWarehouses.SelectedItem is not Warehouse selected)
+            {
+                LinkAreasPopup.IsOpen = false;
+                return;
+            }
+
+            try
+            {
+                using var context = _contextFactory.CreateDbContext();
+
+                // Получаем выбранные территории
+                var selectedItems = new List<WarehouseArea>();
+                foreach (var item in lbAreasForLinking.SelectedItems)
+                {
+                    var dynamicItem = item as dynamic;
+                    if (dynamicItem != null)
+                    {
+                        selectedItems.Add(dynamicItem.Area as WarehouseArea);
+                    }
+                }
+
+                // Удаляем старые связи
+                var oldLinks = await context.Set<WarehouseAreaLink>()
+                    .Where(wal => wal.WarehouseId == selected.Id)
+                    .ToListAsync();
+
+                context.Set<WarehouseAreaLink>().RemoveRange(oldLinks);
+
+                // Создаем новые связи
+                foreach (var area in selectedItems)
+                {
+                    var link = new WarehouseAreaLink
+                    {
+                        WarehouseId = selected.Id,
+                        AreaId = area.Id,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await context.Set<WarehouseAreaLink>().AddAsync(link);
+                }
+
+                await context.SaveChangesAsync();
+
+                LinkAreasPopup.IsOpen = false;
+                await LoadAreasAsync(selected.Id);
+
+                txtStatus.Text = "Привязки сохранены";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка сохранения привязок: {ex.Message}", "Ошибка",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// Отмена привязки территорий
+        /// </summary>
+        private void BtnCancelLinks_Click(object sender, RoutedEventArgs e)
+        {
+            LinkAreasPopup.IsOpen = false;
         }
 
         #endregion

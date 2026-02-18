@@ -110,6 +110,24 @@ namespace OrderingSpecialEquipment.Models
 
         #endregion
 
+        #region Вычисляемые свойства
+
+        /// <summary>
+        /// Отображение госномера для ComboBox
+        /// </summary>
+        [NotMapped]
+        public string PlateDisplay
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(Brand))
+                    return $"{PlateNumber} - {Brand}";
+                return PlateNumber;
+            }
+        }
+
+        #endregion
+
         #region Навигационные свойства
 
         /// <summary>
@@ -150,7 +168,7 @@ namespace OrderingSpecialEquipment.Models
         /// </summary>
         public override string ToString()
         {
-            return $"{PlateNumber} - {Brand}";
+            return PlateDisplay;
         }
 
         #endregion

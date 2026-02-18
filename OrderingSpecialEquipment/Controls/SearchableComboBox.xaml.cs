@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OrderingSpecialEquipment.Models;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -24,16 +25,39 @@ namespace OrderingSpecialEquipment.Controls
         public SearchableComboBox()
         {
             InitializeComponent();
-            MainComboBox.Loaded += (s, e) => UpdateFilteredItems();
-            MainComboBox.TextInput += (s, e) => UpdateFilteredItems();
+
+            // Подписываемся на события после инициализации
+            Loaded += (s, e) =>
+            {
+                UpdateFilteredItems();
+
+                // Подписываемся на изменения текста через TextBox внутри ComboBox
+                if (MainComboBox.Template.FindName("PART_EditableTextBox", MainComboBox) is TextBox textBox)
+                {
+                    textBox.TextChanged += (_, _) =>
+                    {
+                        SearchText = textBox.Text;
+                        UpdateFilteredItems();
+                    };
+                }
+            };
+
             MainComboBox.SelectionChanged += (s, e) =>
             {
                 if (e.AddedItems.Count > 0)
                 {
                     SelectedItem = e.AddedItems[0];
+                    SearchText = GetDisplayText(e.AddedItems[0]);
                 }
             };
-            MainComboBox.LostFocus += (s, e) => UpdateFilteredItems();
+
+            MainComboBox.LostFocus += (s, e) =>
+            {
+                if (SelectedItem != null)
+                {
+                    MainComboBox.Text = GetDisplayText(SelectedItem);
+                }
+            };
         }
 
         // Зависимые свойства
@@ -47,11 +71,11 @@ namespace OrderingSpecialEquipment.Controls
 
         public static readonly DependencyProperty DisplayMemberPathProperty =
             DependencyProperty.Register("DisplayMemberPath", typeof(string), typeof(SearchableComboBox),
-                new PropertyMetadata(""));
+                new PropertyMetadata("", OnDisplayMemberPathChanged));
 
         public static readonly DependencyProperty FilterMemberPathProperty =
             DependencyProperty.Register("FilterMemberPath", typeof(string), typeof(SearchableComboBox),
-                new PropertyMetadata("PlateDisplay"));
+                new PropertyMetadata("", OnFilterMemberPathChanged));
 
         public static readonly DependencyProperty SelectedValuePathProperty =
             DependencyProperty.Register("SelectedValuePath", typeof(string), typeof(SearchableComboBox),
@@ -129,7 +153,6 @@ namespace OrderingSpecialEquipment.Controls
                 {
                     _searchText = value;
                     OnPropertyChanged();
-                    UpdateFilteredItems();
                 }
             }
         }
@@ -165,6 +188,11 @@ namespace OrderingSpecialEquipment.Controls
                     control.SelectedValue = prop.GetValue(item);
                 }
             }
+
+            if (item != null)
+            {
+                control.MainComboBox.Text = control.GetDisplayText(item);
+            }
         }
 
         private static void OnFilterChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -173,65 +201,74 @@ namespace OrderingSpecialEquipment.Controls
             control.UpdateFilteredItems();
         }
 
+        private static void OnDisplayMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SearchableComboBox)d;
+            control.UpdateFilteredItems();
+        }
+
+        private static void OnFilterMemberPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (SearchableComboBox)d;
+            control.UpdateFilteredItems();
+        }
+
         // Обновление отфильтрованных элементов
         private void UpdateFilteredItems()
         {
-            if (ItemsSource == null)
+            try
             {
+                if (ItemsSource == null)
+                {
+                    FilteredItems = new List<object>();
+                    return;
+                }
+
+                var items = ItemsSource.Cast<object>().ToList();
+
+                // Фильтр по организации
+                if (!string.IsNullOrEmpty(FilterByOrganization))
+                {
+                    items = items.Where(i =>
+                    {
+                        var prop = i.GetType().GetProperty("LessorOrganizationId");
+                        return prop != null && prop.GetValue(i)?.ToString() == FilterByOrganization;
+                    }).ToList();
+                }
+
+                // Фильтр по технике
+                if (!string.IsNullOrEmpty(FilterByEquipment))
+                {
+                    items = items.Where(i =>
+                    {
+                        var prop = i.GetType().GetProperty("EquipmentId");
+                        return prop != null && prop.GetValue(i)?.ToString() == FilterByEquipment;
+                    }).ToList();
+                }
+
+                // Поиск по тексту
+                if (!string.IsNullOrEmpty(SearchText))
+                {
+                    var searchLower = SearchText.ToLower();
+                    items = items.Where(i =>
+                    {
+                        var displayText = GetDisplayText(i);
+                        return displayText.ToLower().Contains(searchLower);
+                    }).ToList();
+                }
+
+                FilteredItems = items;
+
+                // Обновляем текст в ComboBox если выбран элемент
+                if (SelectedItem != null && items.Contains(SelectedItem))
+                {
+                    MainComboBox.Text = GetDisplayText(SelectedItem);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка в UpdateFilteredItems: {ex.Message}");
                 FilteredItems = new List<object>();
-                return;
-            }
-
-            var items = ItemsSource.Cast<object>();
-
-            // Фильтр по организации
-            if (!string.IsNullOrEmpty(FilterByOrganization))
-            {
-                items = items.Where(i =>
-                {
-                    var prop = i.GetType().GetProperty("LessorOrganizationId");
-                    return prop != null && prop.GetValue(i)?.ToString() == FilterByOrganization;
-                });
-            }
-
-            // Фильтр по технике
-            if (!string.IsNullOrEmpty(FilterByEquipment))
-            {
-                items = items.Where(i =>
-                {
-                    var prop = i.GetType().GetProperty("EquipmentId");
-                    return prop != null && prop.GetValue(i)?.ToString() == FilterByEquipment;
-                });
-            }
-
-            // Поиск по тексту
-            if (!string.IsNullOrEmpty(SearchText))
-            {
-                var searchLower = SearchText.ToLower();
-                items = items.Where(i =>
-                {
-                    if (string.IsNullOrEmpty(FilterMemberPath))
-                    {
-                        return i.ToString()?.ToLower().Contains(searchLower) ?? false;
-                    }
-
-                    var prop = i.GetType().GetProperty(FilterMemberPath);
-                    if (prop != null)
-                    {
-                        var value = prop.GetValue(i)?.ToString();
-                        return value?.ToLower().Contains(searchLower) ?? false;
-                    }
-
-                    return false;
-                });
-            }
-
-            FilteredItems = items.ToList();
-
-            // Обновляем текст в ComboBox
-            if (SelectedItem != null)
-            {
-                MainComboBox.Text = GetDisplayText(SelectedItem);
             }
         }
 
@@ -239,16 +276,29 @@ namespace OrderingSpecialEquipment.Controls
         {
             if (item == null) return string.Empty;
 
-            if (!string.IsNullOrEmpty(DisplayMemberPath))
+            try
             {
-                var prop = item.GetType().GetProperty(DisplayMemberPath);
-                if (prop != null)
+                if (!string.IsNullOrEmpty(DisplayMemberPath))
                 {
-                    return prop.GetValue(item)?.ToString() ?? string.Empty;
+                    var prop = item.GetType().GetProperty(DisplayMemberPath);
+                    if (prop != null)
+                    {
+                        return prop.GetValue(item)?.ToString() ?? string.Empty;
+                    }
                 }
-            }
 
-            return item.ToString() ?? string.Empty;
+                // Если DisplayMemberPath не задан или не найден, используем стандартное отображение
+                if (item is LicensePlate plate)
+                {
+                    return $"{plate.PlateNumber} - {plate.Brand}";
+                }
+
+                return item.ToString() ?? string.Empty;
+            }
+            catch
+            {
+                return item.ToString() ?? string.Empty;
+            }
         }
     }
 }

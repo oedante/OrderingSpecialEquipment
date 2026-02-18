@@ -114,7 +114,8 @@ namespace OrderingSpecialEquipment
             _logger?.Error(e.Exception, "Необработанное исключение");
 
             // Показываем сообщение только для критических ошибок
-            if (!e.Exception.Message.Contains("BindingExpression"))
+            if (!e.Exception.Message.Contains("BindingExpression") &&
+                !e.Exception.Message.Contains("Set property"))
             {
                 MessageBox.Show(
                     $"Произошла ошибка:\n{e.Exception.Message}",

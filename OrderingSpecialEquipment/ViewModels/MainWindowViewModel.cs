@@ -27,6 +27,7 @@ namespace OrderingSpecialEquipment.ViewModels
         private readonly IDbContextFactory _contextFactory;
         private readonly IShiftRequestService _shiftRequestService;
         private readonly IEquipmentService _equipmentService;
+
         private bool _isLeftPanelVisible = false;
         private bool _isOnlyFavorites;
         private DateTime _selectedDate;
@@ -52,9 +53,24 @@ namespace OrderingSpecialEquipment.ViewModels
         private TimeSpan? _endTime;
         private bool _hasLunchBreak = true;
         private ICollectionView _groupedShiftRequests;
+        private double _leftPanelWidth = 0;
         #endregion
 
         #region Свойства
+
+        public double LeftPanelWidth
+        {
+            get => _leftPanelWidth;
+            set
+            {
+                if (SetProperty(ref _leftPanelWidth, value))
+                {
+                    OnPropertyChanged(nameof(LeftPanelButtonText));
+                    OnPropertyChanged(nameof(LeftPanelButtonToolTip));
+                }
+            }
+        }
+
         public bool IsLeftPanelVisible
         {
             get => _isLeftPanelVisible;
@@ -62,15 +78,14 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 if (SetProperty(ref _isLeftPanelVisible, value))
                 {
-                    OnPropertyChanged(nameof(LeftPanelButtonText));
-                    OnPropertyChanged(nameof(LeftPanelButtonToolTip));
+                    // При изменении видимости панели обновляем отображаемые смены
                     _ = UpdateDisplayedShiftsAsync();
                 }
             }
         }
 
-        public string LeftPanelButtonText => _isLeftPanelVisible ? "◀" : "▶";
-        public string LeftPanelButtonToolTip => _isLeftPanelVisible ? "Скрыть панель техники" : "Показать панель техники";
+        public string LeftPanelButtonText => IsLeftPanelVisible ? "◀" : "▶";
+        public string LeftPanelButtonToolTip => IsLeftPanelVisible ? "Скрыть панель техники" : "Показать панель техники";
 
         public bool IsOnlyFavorites
         {
@@ -300,14 +315,24 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 if (SelectedDepartment == null || AllEquipments == null)
                     return AllEquipments ?? new List<Equipment>();
-                using var context = _databaseService.CreateDbContext();
-                var tpEquipmentIds = context.TransportProgram
-                    .Where(tp => tp.DepartmentId == SelectedDepartment.Id && tp.Year == _selectedDate.Year)
-                    .Select(tp => tp.EquipmentId)
-                    .ToHashSet();
-                return AllEquipments
-                    .Where(e => tpEquipmentIds.Contains(e.Id))
-                    .ToList();
+
+                try
+                {
+                    using var context = _databaseService.CreateDbContext();
+                    var tpEquipmentIds = context.TransportProgram
+                        .Where(tp => tp.DepartmentId == SelectedDepartment.Id && tp.Year == _selectedDate.Year)
+                        .Select(tp => tp.EquipmentId)
+                        .ToHashSet();
+
+                    return AllEquipments
+                        .Where(e => tpEquipmentIds.Contains(e.Id))
+                        .ToList();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Ошибка загрузки доступной техники: {ex.Message}");
+                    return AllEquipments ?? new List<Equipment>();
+                }
             }
         }
 
@@ -349,26 +374,26 @@ namespace OrderingSpecialEquipment.ViewModels
         #endregion
 
         #region Команды
-        public ICommand ToggleLeftPanelCommand { get; }
-        public ICommand AddRequestCommand { get; }
-        public ICommand EditRequestCommand { get; }
-        public ICommand SaveRequestCommand { get; }
-        public ICommand CancelEditCommand { get; }
-        public ICommand DeleteRequestCommand { get; }
-        public ICommand ExportToExcelCommand { get; }
-        public ICommand ToggleFavoriteCommand { get; }
-        public ICommand PreviousDayCommand { get; }
-        public ICommand NextDayCommand { get; }
-        public ICommand OpenConnectionSettingsCommand { get; }
-        public ICommand OpenDepartmentsCommand { get; }
-        public ICommand OpenEquipmentsCommand { get; }
-        public ICommand OpenWarehousesCommand { get; }
-        public ICommand OpenLessorsCommand { get; }
-        public ICommand OpenTransportProgramCommand { get; }
-        public ICommand OpenUsersCommand { get; }
-        public ICommand OpenTransportReportCommand { get; }
-        public ICommand OpenShiftReportCommand { get; }
-        public ICommand RequestDoubleClickCommand { get; }
+        public ICommand ToggleLeftPanelCommand { get; set; }
+        public ICommand AddRequestCommand { get; set; }
+        public ICommand EditRequestCommand { get; set; }
+        public ICommand SaveRequestCommand { get; set; }
+        public ICommand CancelEditCommand { get; set; }
+        public ICommand DeleteRequestCommand { get; set; }
+        public ICommand ExportToExcelCommand { get; set; }
+        public ICommand ToggleFavoriteCommand { get; set; }
+        public ICommand PreviousDayCommand { get; set; }
+        public ICommand NextDayCommand { get; set; }
+        public ICommand OpenConnectionSettingsCommand { get; set; }
+        public ICommand OpenDepartmentsCommand { get; set; }
+        public ICommand OpenEquipmentsCommand { get; set; }
+        public ICommand OpenWarehousesCommand { get; set; }
+        public ICommand OpenLessorsCommand { get; set; }
+        public ICommand OpenTransportProgramCommand { get; set; }
+        public ICommand OpenUsersCommand { get; set; }
+        public ICommand OpenTransportReportCommand { get; set; }
+        public ICommand OpenShiftReportCommand { get; set; }
+        public ICommand RequestDoubleClickCommand { get; set; }
         #endregion
 
         #region Конструктор
@@ -387,6 +412,18 @@ namespace OrderingSpecialEquipment.ViewModels
             _equipmentService = equipmentService ?? throw new ArgumentNullException(nameof(equipmentService));
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
 
+            InitializeCommands();
+            SubscribeToEvents();
+
+            _selectedDate = DateTime.UtcNow.Date;
+            _leftPanelWidth = 0; // Начальная ширина
+            _isLeftPanelVisible = false; // Панель не видима
+        }
+        #endregion
+
+        #region Инициализация
+        private void InitializeCommands()
+        {
             ToggleLeftPanelCommand = new RelayCommand(ToggleLeftPanel);
             AddRequestCommand = new RelayCommand(AddNewRequest, CanAddRequest);
             EditRequestCommand = new RelayCommand<ShiftRequestViewModel>(StartEditRequest, CanEditRequest);
@@ -407,7 +444,10 @@ namespace OrderingSpecialEquipment.ViewModels
             OpenUsersCommand = new RelayCommand(() => OpenReference("Users"), () => _authorizationService.HasSpecialPermission("ManageUsers") || _authorizationService.IsSystemAdmin);
             OpenTransportReportCommand = new RelayCommand(() => OpenReport("Transport"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             OpenShiftReportCommand = new RelayCommand(() => OpenReport("Shift"), () => _authorizationService.HasSpecialPermission("ViewReports"));
+        }
 
+        private void SubscribeToEvents()
+        {
             _databaseService.ConnectionStateChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(IsDatabaseConnected));
@@ -426,8 +466,6 @@ namespace OrderingSpecialEquipment.ViewModels
                     _ = LoadDataAsync();
                 }
             };
-
-            _selectedDate = DateTime.UtcNow.Date;
         }
         #endregion
 
@@ -465,10 +503,12 @@ namespace OrderingSpecialEquipment.ViewModels
             try
             {
                 StatusMessage = "Загрузка данных...";
-                var equipmentTask = LoadEquipmentAsync();
-                var shiftRequestsTask = LoadShiftRequestsAsync();
-                var monthlyHoursTask = LoadMonthlyHoursLeftAsync();
-                await Task.WhenAll(equipmentTask, shiftRequestsTask, monthlyHoursTask);
+
+                // Загружаем последовательно для избежания конфликтов
+                await LoadMonthlyHoursLeftAsync();
+                await LoadEquipmentAsync();
+                await LoadShiftRequestsAsync();
+
                 StatusMessage = "Готов";
             }
             catch (Exception ex)
@@ -485,7 +525,7 @@ namespace OrderingSpecialEquipment.ViewModels
         /// <summary>
         /// Загрузка данных для выпадающих списков
         /// </summary>
-        private async Task LoadComboBoxDataAsync()
+        public async Task LoadComboBoxDataAsync()
         {
             try
             {
@@ -640,7 +680,8 @@ namespace OrderingSpecialEquipment.ViewModels
                 {
                     bool isFavorite = favoriteEquipmentIds.Contains(e.Id);
                     decimal hoursLeft = _monthlyHoursLeft.GetValueOrDefault(e.Id);
-                    var item = new EquipmentItemViewModel
+
+                    equipmentItems.Add(new EquipmentItemViewModel
                     {
                         Equipment = e,
                         IsFavorite = isFavorite,
@@ -649,15 +690,17 @@ namespace OrderingSpecialEquipment.ViewModels
                         DayCount = dayRequests.Count(r => r.EquipmentId == e.Id &&
                             (SelectedDepartment == null || r.DepartmentId == SelectedDepartment.Id)),
                         MonthlyHoursLeft = hoursLeft
-                    };
-                    equipmentItems.Add(item);
+                    });
                 }
 
                 System.Diagnostics.Debug.WriteLine("LoadEquipmentAsync: Присвоение EquipmentItems");
 
                 await Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    try { EquipmentItems = equipmentItems; }
+                    try
+                    {
+                        EquipmentItems = equipmentItems;
+                    }
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine($"Ошибка при загрузке техники: {ex.Message}");
@@ -677,19 +720,22 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        private async Task UpdateDisplayedShiftsAsync()
+        public async Task UpdateDisplayedShiftsAsync()
         {
-            await Task.WhenAll(LoadShiftRequestsAsync(), LoadEquipmentAsync());
+            await LoadShiftRequestsAsync();
+            await LoadEquipmentAsync();
         }
 
         private (DateTime nightDate, DateTime dayDate) GetDisplayDates()
         {
             if (_isLeftPanelVisible)
             {
+                // Панель ОТКРЫТА: ночь ТЕКУЩЕГО дня, день СЛЕДУЮЩЕГО дня
                 return (_selectedDate, _selectedDate.AddDays(1));
             }
             else
             {
+                // Панель СКРЫТА: ночь ПРЕДЫДУЩЕГО дня, день ТЕКУЩЕГО дня
                 return (_selectedDate.AddDays(-1), _selectedDate);
             }
         }
@@ -718,8 +764,6 @@ namespace OrderingSpecialEquipment.ViewModels
                     .ThenBy(r => r.WarehouseName);
 
                 ShiftRequests = new ObservableCollection<ShiftRequestViewModel>(allRequests);
-                _groupedShiftRequests = null;
-                OnPropertyChanged(nameof(GroupedShiftRequests));
             }
             catch (Exception ex)
             {
@@ -752,6 +796,19 @@ namespace OrderingSpecialEquipment.ViewModels
         private void ToggleLeftPanel(object parameter)
         {
             IsLeftPanelVisible = !IsLeftPanelVisible;
+
+            // Анимируем изменение ширины
+            if (IsLeftPanelVisible)
+            {
+                LeftPanelWidth = 250;
+            }
+            else
+            {
+                LeftPanelWidth = 0;
+            }
+
+            // Обновляем отображение смен
+            _ = UpdateDisplayedShiftsAsync();
         }
 
         private async void ToggleFavorite(EquipmentItemViewModel equipmentItem)
@@ -859,6 +916,14 @@ namespace OrderingSpecialEquipment.ViewModels
 
                 EditingRequest = new ShiftRequestViewModel(fullRequest, _authorizationService, _databaseService, _contextFactory, this);
                 EditingRequest.IsEdit = true;
+
+                // Явно устанавливаем навигационные свойства
+                EditingRequest.Department = fullRequest.Department;
+                EditingRequest.Warehouse = fullRequest.Warehouse;
+                EditingRequest.Area = fullRequest.Area;
+                EditingRequest.Equipment = fullRequest.Equipment;
+                EditingRequest.LessorOrganization = fullRequest.LessorOrganization;
+                EditingRequest.LicensePlate = fullRequest.LicensePlate;
 
                 // Устанавливаем выбранный отдел в родительской ViewModel для фильтрации
                 if (fullRequest.Department != null)
@@ -978,6 +1043,7 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 await _shiftRequestService.UnlockRequestAsync(EditingRequest.Key);
                 EditingRequest.Cleanup();
+                EditingRequest.Dispose();
             }
 
             EditingRequest = null;
@@ -1138,555 +1204,5 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
         #endregion
-    }
-
-    /// <summary>
-    /// ViewModel для элемента техники в левой панели
-    /// </summary>
-    public class EquipmentItemViewModel : ViewModelBase
-    {
-        private Equipment _equipment;
-        private bool _isFavorite;
-        private int _nightCount;
-        private int _dayCount;
-        private decimal _monthlyHoursLeft;
-
-        public Equipment Equipment
-        {
-            get => _equipment;
-            set => SetProperty(ref _equipment, value);
-        }
-
-        public bool IsFavorite
-        {
-            get => _isFavorite;
-            set => SetProperty(ref _isFavorite, value);
-        }
-
-        public int NightCount
-        {
-            get => _nightCount;
-            set => SetProperty(ref _nightCount, value);
-        }
-
-        public int DayCount
-        {
-            get => _dayCount;
-            set => SetProperty(ref _dayCount, value);
-        }
-
-        public decimal MonthlyHoursLeft
-        {
-            get => _monthlyHoursLeft;
-            set
-            {
-                if (SetProperty(ref _monthlyHoursLeft, value))
-                {
-                    OnPropertyChanged(nameof(HoursLeftDisplay));
-                    OnPropertyChanged(nameof(IsHoursLeftCritical));
-                    OnPropertyChanged(nameof(IsHoursLeftWarning));
-                    OnPropertyChanged(nameof(HoursLeftColor));
-                }
-            }
-        }
-
-        public string DisplayName => Equipment?.Name ?? "";
-        public string DisplayCounts => $"Н:{NightCount} Д:{DayCount}";
-        public string HoursLeftDisplay => $"{MonthlyHoursLeft:F1} ч";
-        public bool IsHoursLeftCritical => MonthlyHoursLeft <= 0;
-        public bool IsHoursLeftWarning => MonthlyHoursLeft > 0 && MonthlyHoursLeft < 10;
-
-        public string HoursLeftColor
-        {
-            get
-            {
-                if (MonthlyHoursLeft <= 0) return "#FFFFE0E0";
-                if (MonthlyHoursLeft < 10) return "#FFFFF0E0";
-                return "Transparent";
-            }
-        }
-    }
-
-    /// <summary>
-    /// ViewModel для заявки
-    /// </summary>
-    public class ShiftRequestViewModel : ViewModelBase, IDisposable
-    {
-        private readonly ShiftRequest _request;
-        private readonly IAuthorizationService _authorizationService;
-        private readonly IDatabaseService _databaseService;
-        private readonly IDbContextFactory _contextFactory;
-        private readonly MainWindowViewModel _parent;
-        private bool _isNew;
-        private bool _isEdit;
-        private bool _isExpanded;
-        private bool _isUpdatingRelatedProperties = false;
-        private bool _disposed = false;
-
-        public ShiftRequestViewModel(ShiftRequest request,
-            IAuthorizationService authorizationService,
-            IDatabaseService databaseService,
-            IDbContextFactory contextFactory,
-            MainWindowViewModel parent)
-        {
-            _request = request ?? throw new ArgumentNullException(nameof(request));
-            _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
-            _databaseService = databaseService ?? throw new ArgumentNullException(nameof(databaseService));
-            _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
-            _parent = parent ?? throw new ArgumentNullException(nameof(parent));
-        }
-
-        public List<LicensePlate> FilteredLicensePlates => _parent?.FilteredLicensePlates ?? new List<LicensePlate>();
-        public ShiftRequest OriginalRequest => _request;
-        public int Key => _request.Key;
-
-        public bool IsNew
-        {
-            get => _isNew;
-            set => SetProperty(ref _isNew, value);
-        }
-
-        public bool IsEdit
-        {
-            get => _isEdit;
-            set => SetProperty(ref _isEdit, value);
-        }
-
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set => SetProperty(ref _isExpanded, value);
-        }
-
-        public DateTime Date
-        {
-            get => _request.Date;
-            set
-            {
-                _request.Date = value.ToUniversalTime();
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(GroupDisplayString));
-            }
-        }
-
-        public int Shift
-        {
-            get => _request.Shift;
-            set
-            {
-                _request.Shift = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(ShiftName));
-                OnPropertyChanged(nameof(GroupDisplayString));
-            }
-        }
-
-        public string ShiftName => _request.Shift == 0 ? "Дневная" : "Ночная";
-
-        public string EquipmentId
-        {
-            get => _request.EquipmentId;
-            set
-            {
-                _request.EquipmentId = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(EquipmentName));
-                OnPropertyChanged(nameof(CanOrderMultiple));
-                OnPropertyChanged(nameof(GroupDisplayString));
-
-                if (!CanOrderMultiple && RequestedCount > 1)
-                {
-                    RequestedCount = 1;
-                }
-            }
-        }
-
-        public string EquipmentName => _request.Equipment?.Name ?? "";
-
-        public string LicensePlateId
-        {
-            get => _request.LicensePlateId;
-            set
-            {
-                if (_isUpdatingRelatedProperties) return;
-                try
-                {
-                    _isUpdatingRelatedProperties = true;
-                    _request.LicensePlateId = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(PlateNumber));
-                    OnPropertyChanged(nameof(PlateDisplay));
-                    OnPropertyChanged(nameof(GroupDisplayString));
-
-                    if (!string.IsNullOrEmpty(value))
-                    {
-                        var plate = _parent.AllLicensePlates?.FirstOrDefault(lp => lp.Id == value);
-                        if (plate != null && !string.IsNullOrEmpty(plate.LessorOrganizationId))
-                        {
-                            LessorOrganizationId = plate.LessorOrganizationId;
-                        }
-                    }
-                }
-                finally
-                {
-                    _isUpdatingRelatedProperties = false;
-                }
-            }
-        }
-
-        public string PlateNumber => _request.LicensePlate?.PlateNumber ?? "";
-
-        public string PlateDisplay
-        {
-            get
-            {
-                if (_request.LicensePlate != null)
-                {
-                    return $"{_request.LicensePlate.PlateNumber} - {_request.LicensePlate.Brand}";
-                }
-                return "";
-            }
-        }
-
-        public string WarehouseId
-        {
-            get => _request.WarehouseId;
-            set
-            {
-                _request.WarehouseId = value;
-                _availableAreas = null; // Сбрасываем кэш территорий
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(WarehouseName));
-                OnPropertyChanged(nameof(AvailableAreas));
-
-                // Сбрасываем территорию при смене склада
-                AreaId = null;
-            }
-        }
-
-        public string WarehouseName => _request.Warehouse?.Name ?? "";
-
-        public string AreaId
-        {
-            get => _request.AreaId;
-            set
-            {
-                _request.AreaId = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(AreaName));
-                OnPropertyChanged(nameof(GroupDisplayString));
-            }
-        }
-
-        public string AreaName => _request.Area?.Name ?? "";
-
-        public string LessorOrganizationId
-        {
-            get => _request.LessorOrganizationId;
-            set
-            {
-                if (_isUpdatingRelatedProperties) return;
-                try
-                {
-                    _isUpdatingRelatedProperties = true;
-                    _request.LessorOrganizationId = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(LessorName));
-                    OnPropertyChanged(nameof(GroupDisplayString));
-                    _parent?.NotifyPropertyChanged(nameof(MainWindowViewModel.FilteredLicensePlates));
-                    OnPropertyChanged(nameof(FilteredLicensePlates));
-
-                    if (!string.IsNullOrEmpty(LicensePlateId))
-                    {
-                        var plate = _parent.AllLicensePlates?.FirstOrDefault(lp => lp.Id == LicensePlateId);
-                        if (plate != null && plate.LessorOrganizationId != value)
-                        {
-                            LicensePlateId = null;
-                        }
-                    }
-                }
-                finally
-                {
-                    _isUpdatingRelatedProperties = false;
-                }
-            }
-        }
-
-        public string LessorName => _request.LessorOrganization?.Name ?? "";
-
-        public int RequestedCount
-        {
-            get => _request.RequestedCount;
-            set
-            {
-                if (value >= 1)
-                {
-                    _request.RequestedCount = value;
-                    OnPropertyChanged();
-                    OnPropertyChanged(nameof(GroupDisplayString));
-                }
-            }
-        }
-
-        public decimal? WorkedHours
-        {
-            get => _request.WorkedHours;
-            set
-            {
-                _request.WorkedHours = value;
-                OnPropertyChanged();
-                if (value.HasValue && _request.HourlyCost.HasValue)
-                {
-                    ActualCost = Math.Round(value.Value * _request.HourlyCost.Value, 2);
-                }
-            }
-        }
-
-        public decimal? ActualCost
-        {
-            get => _request.ActualCost;
-            set
-            {
-                _request.ActualCost = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsWorked
-        {
-            get => _request.IsWorked;
-            set
-            {
-                _request.IsWorked = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(RowBackgroundColor));
-            }
-        }
-
-        public bool IsNotProvided
-        {
-            get => _request.IsNotProvided;
-            set
-            {
-                _request.IsNotProvided = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(RowBackgroundColor));
-                if (value)
-                {
-                    WorkedHours = 0;
-                    IsWeatherCancellation = false;
-                }
-            }
-        }
-
-        public bool IsWeatherCancellation
-        {
-            get => _request.IsWeatherCancellation;
-            set
-            {
-                _request.IsWeatherCancellation = value;
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(RowBackgroundColor));
-                if (value)
-                {
-                    WorkedHours = 0;
-                    IsNotProvided = false;
-                }
-            }
-        }
-
-        public string CancellationReason
-        {
-            get => _request.CancellationReason;
-            set
-            {
-                _request.CancellationReason = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsBlocked => _request.IsBlocked;
-        public string LockedByUserId => _request.LockedByUserId;
-        public DateTime? LockedAt => _request.LockedAt;
-
-        public string Comment
-        {
-            get => _request.Comment;
-            set
-            {
-                _request.Comment = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string CreatedByUserId => _request.CreatedByUserId;
-        public string CreatedByUser => _request.CreatedByUser?.FullName ?? "";
-        public DateTime CreatedAt => _request.CreatedAt;
-
-        // В сеттерах сбрасываем кэш
-        public string DepartmentId
-        {
-            get => _request.DepartmentId;
-            set
-            {
-                _request.DepartmentId = value;
-                _availableWarehouses = null; // Сбрасываем кэш складов
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(DepartmentName));
-                OnPropertyChanged(nameof(AvailableWarehouses));
-            }
-        }
-
-        public string DepartmentName => _request.Department?.Name ?? "";
-
-        // Группировка в одну строку
-        public string GroupDisplayString
-        {
-            get
-            {
-                var parts = new List<string>();
-                if (!string.IsNullOrEmpty(DepartmentName)) parts.Add(DepartmentName);
-                if (Date != default) parts.Add(Date.ToString("dd.MM.yyyy"));
-                if (!string.IsNullOrEmpty(ShiftName)) parts.Add(ShiftName);
-                if (!string.IsNullOrEmpty(WarehouseName)) parts.Add(WarehouseName);
-                return string.Join(" | ", parts);
-            }
-        }
-
-        public bool IsValid
-        {
-            get
-            {
-                return !string.IsNullOrEmpty(EquipmentId) &&
-                       !string.IsNullOrEmpty(WarehouseId) &&
-                       RequestedCount > 0;
-            }
-        }
-
-        public bool CanEditEquipment => _authorizationService.CanWriteTable("Equipments");
-        public bool CanEditWarehouse => _authorizationService.CanWriteTable("Warehouses");
-        public bool CanEditLessor => _authorizationService.CanWriteTable("LessorOrganizations");
-        public bool CanOrderMultiple => _request.Equipment?.CanOrderMultiple ?? false;
-
-        // Доступные территории для выбранного склада
-        private List<WarehouseArea> _availableAreas;
-        public List<WarehouseArea> AvailableAreas
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(WarehouseId))
-                    return new List<WarehouseArea>();
-
-                if (_availableAreas == null)
-                {
-                    try
-                    {
-                        using var context = _contextFactory.CreateDbContext();
-                        _availableAreas = context.WarehouseAreas
-                            .Where(wa => wa.WarehouseId == WarehouseId && wa.IsActive)
-                            .OrderBy(wa => wa.Name)
-                            .ToList();
-                        System.Diagnostics.Debug.WriteLine($"AvailableAreas: загружено {_availableAreas.Count} территорий");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading AvailableAreas: {ex.Message}");
-                        _availableAreas = new List<WarehouseArea>();
-                    }
-                }
-                return _availableAreas;
-            }
-        }
-
-
-        // Доступные склады для выбранного отдела
-        private List<Warehouse> _availableWarehouses;
-        public List<Warehouse> AvailableWarehouses
-        {
-            get
-            {
-                if (string.IsNullOrEmpty(DepartmentId))
-                    return new List<Warehouse>();
-
-                if (_availableWarehouses == null)
-                {
-                    try
-                    {
-                        using var context = _contextFactory.CreateDbContext();
-                        _availableWarehouses = context.Warehouses
-                            .Where(w => w.DepartmentId == DepartmentId && w.IsActive)
-                            .OrderBy(w => w.Name)
-                            .ToList();
-                        System.Diagnostics.Debug.WriteLine($"AvailableWarehouses: загружено {_availableWarehouses.Count} складов");
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error loading AvailableWarehouses: {ex.Message}");
-                        _availableWarehouses = new List<Warehouse>();
-                    }
-                }
-                return _availableWarehouses;
-            }
-        }
-
-        public string RowBackgroundColor
-        {
-            get
-            {
-                if (IsBlocked) return "#FFF0F0F0";
-                if (IsWorked) return "#FFE0FFE0";
-                if (IsNotProvided) return "#FFFFE0E0";
-                if (IsWeatherCancellation) return "#FFE0F0FF";
-                return "White";
-            }
-        }
-
-        public void Cleanup()
-        {
-            // Очистка ресурсов при необходимости
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    Cleanup();
-                }
-                _disposed = true;
-            }
-        }
-
-        ~ShiftRequestViewModel()
-        {
-            Dispose(false);
-        }
-    }
-
-    /// <summary>
-    /// Конвертер для группировки по дате (оставлен для совместимости)
-    /// </summary>
-    public class DateGroupConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            if (value is DateTime date)
-            {
-                return date.ToString("dd.MM.yyyy (dddd)", new System.Globalization.CultureInfo("ru-RU"));
-            }
-            return value;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

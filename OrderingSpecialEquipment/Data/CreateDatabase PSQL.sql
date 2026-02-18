@@ -329,7 +329,6 @@ CREATE TABLE IF NOT EXISTS "WarehouseAreas" (
     "Key"         SERIAL          NOT NULL,
     "Id"          VARCHAR(10)     NOT NULL,
     "Name"        VARCHAR(100)    NOT NULL,
-    "WarehouseId" VARCHAR(10)     NOT NULL,
     "AreaType"    VARCHAR(50)     NULL,
     "MaxCapacity" INTEGER         NULL,
     "IsActive"    BOOLEAN         DEFAULT true NOT NULL,
@@ -337,9 +336,30 @@ CREATE TABLE IF NOT EXISTS "WarehouseAreas" (
     
     CONSTRAINT "PK_WarehouseAreas" PRIMARY KEY ("Id"),
     CONSTRAINT "UQ_WarehouseAreas_Key" UNIQUE ("Key"),
-    CONSTRAINT "FK_WarehouseAreas_Warehouses" FOREIGN KEY ("WarehouseId") 
         REFERENCES "Warehouses" ("Id") ON DELETE CASCADE
 );
+
+-- =============================================
+-- 12.1 ТАБЛИЦА ТЕРРИТОРИЙ СКЛАДОВ (WarehouseAreas)
+-- Добавление связи многие-ко-многим между складами и территориями
+-- =============================================
+
+-- 1. Создаем новую таблицу для связи складов и территорий
+CREATE TABLE IF NOT EXISTS "WarehouseAreaLinks" (
+    "Key" SERIAL NOT NULL,
+    "WarehouseId" VARCHAR(10) NOT NULL,
+    "AreaId" VARCHAR(10) NOT NULL,
+    "CreatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    
+    CONSTRAINT "PK_WarehouseAreaLinks" PRIMARY KEY ("Key"),
+    CONSTRAINT "UQ_WarehouseAreaLinks_Warehouse_Area" UNIQUE ("WarehouseId", "AreaId"),
+    CONSTRAINT "FK_WarehouseAreaLinks_Warehouses" FOREIGN KEY ("WarehouseId") 
+        REFERENCES "Warehouses" ("Id") ON DELETE CASCADE,
+    CONSTRAINT "FK_WarehouseAreaLinks_WarehouseAreas" FOREIGN KEY ("AreaId") 
+        REFERENCES "WarehouseAreas" ("Id") ON DELETE CASCADE
+);
+
+COMMENT ON TABLE "WarehouseAreaLinks" IS 'Связи между складами и территориями (многие-ко-многим)';
 
 -- =============================================
 -- 13. ТАБЛИЦА ЗАЯВОК (ShiftRequests) - ПОЛНАЯ ВЕРСИЯ СО ВСЕМИ НОВЫМИ ПОЛЯМИ
@@ -430,7 +450,7 @@ CREATE TABLE IF NOT EXISTS "UserFavorites" (
 );
 
 -- =============================================
--- 15. ТАБЛИЦА НАСТРОЕК ПОЛЬЗОВАТЕЛЕЙ (UserSettings) - НОВАЯ
+-- 15. ТАБЛИЦА НАСТРОЕК ПОЛЬЗОВАТЕЛЕЙ (UserSettings)
 -- =============================================
 CREATE TABLE IF NOT EXISTS "UserSettings" (
     "Key"         SERIAL          NOT NULL,
@@ -731,6 +751,10 @@ CREATE INDEX IF NOT EXISTS "IX_UserSettings_UserId" ON "UserSettings" ("UserId")
 CREATE INDEX IF NOT EXISTS "IX_AuditLogs_TableName_RecordId" ON "AuditLogs" ("TableName", "RecordId");
 CREATE INDEX IF NOT EXISTS "IX_AuditLogs_ChangedByUserId" ON "AuditLogs" ("ChangedByUserId");
 CREATE INDEX IF NOT EXISTS "IX_AuditLogs_ChangedAt" ON "AuditLogs" ("ChangedAt");
+
+-- WarehouseAreaLinks
+CREATE INDEX IF NOT EXISTS "IX_WarehouseAreaLinks_WarehouseId" ON "WarehouseAreaLinks" ("WarehouseId");
+CREATE INDEX IF NOT EXISTS "IX_WarehouseAreaLinks_AreaId" ON "WarehouseAreaLinks" ("AreaId");
 
 -- =============================================
 -- ПРЕДСТАВЛЕНИЯ ДЛЯ УДОБСТВА РАБОТЫ

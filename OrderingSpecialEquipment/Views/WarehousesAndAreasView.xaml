@@ -32,6 +32,7 @@
             <Button x:Name="btnAddArea" Content="➕ Добавить территорию" Click="BtnAddArea_Click" Margin="2" Padding="8,3"/>
             <Button x:Name="btnEditArea" Content="✏️ Редактировать территорию" Click="BtnEditArea_Click" Margin="2" Padding="8,3"/>
             <Button x:Name="btnDeleteArea" Content="🗑️ Удалить территорию" Click="BtnDeleteArea_Click" Margin="2" Padding="8,3"/>
+            <Button x:Name="btnLinkAreas" Content="🔗 Привязать территории" Click="BtnLinkAreas_Click" Margin="2" Padding="8,3"/>
             <Separator/>
             <Button x:Name="btnRefresh" Content="🔄 Обновить" Click="BtnRefresh_Click" Margin="2" Padding="8,3"/>
         </ToolBar>
@@ -202,6 +203,39 @@
                                 Margin="5" Click="BtnCancelArea_Click"/>
                     </StackPanel>
                 </StackPanel>
+            </Border>
+        </Popup>
+
+        <!-- Popup для привязки территорий к складу -->
+        <Popup x:Name="LinkAreasPopup" 
+               Placement="Center"
+               PopupAnimation="Fade"
+               AllowsTransparency="True"
+               StaysOpen="False">
+            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
+                    CornerRadius="5" Padding="20" Width="500" Height="400">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="Привязка территорий к складу" 
+                               FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                    <ListBox Grid.Row="1" x:Name="lbAreasForLinking" 
+                             SelectionMode="Multiple"
+                             DisplayMemberPath="Name"
+                             Margin="0,5"/>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button x:Name="btnSaveLinks" Content="Сохранить" Width="100" Height="35" 
+                                Margin="5" Click="BtnSaveLinks_Click"/>
+                        <Button x:Name="btnCancelLinks" Content="Отмена" Width="100" Height="35" 
+                                Margin="5" Click="BtnCancelLinks_Click"/>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Popup>
     </Grid>

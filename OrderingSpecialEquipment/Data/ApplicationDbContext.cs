@@ -85,6 +85,11 @@ namespace OrderingSpecialEquipment.Data
         public DbSet<WarehouseArea> WarehouseAreas { get; set; }
 
         /// <summary>
+        /// Связи складов и территорий (новая таблица)
+        /// </summary>
+        public DbSet<WarehouseAreaLink> WarehouseAreaLinks { get; set; }
+
+        /// <summary>
         /// Заявки
         /// </summary>
         public DbSet<ShiftRequest> ShiftRequests { get; set; }
@@ -316,6 +321,41 @@ namespace OrderingSpecialEquipment.Data
 
             #endregion
 
+            #region Конфигурация WarehouseAreas (обновлено)
+
+            modelBuilder.Entity<WarehouseArea>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.Key).IsUnique();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+                // Связь со складом удалена - теперь через WarehouseAreaLinks
+            });
+
+            #endregion
+
+            #region Конфигурация WarehouseAreaLinks (новая)
+
+            modelBuilder.Entity<WarehouseAreaLink>(entity =>
+            {
+                entity.HasKey(e => e.Key);
+                entity.HasIndex(e => new { e.WarehouseId, e.AreaId }).IsUnique();
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                entity.HasOne(e => e.Warehouse)
+                    .WithMany(e => e.AreaLinks)
+                    .HasForeignKey(e => e.WarehouseId)
+                    .HasPrincipalKey(e => e.Id)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Area)
+                    .WithMany(e => e.WarehouseLinks)
+                    .HasForeignKey(e => e.AreaId)
+                    .HasPrincipalKey(e => e.Id)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            #endregion
+
             #region Конфигурация UserWarehouseAccess
 
             modelBuilder.Entity<UserWarehouseAccess>(entity =>
@@ -334,23 +374,6 @@ namespace OrderingSpecialEquipment.Data
                     .WithMany(e => e.UserWarehouseAccesses)
                     .HasForeignKey(e => e.WarehouseId)
                     .HasPrincipalKey(e => e.Id);
-            });
-
-            #endregion
-
-            #region Конфигурация WarehouseAreas
-
-            modelBuilder.Entity<WarehouseArea>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasIndex(e => e.Key).IsUnique();
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.HasOne(e => e.Warehouse)
-                    .WithMany(e => e.WarehouseAreas)
-                    .HasForeignKey(e => e.WarehouseId)
-                    .HasPrincipalKey(e => e.Id)
-                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             #endregion

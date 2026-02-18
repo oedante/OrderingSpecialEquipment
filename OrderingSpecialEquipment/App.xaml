@@ -7,6 +7,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <!-- Подключаем общие стили -->
                 <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
@@ -29,9 +30,10 @@
             <Style TargetType="GroupBox" BasedOn="{StaticResource ModernGroupBox}"/>
             <Style TargetType="StatusBar" BasedOn="{StaticResource ModernStatusBar}"/>
             <Style TargetType="ToolBar" BasedOn="{StaticResource ModernToolBar}"/>
+            <Style TargetType="Menu" BasedOn="{StaticResource ModernMenu}"/>
 
-            <!-- DropShadowEffect для использования во всем приложении -->
-            <DropShadowEffect x:Key="DropShadowEffect" BlurRadius="20" ShadowDepth="0" Opacity="0.3"/>
+            <!-- Конвертеры, которые могут понадобиться глобально -->
+            <!-- (они уже определены в MainWindow.xaml, но можно добавить и сюда) -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>
