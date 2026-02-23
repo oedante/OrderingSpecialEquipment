@@ -1,0 +1,90 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Светлая тема - цвета -->
+    <Color x:Key="PrimaryColor">#FF4CAF50</Color>
+    <Color x:Key="PrimaryDarkColor">#FF45A049</Color>
+    <Color x:Key="PrimaryDarkerColor">#FF3D8B40</Color>
+    <Color x:Key="AccentColor">#FF2196F3</Color>
+    <Color x:Key="ErrorColor">#FFD32F2F</Color>
+    <Color x:Key="WarningColor">#FFFFC107</Color>
+    <Color x:Key="SuccessColor">#FF4CAF50</Color>
+    <Color x:Key="InfoColor">#FF2196F3</Color>
+
+    <Color x:Key="TextColor">#FF333333</Color>
+    <Color x:Key="TextLightColor">#FF666666</Color>
+    <Color x:Key="TextDarkColor">#FF212121</Color>
+    <Color x:Key="TextDisabledColor">#FF9E9E9E</Color>
+
+    <Color x:Key="BorderColor">#FFDDDDDD</Color>
+    <Color x:Key="BorderLightColor">#FFEEEEEE</Color>
+    <Color x:Key="BorderDarkColor">#FFBDBDBD</Color>
+
+    <Color x:Key="BackgroundColor">#FFFFFFFF</Color>
+    <Color x:Key="BackgroundLightColor">#FFF9F9F9</Color>
+    <Color x:Key="BackgroundDarkColor">#FFF0F0F0</Color>
+
+    <Color x:Key="PanelBackgroundColor">#FFF8F8F8</Color>
+    <Color x:Key="HeaderBackgroundColor">#FFF0F0F0</Color>
+    <Color x:Key="WindowBackgroundColor">#FFF5F5F5</Color>
+
+    <Color x:Key="DataGridAlternatingRowColor">#FFF9F9F9</Color>
+    <Color x:Key="DataGridHeaderColor">#FFF0F0F0</Color>
+    <Color x:Key="DataGridSelectedRowColor">#FFE3F2FD</Color>
+    <Color x:Key="DataGridHoverRowColor">#FFF5F5F5</Color>
+
+    <Color x:Key="ToolBarBackgroundColor">#FFF8F8F8</Color>
+    <Color x:Key="StatusBarBackgroundColor">#FFF0F0F0</Color>
+    <Color x:Key="MenuBackgroundColor">#FFF0F0F0</Color>
+
+    <Color x:Key="PopupBackgroundColor">#FFFFFFFF</Color>
+    <Color x:Key="PopupBorderColor">#FFDDDDDD</Color>
+
+    <Color x:Key="ScrollBarBackgroundColor">#FFF0F0F0</Color>
+    <Color x:Key="ScrollBarThumbColor">#FFC1C1C1</Color>
+    <Color x:Key="ScrollBarThumbHoverColor">#FFA0A0A0</Color>
+
+    <!-- Кисти -->
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}"/>
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="{StaticResource PrimaryDarkColor}"/>
+    <SolidColorBrush x:Key="PrimaryDarkerBrush" Color="{StaticResource PrimaryDarkerColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource ErrorColor}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{StaticResource InfoColor}"/>
+
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+    <SolidColorBrush x:Key="TextLightBrush" Color="{StaticResource TextLightColor}"/>
+    <SolidColorBrush x:Key="TextDarkBrush" Color="{StaticResource TextDarkColor}"/>
+    <SolidColorBrush x:Key="TextDisabledBrush" Color="{StaticResource TextDisabledColor}"/>
+
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="BorderLightBrush" Color="{StaticResource BorderLightColor}"/>
+    <SolidColorBrush x:Key="BorderDarkBrush" Color="{StaticResource BorderDarkColor}"/>
+
+    <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
+    <SolidColorBrush x:Key="BackgroundLightBrush" Color="{StaticResource BackgroundLightColor}"/>
+    <SolidColorBrush x:Key="BackgroundDarkBrush" Color="{StaticResource BackgroundDarkColor}"/>
+
+    <SolidColorBrush x:Key="PanelBackgroundBrush" Color="{StaticResource PanelBackgroundColor}"/>
+    <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="{StaticResource HeaderBackgroundColor}"/>
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}"/>
+
+    <SolidColorBrush x:Key="DataGridAlternatingRowBrush" Color="{StaticResource DataGridAlternatingRowColor}"/>
+    <SolidColorBrush x:Key="DataGridHeaderBrush" Color="{StaticResource DataGridHeaderColor}"/>
+    <SolidColorBrush x:Key="DataGridSelectedRowBrush" Color="{StaticResource DataGridSelectedRowColor}"/>
+    <SolidColorBrush x:Key="DataGridHoverRowBrush" Color="{StaticResource DataGridHoverRowColor}"/>
+
+    <SolidColorBrush x:Key="ToolBarBackgroundBrush" Color="{StaticResource ToolBarBackgroundColor}"/>
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="{StaticResource StatusBarBackgroundColor}"/>
+    <SolidColorBrush x:Key="MenuBackgroundBrush" Color="{StaticResource MenuBackgroundColor}"/>
+
+    <SolidColorBrush x:Key="PopupBackgroundBrush" Color="{StaticResource PopupBackgroundColor}"/>
+    <SolidColorBrush x:Key="PopupBorderBrush" Color="{StaticResource PopupBorderColor}"/>
+
+    <SolidColorBrush x:Key="ScrollBarBackgroundBrush" Color="{StaticResource ScrollBarBackgroundColor}"/>
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource ScrollBarThumbColor}"/>
+    <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="{StaticResource ScrollBarThumbHoverColor}"/>
+
+</ResourceDictionary>

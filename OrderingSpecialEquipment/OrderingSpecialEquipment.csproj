@@ -7,11 +7,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <Platforms>AnyCPU;x64</Platforms>
-    <ApplicationIcon>Pictures\main.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\Pictures\main.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Pictures\main.ico" />
+    <Page Remove="Resources\Themes\DarkTheme.xaml" />
+    <Page Remove="Resources\Themes\LightTheme.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\Pictures\main.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +29,11 @@
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Themes\DarkTheme.xaml" />
+    <Resource Include="Resources\Themes\LightTheme.xaml" />
   </ItemGroup>
 
 </Project>

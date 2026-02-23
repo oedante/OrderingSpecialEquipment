@@ -9,14 +9,16 @@
         Title="Транспортная программа" 
         WindowStartupLocation="CenterOwner"
         Width="1200" Height="600"
-        MinWidth="1000" MinHeight="400">
+        MinWidth="1000" MinHeight="400"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <converters:CurrencyFormatConverter x:Key="CurrencyFormat"/>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="10" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -25,18 +27,39 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="0" Background="#FFF0F0F0" Height="40">
-            <Button x:Name="btnAdd" Content="➕ Добавить" Click="BtnAdd_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnEdit" Content="✏️ Редактировать" Click="BtnEdit_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnDelete" Content="🗑️ Удалить" Click="BtnDelete_Click" Margin="2" Padding="8,3"/>
-            <Separator/>
-            <Button x:Name="btnCopy" Content="📋 Копировать из года" Click="BtnCopy_Click" Margin="2" Padding="8,3"/>
-            <Separator/>
-            <Button x:Name="btnRefresh" Content="🔄 Обновить" Click="BtnRefresh_Click" Margin="2" Padding="8,3"/>
+        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+            <Button x:Name="btnAdd" Content="➕ Добавить" 
+                    Click="BtnAdd_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnEdit" Content="✏️ Редактировать" 
+                    Click="BtnEdit_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnDelete" Content="🗑️ Удалить" 
+                    Click="BtnDelete_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
+            <Button x:Name="btnCopy" Content="📋 Копировать из года" 
+                    Click="BtnCopy_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
+            <Button x:Name="btnRefresh" Content="🔄 Обновить" 
+                    Click="BtnRefresh_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
         </ToolBar>
 
         <!-- Фильтры -->
-        <Border Grid.Row="1" Background="#FFF5F5F5" Padding="10" Margin="0,5">
+        <Border Grid.Row="1" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                Margin="0,5"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -46,17 +69,29 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Отдел:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Отдел:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="1" x:Name="cmbDepartmentFilter" 
-                          Height="30" Margin="5,0"
+                          Height="30" 
+                          Margin="5,0"
                           DisplayMemberPath="Name"
                           SelectedValuePath="Id"
-                          SelectionChanged="CmbDepartmentFilter_SelectionChanged"/>
+                          SelectionChanged="CmbDepartmentFilter_SelectionChanged"
+                          Style="{StaticResource ModernComboBox}"/>
 
-                <TextBlock Grid.Column="2" Text="Год:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="2" 
+                           Text="Год:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="3" x:Name="cmbYearFilter" 
-                          Height="30" Margin="5,0"
-                          SelectionChanged="CmbYearFilter_SelectionChanged"/>
+                          Height="30" 
+                          Margin="5,0"
+                          SelectionChanged="CmbYearFilter_SelectionChanged"
+                          Style="{StaticResource ModernComboBox}"/>
             </Grid>
         </Border>
 
@@ -68,35 +103,102 @@
                   SelectionUnit="FullRow"
                   MouseDoubleClick="DgTransportProgram_MouseDoubleClick"
                   Margin="0,5"
-                  RowHeight="30">
+                  RowHeight="30"
+                  Style="{StaticResource ModernDataGrid}"
+                  RowStyle="{StaticResource ModernDataGridRow}"
+                  CellStyle="{StaticResource ModernDataGridCell}"
+                  ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                  Background="{DynamicResource BackgroundBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  RowBackground="{DynamicResource BackgroundBrush}"
+                  AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Отдел" Binding="{Binding Department.Name}" Width="150"/>
-                <DataGridTextColumn Header="Год" Binding="{Binding Year}" Width="60"/>
-                <DataGridTextColumn Header="Техника" Binding="{Binding Equipment.Name}" Width="200"/>
-                <DataGridTextColumn Header="Стоимость часа" Binding="{Binding HourlyCost, Converter={StaticResource CurrencyFormat}}" Width="120"/>
+                <DataGridTextColumn Header="Отдел" 
+                                    Binding="{Binding Department.Name}" 
+                                    Width="150"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Год" 
+                                    Binding="{Binding Year}" 
+                                    Width="60"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Техника" 
+                                    Binding="{Binding Equipment.Name}" 
+                                    Width="200"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Стоимость часа" 
+                                    Binding="{Binding HourlyCost, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
 
-                <DataGridTextColumn Header="Янв" Binding="{Binding JanuaryHours}" Width="50"/>
-                <DataGridTextColumn Header="Фев" Binding="{Binding FebruaryHours}" Width="50"/>
-                <DataGridTextColumn Header="Мар" Binding="{Binding MarchHours}" Width="50"/>
-                <DataGridTextColumn Header="Апр" Binding="{Binding AprilHours}" Width="50"/>
-                <DataGridTextColumn Header="Май" Binding="{Binding MayHours}" Width="50"/>
-                <DataGridTextColumn Header="Июн" Binding="{Binding JuneHours}" Width="50"/>
-                <DataGridTextColumn Header="Июл" Binding="{Binding JulyHours}" Width="50"/>
-                <DataGridTextColumn Header="Авг" Binding="{Binding AugustHours}" Width="50"/>
-                <DataGridTextColumn Header="Сен" Binding="{Binding SeptemberHours}" Width="50"/>
-                <DataGridTextColumn Header="Окт" Binding="{Binding OctoberHours}" Width="50"/>
-                <DataGridTextColumn Header="Ноя" Binding="{Binding NovemberHours}" Width="50"/>
-                <DataGridTextColumn Header="Дек" Binding="{Binding DecemberHours}" Width="50"/>
+                <DataGridTextColumn Header="Янв" 
+                                    Binding="{Binding JanuaryHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Фев" 
+                                    Binding="{Binding FebruaryHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Мар" 
+                                    Binding="{Binding MarchHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Апр" 
+                                    Binding="{Binding AprilHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Май" 
+                                    Binding="{Binding MayHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Июн" 
+                                    Binding="{Binding JuneHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Июл" 
+                                    Binding="{Binding JulyHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Авг" 
+                                    Binding="{Binding AugustHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Сен" 
+                                    Binding="{Binding SeptemberHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Окт" 
+                                    Binding="{Binding OctoberHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Ноя" 
+                                    Binding="{Binding NovemberHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Дек" 
+                                    Binding="{Binding DecemberHours}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
 
-                <DataGridTextColumn Header="Всего часов" Binding="{Binding TotalYearHours}" Width="80"/>
-                <DataGridTextColumn Header="Всего стоимость" Binding="{Binding TotalYearCost, Converter={StaticResource CurrencyFormat}}" Width="120"/>
+                <DataGridTextColumn Header="Всего часов" 
+                                    Binding="{Binding TotalYearHours}" 
+                                    Width="80"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Всего стоимость" 
+                                    Binding="{Binding TotalYearCost, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Статус бар -->
-        <StatusBar Grid.Row="3" Background="#FFF0F0F0">
+        <StatusBar Grid.Row="3" Style="{StaticResource ModernStatusBar}">
             <StatusBarItem>
-                <TextBlock x:Name="txtStatus" Text="Готов"/>
+                <TextBlock x:Name="txtStatus" 
+                           Text="Готов" 
+                           Foreground="{DynamicResource TextBrush}"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -105,13 +207,18 @@
                Placement="Center"
                PopupAnimation="Fade"
                AllowsTransparency="True"
-               StaysOpen="False">
-            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
-                    CornerRadius="5" Padding="20" Width="900" MaxHeight="700">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+               StaysOpen="False"
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}" Width="900" MaxHeight="700">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Style="{StaticResource ModernScrollViewer}">
                     <StackPanel>
-                        <TextBlock x:Name="PopupTitle" Text="Добавление записи транспортной программы" 
-                                   FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                        <TextBlock x:Name="PopupTitle" 
+                                   Text="Добавление записи транспортной программы" 
+                                   FontSize="16" 
+                                   FontWeight="Bold" 
+                                   Margin="0,0,0,15"
+                                   Foreground="{DynamicResource TextBrush}"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -121,29 +228,47 @@
 
                             <!-- Левая колонка -->
                             <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                <TextBlock Text="Отдел:" Margin="0,5"/>
+                                <TextBlock Text="Отдел:" 
+                                           Margin="0,5"
+                                           Foreground="{DynamicResource TextBrush}"/>
                                 <ComboBox x:Name="cmbDepartment" 
                                           DisplayMemberPath="Name"
                                           SelectedValuePath="Id"
-                                          Height="30" Margin="0,0,0,10"/>
+                                          Height="30" 
+                                          Margin="0,0,0,10"
+                                          Style="{StaticResource ModernComboBox}"/>
 
-                                <TextBlock Text="Год:" Margin="0,5"/>
-                                <ComboBox x:Name="cmbYear" Height="30" Margin="0,0,0,10">
-                                    <ComboBoxItem Content="2024"/>
-                                    <ComboBoxItem Content="2025"/>
-                                    <ComboBoxItem Content="2026"/>
-                                    <ComboBoxItem Content="2027"/>
-                                    <ComboBoxItem Content="2028"/>
+                                <TextBlock Text="Год:" 
+                                           Margin="0,5"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                                <ComboBox x:Name="cmbYear" 
+                                          Height="30" 
+                                          Margin="0,0,0,10"
+                                          Style="{StaticResource ModernComboBox}">
+                                    <ComboBoxItem Content="2024" Style="{StaticResource ModernComboBoxItem}"/>
+                                    <ComboBoxItem Content="2025" Style="{StaticResource ModernComboBoxItem}"/>
+                                    <ComboBoxItem Content="2026" Style="{StaticResource ModernComboBoxItem}"/>
+                                    <ComboBoxItem Content="2027" Style="{StaticResource ModernComboBoxItem}"/>
+                                    <ComboBoxItem Content="2028" Style="{StaticResource ModernComboBoxItem}"/>
                                 </ComboBox>
 
-                                <TextBlock Text="Техника:" Margin="0,5"/>
+                                <TextBlock Text="Техника:" 
+                                           Margin="0,5"
+                                           Foreground="{DynamicResource TextBrush}"/>
                                 <ComboBox x:Name="cmbEquipment" 
                                           DisplayMemberPath="Name"
                                           SelectedValuePath="Id"
-                                          Height="30" Margin="0,0,0,10"/>
+                                          Height="30" 
+                                          Margin="0,0,0,10"
+                                          Style="{StaticResource ModernComboBox}"/>
 
-                                <TextBlock Text="Стоимость часа:" Margin="0,5"/>
-                                <TextBox x:Name="txtHourlyCost" Height="30" Margin="0,0,0,10"/>
+                                <TextBlock Text="Стоимость часа:" 
+                                           Margin="0,5"
+                                           Foreground="{DynamicResource TextBrush}"/>
+                                <TextBox x:Name="txtHourlyCost" 
+                                         Height="30" 
+                                         Margin="0,0,0,10"
+                                         Style="{StaticResource ModernTextBox}"/>
                             </StackPanel>
 
                             <!-- Правая колонка - часы по месяцам -->
@@ -162,50 +287,159 @@
                                         <ColumnDefinition Width="*"/>
                                     </Grid.ColumnDefinitions>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Январь:" Margin="0,5"/>
-                                    <TextBox Grid.Row="0" Grid.Column="1" x:Name="txtJan" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                                               Text="Январь:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" 
+                                             x:Name="txtJan" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Февраль:" Margin="0,5"/>
-                                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="txtFeb" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="0" 
+                                               Text="Февраль:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" 
+                                             x:Name="txtFeb" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Март:" Margin="0,5"/>
-                                    <TextBox Grid.Row="2" Grid.Column="1" x:Name="txtMar" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="0" 
+                                               Text="Март:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" 
+                                             x:Name="txtMar" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Апрель:" Margin="0,5"/>
-                                    <TextBox Grid.Row="3" Grid.Column="1" x:Name="txtApr" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="0" 
+                                               Text="Апрель:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" 
+                                             x:Name="txtApr" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Май:" Margin="0,5"/>
-                                    <TextBox Grid.Row="4" Grid.Column="1" x:Name="txtMay" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="0" 
+                                               Text="Май:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="4" Grid.Column="1" 
+                                             x:Name="txtMay" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Июнь:" Margin="0,5"/>
-                                    <TextBox Grid.Row="5" Grid.Column="1" x:Name="txtJun" Text="0" Height="30" Margin="0,0,0,5"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="0" 
+                                               Text="Июнь:" 
+                                               Margin="0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="5" Grid.Column="1" 
+                                             x:Name="txtJun" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="0,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="Июль:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="0" Grid.Column="3" x:Name="txtJul" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" 
+                                               Text="Июль:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="0" Grid.Column="3" 
+                                             x:Name="txtJul" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="1" Grid.Column="2" Text="Август:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="1" Grid.Column="3" x:Name="txtAug" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" 
+                                               Text="Август:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="1" Grid.Column="3" 
+                                             x:Name="txtAug" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="2" Grid.Column="2" Text="Сентябрь:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="2" Grid.Column="3" x:Name="txtSep" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" 
+                                               Text="Сентябрь:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="2" Grid.Column="3" 
+                                             x:Name="txtSep" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="3" Grid.Column="2" Text="Октябрь:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="3" Grid.Column="3" x:Name="txtOct" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="2" 
+                                               Text="Октябрь:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="3" Grid.Column="3" 
+                                             x:Name="txtOct" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="4" Grid.Column="2" Text="Ноябрь:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="4" Grid.Column="3" x:Name="txtNov" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="2" 
+                                               Text="Ноябрь:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="4" Grid.Column="3" 
+                                             x:Name="txtNov" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
 
-                                    <TextBlock Grid.Row="5" Grid.Column="2" Text="Декабрь:" Margin="20,5,0,5"/>
-                                    <TextBox Grid.Row="5" Grid.Column="3" x:Name="txtDec" Text="0" Height="30" Margin="20,0,0,5"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="2" 
+                                               Text="Декабрь:" 
+                                               Margin="20,5,0,5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBox Grid.Row="5" Grid.Column="3" 
+                                             x:Name="txtDec" 
+                                             Text="0" 
+                                             Height="30" 
+                                             Margin="20,0,0,5"
+                                             Style="{StaticResource ModernTextBox}"/>
                                 </Grid>
                             </StackPanel>
                         </Grid>
 
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                            <Button x:Name="btnSave" Content="Сохранить" Width="100" Height="35" 
-                                    Margin="5" Click="BtnSave_Click"/>
-                            <Button x:Name="btnCancel" Content="Отмена" Width="100" Height="35" 
-                                    Margin="5" Click="BtnCancel_Click"/>
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" 
+                                    Margin="0,20,0,0">
+                            <Button x:Name="btnSave" 
+                                    Content="Сохранить" 
+                                    Width="100" 
+                                    Height="35" 
+                                    Margin="5" 
+                                    Click="BtnSave_Click"
+                                    Style="{StaticResource ModernButton}"/>
+                            <Button x:Name="btnCancel" 
+                                    Content="Отмена" 
+                                    Width="100" 
+                                    Height="35" 
+                                    Margin="5" 
+                                    Click="BtnCancel_Click"
+                                    Style="{StaticResource ModernButton}"
+                                    Background="#FF9E9E9E"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
@@ -217,42 +451,72 @@
                Placement="Center"
                PopupAnimation="Fade"
                AllowsTransparency="True"
-               StaysOpen="False">
-            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
-                    CornerRadius="5" Padding="20" Width="400">
+               StaysOpen="False"
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}" Width="400">
                 <StackPanel>
                     <TextBlock Text="Копирование транспортной программы" 
-                               FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,15"
+                               Foreground="{DynamicResource TextBrush}"/>
 
-                    <TextBlock Text="Отдел:" Margin="0,5"/>
+                    <TextBlock Text="Отдел:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <ComboBox x:Name="cmbCopyDepartment" 
                               DisplayMemberPath="Name"
                               SelectedValuePath="Id"
-                              Height="30" Margin="0,0,0,10"/>
+                              Height="30" 
+                              Margin="0,0,0,10"
+                              Style="{StaticResource ModernComboBox}"/>
 
-                    <TextBlock Text="Из года:" Margin="0,5"/>
-                    <ComboBox x:Name="cmbCopyFromYear" Height="30" Margin="0,0,0,10">
-                        <ComboBoxItem Content="2024"/>
-                        <ComboBoxItem Content="2025"/>
-                        <ComboBoxItem Content="2026"/>
-                        <ComboBoxItem Content="2027"/>
-                        <ComboBoxItem Content="2028"/>
+                    <TextBlock Text="Из года:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <ComboBox x:Name="cmbCopyFromYear" 
+                              Height="30" 
+                              Margin="0,0,0,10"
+                              Style="{StaticResource ModernComboBox}">
+                        <ComboBoxItem Content="2024" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2025" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2026" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2027" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2028" Style="{StaticResource ModernComboBoxItem}"/>
                     </ComboBox>
 
-                    <TextBlock Text="В год:" Margin="0,5"/>
-                    <ComboBox x:Name="cmbCopyToYear" Height="30" Margin="0,0,0,10">
-                        <ComboBoxItem Content="2024"/>
-                        <ComboBoxItem Content="2025"/>
-                        <ComboBoxItem Content="2026"/>
-                        <ComboBoxItem Content="2027"/>
-                        <ComboBoxItem Content="2028"/>
+                    <TextBlock Text="В год:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <ComboBox x:Name="cmbCopyToYear" 
+                              Height="30" 
+                              Margin="0,0,0,10"
+                              Style="{StaticResource ModernComboBox}">
+                        <ComboBoxItem Content="2024" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2025" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2026" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2027" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="2028" Style="{StaticResource ModernComboBoxItem}"/>
                     </ComboBox>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                        <Button x:Name="btnCopyExecute" Content="Копировать" Width="100" Height="35" 
-                                Margin="5" Click="BtnCopyExecute_Click"/>
-                        <Button x:Name="btnCopyCancel" Content="Отмена" Width="100" Height="35" 
-                                Margin="5" Click="BtnCopyCancel_Click"/>
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,20,0,0">
+                        <Button x:Name="btnCopyExecute" 
+                                Content="Копировать" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnCopyExecute_Click"
+                                Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="btnCopyCancel" 
+                                Content="Отмена" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnCopyCancel_Click"
+                                Style="{StaticResource ModernButton}"
+                                Background="#FF9E9E9E"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

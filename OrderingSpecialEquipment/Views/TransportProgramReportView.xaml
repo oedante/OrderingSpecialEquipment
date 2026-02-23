@@ -9,7 +9,9 @@
         Title="Отчет по выполнению транспортной программы" 
         WindowStartupLocation="CenterOwner"
         Width="1000" Height="600"
-        MinWidth="800" MinHeight="400">
+        MinWidth="800" MinHeight="400"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <converters:CurrencyFormatConverter x:Key="CurrencyFormat"/>
@@ -17,7 +19,7 @@
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="10" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -26,7 +28,13 @@
         </Grid.RowDefinitions>
 
         <!-- Панель параметров отчета -->
-        <Border Grid.Row="0" Background="#FFF5F5F5" Padding="10" CornerRadius="5" Margin="0,0,0,10">
+        <Border Grid.Row="0" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,0,0,10"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -38,77 +46,131 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Отдел:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Отдел:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="1" x:Name="cmbDepartment" 
-                          Height="30" Margin="5,0"
+                          Height="30" 
+                          Margin="5,0"
                           DisplayMemberPath="Name"
-                          SelectedValuePath="Id"/>
+                          SelectedValuePath="Id"
+                          Style="{StaticResource ModernComboBox}"/>
 
-                <TextBlock Grid.Column="2" Text="Период:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="2" 
+                           Text="Период:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="3" x:Name="cmbPeriod" 
-                          Height="30" Margin="5,0"
-                          SelectionChanged="CmbPeriod_SelectionChanged">
-                    <ComboBoxItem Content="Месяц" Tag="Month" IsSelected="True"/>
-                    <ComboBoxItem Content="Квартал" Tag="Quarter"/>
-                    <ComboBoxItem Content="Год" Tag="Year"/>
+                          Height="30" 
+                          Margin="5,0"
+                          SelectionChanged="CmbPeriod_SelectionChanged"
+                          Style="{StaticResource ModernComboBox}">
+                    <ComboBoxItem Content="Месяц" Tag="Month" IsSelected="True" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Квартал" Tag="Quarter" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Год" Tag="Year" Style="{StaticResource ModernComboBoxItem}"/>
                 </ComboBox>
 
-                <TextBlock Grid.Column="4" x:Name="lblYear" Text="Год:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="4" x:Name="lblYear" 
+                           Text="Год:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="5" x:Name="cmbYear" 
-                          Height="30" Margin="5,0"/>
+                          Height="30" 
+                          Margin="5,0"
+                          Style="{StaticResource ModernComboBox}"/>
 
                 <Button Grid.Column="6" x:Name="btnGenerate" 
-                        Content="Сформировать отчет" Width="150" Height="35" 
-                        HorizontalAlignment="Right" Margin="5"
-                        Click="BtnGenerate_Click"/>
+                        Content="Сформировать отчет" 
+                        Width="150" 
+                        Height="35" 
+                        HorizontalAlignment="Right" 
+                        Margin="5"
+                        Click="BtnGenerate_Click"
+                        Style="{StaticResource ModernButton}"/>
 
                 <Button Grid.Column="6" x:Name="btnExport" 
-                        Content="📊 Экспорт в Excel" Width="150" Height="35" 
-                        HorizontalAlignment="Right" Margin="5,0,160,0"
-                        Click="BtnExport_Click"/>
+                        Content="📊 Экспорт в Excel" 
+                        Width="150" 
+                        Height="35" 
+                        HorizontalAlignment="Right" 
+                        Margin="5,0,160,0"
+                        Click="BtnExport_Click"
+                        Style="{StaticResource ModernButton}"
+                        Background="{DynamicResource AccentBrush}"/>
             </Grid>
         </Border>
 
         <!-- Дополнительные параметры для месяца -->
-        <Border Grid.Row="1" x:Name="panelMonth" Background="#FFF5F5F5" Padding="10" CornerRadius="5" Margin="0,0,0,10">
+        <Border Grid.Row="1" x:Name="panelMonth" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,0,0,10"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="200"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Месяц:" VerticalAlignment="Center" Margin="5,0"/>
-                <ComboBox Grid.Column="1" x:Name="cmbMonth" Height="30" Margin="5,0">
-                    <ComboBoxItem Content="Январь" Tag="1"/>
-                    <ComboBoxItem Content="Февраль" Tag="2"/>
-                    <ComboBoxItem Content="Март" Tag="3"/>
-                    <ComboBoxItem Content="Апрель" Tag="4"/>
-                    <ComboBoxItem Content="Май" Tag="5"/>
-                    <ComboBoxItem Content="Июнь" Tag="6"/>
-                    <ComboBoxItem Content="Июль" Tag="7"/>
-                    <ComboBoxItem Content="Август" Tag="8"/>
-                    <ComboBoxItem Content="Сентябрь" Tag="9"/>
-                    <ComboBoxItem Content="Октябрь" Tag="10"/>
-                    <ComboBoxItem Content="Ноябрь" Tag="11"/>
-                    <ComboBoxItem Content="Декабрь" Tag="12"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Месяц:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <ComboBox Grid.Column="1" x:Name="cmbMonth" 
+                          Height="30" 
+                          Margin="5,0"
+                          Style="{StaticResource ModernComboBox}">
+                    <ComboBoxItem Content="Январь" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Февраль" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Март" Tag="3" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Апрель" Tag="4" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Май" Tag="5" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Июнь" Tag="6" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Июль" Tag="7" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Август" Tag="8" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Сентябрь" Tag="9" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Октябрь" Tag="10" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Ноябрь" Tag="11" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="Декабрь" Tag="12" Style="{StaticResource ModernComboBoxItem}"/>
                 </ComboBox>
             </Grid>
         </Border>
 
         <!-- Дополнительные параметры для квартала -->
-        <Border Grid.Row="1" x:Name="panelQuarter" Background="#FFF5F5F5" Padding="10" CornerRadius="5" Margin="0,0,0,10" Visibility="Collapsed">
+        <Border Grid.Row="1" x:Name="panelQuarter" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,0,0,10" 
+                Visibility="Collapsed"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="200"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Квартал:" VerticalAlignment="Center" Margin="5,0"/>
-                <ComboBox Grid.Column="1" x:Name="cmbQuarter" Height="30" Margin="5,0">
-                    <ComboBoxItem Content="1 квартал" Tag="1"/>
-                    <ComboBoxItem Content="2 квартал" Tag="2"/>
-                    <ComboBoxItem Content="3 квартал" Tag="3"/>
-                    <ComboBoxItem Content="4 квартал" Tag="4"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Квартал:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <ComboBox Grid.Column="1" x:Name="cmbQuarter" 
+                          Height="30" 
+                          Margin="5,0"
+                          Style="{StaticResource ModernComboBox}">
+                    <ComboBoxItem Content="1 квартал" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="2 квартал" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="3 квартал" Tag="3" Style="{StaticResource ModernComboBoxItem}"/>
+                    <ComboBoxItem Content="4 квартал" Tag="4" Style="{StaticResource ModernComboBoxItem}"/>
                 </ComboBox>
             </Grid>
         </Border>
@@ -118,21 +180,62 @@
                   AutoGenerateColumns="False" 
                   IsReadOnly="True"
                   Margin="0,5"
-                  RowHeight="30">
+                  RowHeight="30"
+                  Style="{StaticResource ModernDataGrid}"
+                  RowStyle="{StaticResource ModernDataGridRow}"
+                  CellStyle="{StaticResource ModernDataGridCell}"
+                  ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                  Background="{DynamicResource BackgroundBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  RowBackground="{DynamicResource BackgroundBrush}"
+                  AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Техника" Binding="{Binding EquipmentName}" Width="200"/>
-                <DataGridTextColumn Header="План, часы" Binding="{Binding PlanHours}" Width="100"/>
-                <DataGridTextColumn Header="Факт, часы" Binding="{Binding ActualHours}" Width="100"/>
-                <DataGridTextColumn Header="Отклонение, часы" Binding="{Binding HoursDeviation}" Width="120"/>
-                <DataGridTextColumn Header="% выполнения" Binding="{Binding ExecutionPercent, Converter={StaticResource PercentFormat}}" Width="100"/>
-                <DataGridTextColumn Header="План, сумма" Binding="{Binding PlanCost, Converter={StaticResource CurrencyFormat}}" Width="120"/>
-                <DataGridTextColumn Header="Факт, сумма" Binding="{Binding ActualCost, Converter={StaticResource CurrencyFormat}}" Width="120"/>
-                <DataGridTextColumn Header="Отклонение, сумма" Binding="{Binding CostDeviation, Converter={StaticResource CurrencyFormat}}" Width="140"/>
+                <DataGridTextColumn Header="Техника" 
+                                    Binding="{Binding EquipmentName}" 
+                                    Width="200"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="План, часы" 
+                                    Binding="{Binding PlanHours}" 
+                                    Width="100"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Факт, часы" 
+                                    Binding="{Binding ActualHours}" 
+                                    Width="100"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Отклонение, часы" 
+                                    Binding="{Binding HoursDeviation}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="% выполнения" 
+                                    Binding="{Binding ExecutionPercent, Converter={StaticResource PercentFormat}}" 
+                                    Width="100"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="План, сумма" 
+                                    Binding="{Binding PlanCost, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Факт, сумма" 
+                                    Binding="{Binding ActualCost, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Отклонение, сумма" 
+                                    Binding="{Binding CostDeviation, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="140"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Итоговая строка -->
-        <Border Grid.Row="3" Background="#FFF0F0F0" Padding="10" CornerRadius="5" Margin="0,5,0,0">
+        <Border Grid.Row="3" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,5,0,0"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="200"/>
@@ -145,21 +248,57 @@
                     <ColumnDefinition Width="140"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="ИТОГО:" FontWeight="Bold" FontSize="14"/>
-                <TextBlock Grid.Column="1" x:Name="txtTotalPlanHours" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="2" x:Name="txtTotalActualHours" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="3" x:Name="txtTotalHoursDeviation" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="4" x:Name="txtTotalPercent" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="5" x:Name="txtTotalPlanCost" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="6" x:Name="txtTotalActualCost" FontWeight="Bold" HorizontalAlignment="Right"/>
-                <TextBlock Grid.Column="7" x:Name="txtTotalCostDeviation" FontWeight="Bold" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Column="0" 
+                           Text="ИТОГО:" 
+                           FontWeight="Bold" 
+                           FontSize="14"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="1" 
+                           x:Name="txtTotalPlanHours" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="2" 
+                           x:Name="txtTotalActualHours" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="3" 
+                           x:Name="txtTotalHoursDeviation" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="4" 
+                           x:Name="txtTotalPercent" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="5" 
+                           x:Name="txtTotalPlanCost" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="6" 
+                           x:Name="txtTotalActualCost" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBlock Grid.Column="7" 
+                           x:Name="txtTotalCostDeviation" 
+                           FontWeight="Bold" 
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource TextBrush}"/>
             </Grid>
         </Border>
 
         <!-- Статус бар -->
-        <StatusBar Grid.Row="4" Background="#FFF0F0F0" Margin="0,5,0,0">
+        <StatusBar Grid.Row="4" 
+                   Style="{StaticResource ModernStatusBar}"
+                   Margin="0,5,0,0">
             <StatusBarItem>
-                <TextBlock x:Name="txtStatus" Text="Готов"/>
+                <TextBlock x:Name="txtStatus" 
+                           Text="Готов" 
+                           Foreground="{DynamicResource TextBrush}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>

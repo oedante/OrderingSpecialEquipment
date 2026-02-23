@@ -10,7 +10,9 @@
         d:DesignHeight="800" d:DesignWidth="1200"
         Title="{Binding WindowTitle}" 
         WindowStartupLocation="CenterScreen"
-        WindowState="Maximized">
+        WindowState="Maximized"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <!-- Конвертеры -->
@@ -54,42 +56,6 @@
             <DoubleAnimation Storyboard.TargetProperty="Opacity" 
                              From="1" To="0" Duration="0:0:0.2"/>
         </Storyboard>
-
-        <Style x:Key="AnimatedColumnDefinitionStyle" TargetType="ColumnDefinition">
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsLeftPanelVisible}" Value="False">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="Width"
-                                             To="0"
-                                             Duration="0:0:0.3">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut"/>
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding IsLeftPanelVisible}" Value="True">
-                    <DataTrigger.EnterActions>
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation Storyboard.TargetProperty="Width"
-                                             To="250"
-                                             Duration="0:0:0.3">
-                                    <DoubleAnimation.EasingFunction>
-                                        <CubicEase EasingMode="EaseOut"/>
-                                    </DoubleAnimation.EasingFunction>
-                                </DoubleAnimation>
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </DataTrigger.EnterActions>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-
     </Window.Resources>
 
     <Grid>
@@ -101,80 +67,93 @@
         </Grid.RowDefinitions>
 
         <!-- Меню -->
-        <Menu Grid.Row="0">
-            <MenuItem Header="_Файл">
+        <Menu Grid.Row="0" 
+              Style="{StaticResource ModernMenu}"
+              Background="{DynamicResource MenuBackgroundBrush}"
+              Foreground="{DynamicResource TextBrush}">
+            <MenuItem Header="Файл" Style="{StaticResource ModernMenuItem}">
                 <MenuItem Header="Настройки подключения" 
-                          Command="{Binding OpenConnectionSettingsCommand}"/>
-                <Separator/>
-                <MenuItem Header="Выход" Click="MenuItemExit_Click"/>
+                          Command="{Binding OpenConnectionSettingsCommand}"
+                          Style="{StaticResource ModernMenuItem}"/>
+                <Separator Style="{StaticResource ModernSeparator}"/>
+                <MenuItem Header="Выход" Click="MenuItemExit_Click" Style="{StaticResource ModernMenuItem}"/>
             </MenuItem>
 
-            <MenuItem Header="_Справочники">
-                <MenuItem Header="Отделы" Command="{Binding OpenDepartmentsCommand}"/>
-                <MenuItem Header="Техника" Command="{Binding OpenEquipmentsCommand}"/>
-                <MenuItem Header="Склады и территории" Command="{Binding OpenWarehousesCommand}"/>
-                <MenuItem Header="Арендодатели и госномера" Command="{Binding OpenLessorsCommand}"/>
-                <MenuItem Header="Транспортная программа" Command="{Binding OpenTransportProgramCommand}"/>
-                <Separator/>
-                <MenuItem Header="Пользователи и права" Command="{Binding OpenUsersCommand}"/>
+            <MenuItem Header="Справочники" Style="{StaticResource ModernMenuItem}">
+                <MenuItem Header="Отделы" Command="{Binding OpenDepartmentsCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Техника" Command="{Binding OpenEquipmentsCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Склады и территории" Command="{Binding OpenWarehousesCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Арендодатели и госномера" Command="{Binding OpenLessorsCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Транспортная программа" Command="{Binding OpenTransportProgramCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <Separator Style="{StaticResource ModernSeparator}"/>
+                <MenuItem Header="Пользователи и права" Command="{Binding OpenUsersCommand}" Style="{StaticResource ModernMenuItem}"/>
             </MenuItem>
 
-            <MenuItem Header="_Отчеты">
-                <MenuItem Header="Выполнение транспортной программы" Command="{Binding OpenTransportReportCommand}"/>
-                <MenuItem Header="Детализация заявок" Command="{Binding OpenShiftReportCommand}"/>
+            <MenuItem Header="Отчеты" Style="{StaticResource ModernMenuItem}">
+                <MenuItem Header="Выполнение транспортной программы" Command="{Binding OpenTransportReportCommand}" Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Детализация заявок" Command="{Binding OpenShiftReportCommand}" Style="{StaticResource ModernMenuItem}"/>
             </MenuItem>
 
-            <MenuItem Header="_Настройки">
+            <MenuItem Header="Настройки" Style="{StaticResource ModernMenuItem}">
                 <MenuItem Header="Только избранное" IsCheckable="True" 
-                          IsChecked="{Binding IsOnlyFavorites}"/>
+                          IsChecked="{Binding IsOnlyFavorites}"
+                          Style="{StaticResource ModernMenuItem}"/>
+                <MenuItem Header="Темная тема" IsCheckable="True" 
+                          IsChecked="{Binding IsDarkTheme}"
+                          Command="{Binding ToggleThemeCommand}"
+                          Style="{StaticResource ModernMenuItem}"/>
             </MenuItem>
 
-            <MenuItem Header="_Помощь">
-                <MenuItem Header="О программе" Click="MenuItemAbout_Click"/>
+            <MenuItem Header="Помощь" Style="{StaticResource ModernMenuItem}">
+                <MenuItem Header="О программе" Click="MenuItemAbout_Click" Style="{StaticResource ModernMenuItem}"/>
             </MenuItem>
         </Menu>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="1">
+        <ToolBar Grid.Row="1" Style="{StaticResource ModernToolBar}">
             <StackPanel Orientation="Horizontal">
                 <Button Content="←" 
                         Command="{Binding PreviousDayCommand}" 
                         ToolTip="Предыдущий день" 
                         Width="32" Height="32"
-                        Margin="2"/>
+                        Margin="2"
+                        Style="{StaticResource IconButton}"/>
                 <DatePicker SelectedDate="{Binding SelectedDate}" 
                             Width="140" 
                             Height="32"
-                            Margin="2"/>
+                            Margin="2"
+                            Style="{StaticResource ModernDatePicker}"/>
                 <Button Content="→" 
                         Command="{Binding NextDayCommand}" 
                         ToolTip="Следующий день" 
                         Width="32" Height="32"
-                        Margin="2"/>
+                        Margin="2"
+                        Style="{StaticResource IconButton}"/>
 
-                <Separator/>
+                <Separator Style="{StaticResource ModernSeparator}"/>
 
-                <Border Background="{StaticResource HeaderBackgroundBrush}" 
+                <Border Background="{DynamicResource HeaderBackgroundBrush}" 
                         CornerRadius="4" 
                         Padding="8,4" 
                         Margin="10,0">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding DisplayDate}" FontWeight="SemiBold" Margin="0,0,4,0"/>
-                        <TextBlock Text="("/>
-                        <TextBlock Text="{Binding DisplayDayOfWeek}"/>
-                        <TextBlock Text=")"/>
+                        <TextBlock Text="{Binding DisplayDate}" FontWeight="SemiBold" Margin="0,0,4,0" Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="(" Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text="{Binding DisplayDayOfWeek}" Foreground="{DynamicResource TextBrush}"/>
+                        <TextBlock Text=")" Foreground="{DynamicResource TextBrush}"/>
                     </StackPanel>
                 </Border>
 
-                <Separator/>
+                <Separator Style="{StaticResource ModernSeparator}"/>
 
-                <TextBlock Text="Отдел:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Text="Отдел:" VerticalAlignment="Center" Margin="5,0" Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox ItemsSource="{Binding AccessibleDepartments}"
                           SelectedItem="{Binding SelectedDepartment}"
                           DisplayMemberPath="Name"
                           Width="200" 
                           Height="32" 
-                          Margin="5,0"/>
+                          Margin="5,0"
+                          Style="{StaticResource ModernComboBox}"/>
             </StackPanel>
 
         </ToolBar>
@@ -184,9 +163,9 @@
             <Grid.ColumnDefinitions>
                 <!-- Левая панель с техникой - Column 0 -->
                 <ColumnDefinition x:Name="LeftPanelColumn" 
-                                          Width="{Binding LeftPanelWidth}" 
-                                          MinWidth="0" 
-                                          MaxWidth="400"/>
+                                  Width="{Binding LeftPanelWidth}" 
+                                  MinWidth="0" 
+                                  MaxWidth="400"/>
                 <ColumnDefinition Width="5"/>
                 <!-- Правая таблица заявок - Column 2 -->
                 <ColumnDefinition Width="*"/>
@@ -194,11 +173,11 @@
 
             <!-- Левая панель с техникой -->
             <Border Grid.Column="0" 
-            Background="White" 
-            BorderBrush="{StaticResource BorderBrush}" 
-            BorderThickness="1" 
-            CornerRadius="4"
-            Visibility="{Binding IsLeftPanelVisible, Converter={StaticResource BoolToVis}}">
+                    Background="{DynamicResource BackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="4"
+                    Visibility="{Binding IsLeftPanelVisible, Converter={StaticResource BoolToVis}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -207,9 +186,9 @@
 
                     <!-- Заголовок панели -->
                     <Border Grid.Row="0" 
-                    Background="{StaticResource HeaderBackgroundBrush}" 
-                    Padding="10" 
-                    CornerRadius="4,4,0,0">
+                            Background="{DynamicResource HeaderBackgroundBrush}" 
+                            Padding="10" 
+                            CornerRadius="4,4,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -218,32 +197,33 @@
 
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Техника" 
-                                   FontSize="16" 
-                                   FontWeight="SemiBold" 
-                                   Foreground="{StaticResource TextBrush}"/>
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Foreground="{DynamicResource TextBrush}"/>
                                 <TextBlock Text="{Binding SelectedDepartment.Name}" 
-                                   FontSize="12" 
-                                   Foreground="{StaticResource TextLightBrush}"/>
+                                           FontSize="12" 
+                                           Foreground="{DynamicResource TextLightBrush}"/>
                             </StackPanel>
                         </Grid>
                     </Border>
 
                     <!-- Список техники -->
                     <ListBox Grid.Row="1" 
-                     ItemsSource="{Binding EquipmentItems}"
-                     SelectedItem="{Binding SelectedEquipment}"
-                     Background="Transparent"
-                     BorderThickness="0"
-                     Margin="5"
-                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                             ItemsSource="{Binding EquipmentItems}"
+                             SelectedItem="{Binding SelectedEquipment}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Margin="5"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             Style="{StaticResource ModernListBox}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Border Background="{Binding HoursLeftColor}"
-                                CornerRadius="4"
-                                Padding="8"
-                                Margin="0,2"
-                                MouseLeftButtonUp="FavoriteStar_MouseLeftButtonUp"
-                                Tag="{Binding}">
+                                        CornerRadius="4"
+                                        Padding="8"
+                                        Margin="0,2"
+                                        MouseLeftButtonUp="FavoriteStar_MouseLeftButtonUp"
+                                        Tag="{Binding}">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>
@@ -254,49 +234,50 @@
 
                                         <!-- Звездочка избранного -->
                                         <TextBlock Grid.Column="0" 
-                                           Style="{StaticResource FavoriteStarStyle}"
-                                           Tag="{Binding}"
-                                           VerticalAlignment="Center"/>
+                                                   Style="{StaticResource FavoriteStarStyle}"
+                                                   Tag="{Binding}"
+                                                   VerticalAlignment="Center"/>
 
                                         <!-- Название техники -->
                                         <TextBlock Grid.Column="1" 
-                                           Text="{Binding DisplayName}"
-                                           TextWrapping="Wrap"
-                                           Margin="8,0,4,0"
-                                           FontSize="13"
-                                           VerticalAlignment="Center"/>
+                                                   Text="{Binding DisplayName}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="8,0,4,0"
+                                                   FontSize="13"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextBrush}"/>
 
                                         <!-- Оставшиеся часы -->
                                         <Border Grid.Column="2"
-                                        Background="{StaticResource HeaderBackgroundBrush}"
-                                        CornerRadius="3"
-                                        Padding="4,2"
-                                        Margin="4,0"
-                                        ToolTip="Осталось часов по транспортной программе">
+                                                Background="{DynamicResource HeaderBackgroundBrush}"
+                                                CornerRadius="3"
+                                                Padding="4,2"
+                                                Margin="4,0"
+                                                ToolTip="Осталось часов по транспортной программе">
                                             <TextBlock Text="{Binding HoursLeftDisplay}"
-                                               FontSize="11"
-                                               Foreground="{StaticResource TextLightBrush}"/>
+                                                       FontSize="11"
+                                                       Foreground="{DynamicResource TextLightBrush}"/>
                                         </Border>
 
                                         <!-- Количество заявок -->
                                         <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="4,0,0,0">
                                             <Border Background="#FFE3F2FD" 
-                                            CornerRadius="3" 
-                                            Padding="4,2" 
-                                            Margin="2,0"
-                                            ToolTip="Ночная смена">
+                                                    CornerRadius="3" 
+                                                    Padding="4,2" 
+                                                    Margin="2,0"
+                                                    ToolTip="Ночная смена">
                                                 <TextBlock Text="{Binding NightCount}" 
-                                                   FontSize="11" 
-                                                   Foreground="#FF1976D2"/>
+                                                           FontSize="11" 
+                                                           Foreground="#FF1976D2"/>
                                             </Border>
                                             <Border Background="#FFF3E5F5" 
-                                            CornerRadius="3" 
-                                            Padding="4,2" 
-                                            Margin="2,0"
-                                            ToolTip="Дневная смена">
+                                                    CornerRadius="3" 
+                                                    Padding="4,2" 
+                                                    Margin="2,0"
+                                                    ToolTip="Дневная смена">
                                                 <TextBlock Text="{Binding DayCount}" 
-                                                   FontSize="11" 
-                                                   Foreground="#FF7B1FA2"/>
+                                                           FontSize="11" 
+                                                           Foreground="#FF7B1FA2"/>
                                             </Border>
                                         </StackPanel>
                                     </Grid>
@@ -309,17 +290,17 @@
 
             <!-- Разделитель -->
             <GridSplitter Grid.Column="1" 
-                  HorizontalAlignment="Stretch" 
-                  Background="{StaticResource BorderBrush}" 
-                  Width="5"
-                  Visibility="{Binding IsLeftPanelVisible, Converter={StaticResource BoolToVis}}"/>
+                          HorizontalAlignment="Stretch" 
+                          Background="{DynamicResource BorderBrush}" 
+                          Width="5"
+                          Visibility="{Binding IsLeftPanelVisible, Converter={StaticResource BoolToVis}}"/>
 
             <!-- Центральная таблица заявок -->
             <Border Grid.Column="2" 
-            Background="White" 
-            BorderBrush="{StaticResource BorderBrush}" 
-            BorderThickness="1" 
-            CornerRadius="4">
+                    Background="{DynamicResource BackgroundBrush}" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -328,9 +309,9 @@
 
                     <!-- Панель инструментов таблицы -->
                     <Border Grid.Row="0" 
-                    Background="{StaticResource HeaderBackgroundBrush}" 
-                    Padding="10" 
-                    CornerRadius="4,4,0,0">
+                            Background="{DynamicResource HeaderBackgroundBrush}" 
+                            Padding="10" 
+                            CornerRadius="4,4,0,0">
                         <StackPanel Orientation="Horizontal">
 
                             <!-- Кнопка скрытия/показа панели (всегда видима) -->
@@ -339,60 +320,71 @@
                                     Content="{Binding LeftPanelButtonText}"
                                     Command="{Binding ToggleLeftPanelCommand}"
                                     ToolTip="{Binding LeftPanelButtonToolTip}"
-                                    Width="28" 
-                                    Height="28" 
+                                    Width="34" 
+                                    Height="34" 
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Top"
                                     Margin="0,0,10,0"
                                     Panel.ZIndex="10"
-                                    Background="{StaticResource PrimaryBrush}"
+                                    Background="{DynamicResource PrimaryBrush}"
                                     BorderThickness="0"
                                     FontSize="14"
-                                    Cursor="Hand">
-                                <Button.Resources>
-                                    <Style TargetType="Border">
-                                        <Setter Property="CornerRadius" Value="14"/>
-                                    </Style>
-                                </Button.Resources>
-                            </Button>
+                                    Cursor="Hand"
+                                    Style="{StaticResource IconButton}"/>
 
                             <Button Content="➕ Добавить заявку"
-                            Command="{Binding AddRequestCommand}"
-                            Margin="0,0,10,0"/>
+                                    Command="{Binding AddRequestCommand}"
+                                    Margin="0,0,10,0"
+                                    Style="{StaticResource ModernButton}"/>
+                            
                             <Button Content="📊 Экспорт в Excel"
-                            Command="{Binding ExportToExcelCommand}"
-                            Background="{StaticResource AccentBrush}"
-                            Margin="0,0,10,0"/>
+                                    Command="{Binding ExportToExcelCommand}"
+                                    Background="{DynamicResource AccentBrush}"
+                                    Margin="0,0,10,0"
+                                    Style="{StaticResource ModernButton}"/>
 
-                            <Separator/>
+                            <Separator Style="{StaticResource ModernSeparator}"/>
 
                             <CheckBox IsChecked="{Binding IsOnlyFavorites}"
-                              Content="Только избранное"
-                              VerticalAlignment="Center"
-                              Margin="5,0"/>
+                                      Content="Только избранное"
+                                      VerticalAlignment="Center"
+                                      Margin="5,0"
+                                      Style="{StaticResource ModernCheckBox}"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Таблица заявок с группировкой -->
                     <DataGrid Grid.Row="1"
-                      x:Name="RequestsDataGrid"
-                      ItemsSource="{Binding GroupedShiftRequests}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      SelectionUnit="FullRow"
-                      MouseDoubleClick="DataGrid_MouseDoubleClick"
-                      RowBackground="White"
-                      AlternatingRowBackground="#FFF9F9F9">
+                              x:Name="RequestsDataGrid"
+                              ItemsSource="{Binding GroupedShiftRequests}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              MouseDoubleClick="DataGrid_MouseDoubleClick"
+                              Style="{StaticResource ModernDataGrid}"
+                              RowStyle="{StaticResource ModernDataGridRow}"
+                              CellStyle="{StaticResource ModernDataGridCell}"
+                              ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                              Background="{DynamicResource BackgroundBrush}"
+                              Foreground="{DynamicResource TextBrush}"
+                              RowBackground="{DynamicResource BackgroundBrush}"
+                              AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                              BorderBrush="{DynamicResource BorderBrush}"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
 
                         <DataGrid.ContextMenu>
-                            <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                            <ContextMenu Background="{DynamicResource PopupBackgroundBrush}" 
+                                        BorderBrush="{DynamicResource PopupBorderBrush}">
                                 <MenuItem Header="Редактировать" 
-                                  Command="{Binding EditRequestCommand}" 
-                                  CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                          Command="{Binding PlacementTarget.DataContext.EditRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                                          CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                          Style="{StaticResource ModernMenuItem}"/>
                                 <MenuItem Header="Удалить" 
-                                  Command="{Binding DeleteRequestCommand}" 
-                                  CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                          Command="{Binding PlacementTarget.DataContext.DeleteRequestCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" 
+                                          CommandParameter="{Binding PlacementTarget.SelectedItem, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                                          Style="{StaticResource ModernMenuItem}"/>
                             </ContextMenu>
                         </DataGrid.ContextMenu>
 
@@ -400,13 +392,15 @@
                             <GroupStyle>
                                 <GroupStyle.HeaderTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource HeaderBackgroundBrush}"
-                                        Padding="10,4"
-                                        CornerRadius="3"
-                                        Margin="0,2">
+                                        <Border Background="{DynamicResource HeaderBackgroundBrush}"
+                                                Padding="10,4"
+                                                CornerRadius="3"
+                                                Margin="0,2"
+                                                BorderBrush="{DynamicResource BorderBrush}"
+                                                BorderThickness="1">
                                             <TextBlock Text="{Binding Name}" 
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"/>
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextBrush}"/>
                                         </Border>
                                     </DataTemplate>
                                 </GroupStyle.HeaderTemplate>
@@ -415,49 +409,61 @@
 
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Дата" 
-                                        Binding="{Binding Date, StringFormat=dd.MM.yyyy}" 
-                                        Width="90"/>
+                                                Binding="{Binding Date, StringFormat=dd.MM.yyyy}" 
+                                                Width="90"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Смена" 
-                                        Binding="{Binding ShiftName}" 
-                                        Width="70"/>
+                                                Binding="{Binding ShiftName}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Отдел" 
-                                        Binding="{Binding DepartmentName}" 
-                                        Width="120"/>
+                                                Binding="{Binding DepartmentName}" 
+                                                Width="120"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Склад" 
-                                        Binding="{Binding WarehouseName}" 
-                                        Width="120"/>
+                                                Binding="{Binding WarehouseName}" 
+                                                Width="120"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Территория" 
-                                        Binding="{Binding AreaName}" 
-                                        Width="120"/>
+                                                Binding="{Binding AreaName}" 
+                                                Width="120"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Техника" 
-                                        Binding="{Binding EquipmentName}" 
-                                        Width="150"/>
+                                                Binding="{Binding EquipmentName}" 
+                                                Width="150"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Госномер" 
-                                        Binding="{Binding PlateNumber}" 
-                                        Width="100"/>
+                                                Binding="{Binding PlateNumber}" 
+                                                Width="100"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Арендодатель" 
-                                        Binding="{Binding LessorName}" 
-                                        Width="150"/>
+                                                Binding="{Binding LessorName}" 
+                                                Width="150"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Кол-во" 
-                                        Binding="{Binding RequestedCount}" 
-                                        Width="50"/>
+                                                Binding="{Binding RequestedCount}" 
+                                                Width="50"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Часы" 
-                                        Binding="{Binding WorkedHours}" 
-                                        Width="60"/>
+                                                Binding="{Binding WorkedHours}" 
+                                                Width="60"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Отработано" 
-                                        Binding="{Binding IsWorked, Converter={StaticResource BoolToYesNo}}" 
-                                        Width="80"/>
+                                                Binding="{Binding IsWorked, Converter={StaticResource BoolToYesNo}}" 
+                                                Width="80"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTextColumn Header="Создал" 
-                                        Binding="{Binding CreatedByUser}" 
-                                        Width="120"/>
+                                                Binding="{Binding CreatedByUser}" 
+                                                Width="120"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                             <DataGridTemplateColumn Header=" " Width="30">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border Background="#FFFFD700"
-                                        CornerRadius="3"
-                                        Padding="2"
-                                        Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVis}}"
-                                        ToolTip="Запись редактируется другим пользователем">
+                                                CornerRadius="3"
+                                                Padding="2"
+                                                Visibility="{Binding IsBlocked, Converter={StaticResource BoolToVis}}"
+                                                ToolTip="Запись редактируется другим пользователем">
                                             <TextBlock Text="🔒" FontSize="12" HorizontalAlignment="Center"/>
                                         </Border>
                                     </DataTemplate>
@@ -470,35 +476,36 @@
         </Grid>
 
         <!-- Статус бар -->
-        <StatusBar Grid.Row="3">
+        <StatusBar Grid.Row="3" Style="{StaticResource ModernStatusBar}">
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Пользователь: " Foreground="{StaticResource TextLightBrush}"/>
-                    <TextBlock Text="{Binding CurrentUser.FullName}" FontWeight="SemiBold"/>
+                    <TextBlock Text="Пользователь: " Foreground="{DynamicResource TextLightBrush}"/>
+                    <TextBlock Text="{Binding CurrentUser.FullName}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </StatusBarItem>
-            <Separator/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
             <StatusBarItem>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Роль: " Foreground="{StaticResource TextLightBrush}"/>
-                    <TextBlock Text="{Binding CurrentUser.Role.Name}" FontWeight="SemiBold"/>
+                    <TextBlock Text="Роль: " Foreground="{DynamicResource TextLightBrush}"/>
+                    <TextBlock Text="{Binding CurrentUser.Role.Name}" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </StatusBarItem>
-            <Separator/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
             <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextLightBrush}"/>
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource TextLightBrush}"/>
             </StatusBarItem>
 
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="Подключение:" VerticalAlignment="Center" Margin="5,0"/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Подключение:" Foreground="{DynamicResource TextLightBrush}" Margin="5,0"/>
                     <Ellipse Width="12" Height="12" Margin="2,0">
                         <Ellipse.Fill>
                             <SolidColorBrush Color="{Binding IsDatabaseConnected, Converter={StaticResource BooleanToColorConverter}}"/>
                         </Ellipse.Fill>
                     </Ellipse>
                     <TextBlock Text="{Binding IsDatabaseConnected, Converter={StaticResource BooleanToStatusTextConverter}}" 
-                               Margin="2,0"/>
+                               Foreground="{DynamicResource TextLightBrush}" Margin="2,0"/>
                 </StackPanel>
             </StatusBarItem>
         </StatusBar>
@@ -512,12 +519,12 @@
                 <TextBlock Text="Загрузка данных..." 
                            FontSize="20" 
                            FontWeight="SemiBold"
-                           Foreground="{StaticResource TextBrush}"
+                           Foreground="{DynamicResource TextBrush}"
                            Margin="0,0,0,20"/>
                 <ProgressBar IsIndeterminate="True" 
                              Height="4" 
                              Width="300"
-                             Foreground="{StaticResource PrimaryBrush}"/>
+                             Style="{StaticResource ModernProgressBar}"/>
             </StackPanel>
         </Border>
 
@@ -527,15 +534,11 @@
                Placement="Center"
                PopupAnimation="Fade"
                AllowsTransparency="True"
-               StaysOpen="False">
-            <Border Background="White"
-                    BorderBrush="{StaticResource BorderBrush}"
-                    BorderThickness="1"
-                    CornerRadius="8"
-                    Padding="20"
+               StaysOpen="False"
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}"
                     Width="700"
-                    MaxHeight="800"
-                    Effect="{StaticResource DropShadowEffect}">
+                    MaxHeight="800">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -548,252 +551,244 @@
                                Text="{Binding EditingRequest.IsNew, Converter={StaticResource BooleanToTextConverter}, ConverterParameter='Новая заявка;Редактирование заявки'}"
                                FontSize="18"
                                FontWeight="SemiBold"
-                               Foreground="{StaticResource TextBrush}"
+                               Foreground="{DynamicResource TextBrush}"
                                Margin="0,0,0,20"/>
 
                     <!-- Форма редактирования -->
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
-                                  MaxHeight="600">
+                                  MaxHeight="600"
+                                  Style="{StaticResource ModernScrollViewer}">
                         <StackPanel Margin="0,0,10,0">
                             <!-- Основная информация -->
-                            <Border Background="#FFF9F9F9"
-                                    CornerRadius="6"
-                                    Padding="15"
-                                    Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="Основная информация"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Margin="0,0,0,10"/>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                            <GroupBox Header="Основная информация" 
+                                      Style="{StaticResource ModernGroupBox}"
+                                      Foreground="{DynamicResource TextBrush}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <!-- Дата -->
-                                        <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                   Text="Дата:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <DatePicker Grid.Row="0" Grid.Column="1" 
-                                                    SelectedDate="{Binding EditingRequest.Date}"
-                                                    Height="32"
-                                                    Margin="5"/>
+                                    <!-- Дата -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                                               Text="Дата:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <DatePicker Grid.Row="0" Grid.Column="1" 
+                                                SelectedDate="{Binding EditingRequest.Date}"
+                                                Height="32"
+                                                Margin="5"
+                                                Style="{StaticResource ModernDatePicker}"/>
 
-                                        <!-- Смена -->
-                                        <TextBlock Grid.Row="1" Grid.Column="0" 
-                                                   Text="Смена:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1"
-                                                  SelectedValue="{Binding EditingRequest.Shift}"
-                                                  SelectedValuePath="Tag"
-                                                  Height="32"
-                                                  Margin="5">
-                                            <ComboBoxItem Content="Дневная" Tag="0"/>
-                                            <ComboBoxItem Content="Ночная" Tag="1"/>
-                                        </ComboBox>
+                                    <!-- Смена -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" 
+                                               Text="Смена:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1"
+                                              SelectedValue="{Binding EditingRequest.Shift}"
+                                              SelectedValuePath="Tag"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}">
+                                        <ComboBoxItem Content="Дневная" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                                        <ComboBoxItem Content="Ночная" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                                    </ComboBox>
 
-                                        <!-- Отдел -->
-                                        <TextBlock Grid.Row="2" Grid.Column="0" 
-                                                   Text="Отдел:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="2" Grid.Column="1"
-                                                  ItemsSource="{Binding AccessibleDepartments}"
-                                                  SelectedItem="{Binding EditingRequest.Department}"
-                                                  DisplayMemberPath="Name"
-                                                  Height="32"
-                                                  Margin="5"/>
+                                    <!-- Отдел -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" 
+                                               Text="Отдел:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="2" Grid.Column="1"
+                                              ItemsSource="{Binding AccessibleDepartments}"
+                                              SelectedItem="{Binding EditingRequest.Department}"
+                                              DisplayMemberPath="Name"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}"/>
 
-                                        <!-- Склад -->
-                                        <TextBlock Grid.Row="3" Grid.Column="0" 
-                                                   Text="Склад:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="3" Grid.Column="1"
-                                                  ItemsSource="{Binding EditingRequest.AvailableWarehouses}"
-                                                  SelectedItem="{Binding EditingRequest.Warehouse}"
-                                                  DisplayMemberPath="Name"
-                                                  Height="32"
-                                                  Margin="5"/>
+                                    <!-- Склад -->
+                                    <TextBlock Grid.Row="3" Grid.Column="0" 
+                                               Text="Склад:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="3" Grid.Column="1"
+                                              ItemsSource="{Binding EditingRequest.AvailableWarehouses}"
+                                              SelectedItem="{Binding EditingRequest.Warehouse}"
+                                              DisplayMemberPath="Name"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}"/>
 
-                                        <!-- Территория -->
-                                        <TextBlock Grid.Row="4" Grid.Column="0" 
-                                                   Text="Территория:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="4" Grid.Column="1"
-                                                  ItemsSource="{Binding EditingRequest.AvailableAreas}"
-                                                  SelectedItem="{Binding EditingRequest.Area}"
-                                                  DisplayMemberPath="Name"
-                                                  Height="32"
-                                                  Margin="5"/>
+                                    <!-- Территория -->
+                                    <TextBlock Grid.Row="4" Grid.Column="0" 
+                                               Text="Территория:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="4" Grid.Column="1"
+                                              ItemsSource="{Binding EditingRequest.AvailableAreas}"
+                                              SelectedItem="{Binding EditingRequest.Area}"
+                                              DisplayMemberPath="Name"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}"/>
 
-                                        <!-- Техника -->
-                                        <TextBlock Grid.Row="5" Grid.Column="0" 
-                                                   Text="Техника:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="5" Grid.Column="1"
-                                                  ItemsSource="{Binding AvailableEquipmentsForDepartment}"
-                                                  SelectedItem="{Binding EditingRequest.Equipment}"
-                                                  DisplayMemberPath="Name"
-                                                  Height="32"
-                                                  Margin="5"/>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                                    <!-- Техника -->
+                                    <TextBlock Grid.Row="5" Grid.Column="0" 
+                                               Text="Техника:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="5" Grid.Column="1"
+                                              ItemsSource="{Binding AvailableEquipmentsForDepartment}"
+                                              SelectedItem="{Binding EditingRequest.Equipment}"
+                                              DisplayMemberPath="Name"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}"/>
+                                </Grid>
+                            </GroupBox>
 
                             <!-- Детали заказа -->
-                            <Border Background="#FFF9F9F9"
-                                    CornerRadius="6"
-                                    Padding="15"
-                                    Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="Детали заказа"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Margin="0,0,0,10"/>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="*"/>
-                                        </Grid.ColumnDefinitions>
+                            <GroupBox Header="Детали заказа" 
+                                      Style="{StaticResource ModernGroupBox}"
+                                      Foreground="{DynamicResource TextBrush}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <!-- Количество -->
-                                        <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                   Text="Количество:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <controls:NumericTextBox Grid.Row="0" Grid.Column="1"
-                                                                  Value="{Binding EditingRequest.RequestedCount}"
-                                                                  MinValue="1"
-                                                                  ControlIsEnabled="{Binding EditingRequest.CanOrderMultiple}"
+                                    <!-- Количество -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                                               Text="Количество:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <controls:NumericTextBox Grid.Row="0" Grid.Column="1"
+                                                              Value="{Binding EditingRequest.RequestedCount}"
+                                                              MinValue="1"
+                                                              ControlIsEnabled="{Binding EditingRequest.CanOrderMultiple}"
+                                                              Height="32"
+                                                              Margin="5"/>
+
+                                    <!-- Арендодатель -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" 
+                                               Text="Арендодатель:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <ComboBox Grid.Row="1" Grid.Column="1"
+                                              ItemsSource="{Binding AllLessorOrganizations}"
+                                              SelectedItem="{Binding EditingRequest.LessorOrganization}"
+                                              DisplayMemberPath="Name"
+                                              Height="32"
+                                              Margin="5"
+                                              Style="{StaticResource ModernComboBox}"/>
+
+                                    <!-- Госномер -->
+                                    <TextBlock Grid.Row="2" Grid.Column="0" 
+                                               Text="Госномер:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <controls:SearchableComboBox Grid.Row="2" Grid.Column="1"
+                                                                  ItemsSource="{Binding AllLicensePlates}"
+                                                                  SelectedItem="{Binding EditingRequest.LicensePlate}"
+                                                                  FilterByOrganization="{Binding EditingRequest.LessorOrganizationId}"
+                                                                  FilterByEquipment="{Binding EditingRequest.EquipmentId}"
+                                                                  DisplayMemberPath="PlateDisplay"
                                                                   Height="32"
                                                                   Margin="5"/>
-
-                                        <!-- Арендодатель -->
-                                        <TextBlock Grid.Row="1" Grid.Column="0" 
-                                                   Text="Арендодатель:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <ComboBox Grid.Row="1" Grid.Column="1"
-                                                  ItemsSource="{Binding AllLessorOrganizations}"
-                                                  SelectedItem="{Binding EditingRequest.LessorOrganization}"
-                                                  DisplayMemberPath="Name"
-                                                  Height="32"
-                                                  Margin="5"/>
-
-                                        <!-- Госномер -->
-                                        <TextBlock Grid.Row="2" Grid.Column="0" 
-                                                   Text="Госномер:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <controls:SearchableComboBox Grid.Row="2" Grid.Column="1"
-                                                                      ItemsSource="{Binding AllLicensePlates}"
-                                                                      SelectedItem="{Binding EditingRequest.LicensePlate}"
-                                                                      FilterByOrganization="{Binding EditingRequest.LessorOrganizationId}"
-                                                                      FilterByEquipment="{Binding EditingRequest.EquipmentId}"
-                                                                      DisplayMemberPath="PlateDisplay"
-                                                                      Height="32"
-                                                                      Margin="5"/>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                                </Grid>
+                            </GroupBox>
 
                             <!-- Время работы -->
-                            <Border Background="#FFF9F9F9"
-                                    CornerRadius="6"
-                                    Padding="15"
-                                    Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="Время работы"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Margin="0,0,0,10"/>
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                            <RowDefinition Height="Auto"/>
-                                        </Grid.RowDefinitions>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="120"/>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
+                            <GroupBox Header="Время работы" 
+                                      Style="{StaticResource ModernGroupBox}"
+                                      Foreground="{DynamicResource TextBrush}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="120"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
 
-                                        <!-- Время начала -->
-                                        <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                   Text="Начало:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <controls:TimePicker Grid.Row="0" Grid.Column="1"
-                                                             Value="{Binding StartTime}"
-                                                             Height="32"
-                                                             Margin="5"/>
+                                    <!-- Время начала -->
+                                    <TextBlock Grid.Row="0" Grid.Column="0" 
+                                               Text="Начало:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <controls:TimePicker Grid.Row="0" Grid.Column="1"
+                                                         Value="{Binding StartTime}"
+                                                         Height="32"
+                                                         Margin="5"/>
 
-                                        <!-- Время окончания -->
-                                        <TextBlock Grid.Row="1" Grid.Column="0" 
-                                                   Text="Окончание:" 
-                                                   VerticalAlignment="Center" 
-                                                   Margin="5"/>
-                                        <controls:TimePicker Grid.Row="1" Grid.Column="1"
-                                                             Value="{Binding EndTime}"
-                                                             Height="32"
-                                                             Margin="5"/>
+                                    <!-- Время окончания -->
+                                    <TextBlock Grid.Row="1" Grid.Column="0" 
+                                               Text="Окончание:" 
+                                               VerticalAlignment="Center" 
+                                               Margin="5"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                    <controls:TimePicker Grid.Row="1" Grid.Column="1"
+                                                         Value="{Binding EndTime}"
+                                                         Height="32"
+                                                         Margin="5"/>
 
-                                        <!-- Чекбокс обеда -->
-                                        <CheckBox Grid.Row="2" Grid.Column="1"
-                                                  Content="Вычесть 1 час на обед (если более 5 часов)"
-                                                  IsChecked="{Binding HasLunchBreak}"
-                                                  Margin="5"
-                                                  VerticalAlignment="Center"/>
+                                    <!-- Чекбокс обеда -->
+                                    <CheckBox Grid.Row="2" Grid.Column="1"
+                                              Content="Вычесть 1 час на обед (если более 5 часов)"
+                                              IsChecked="{Binding HasLunchBreak}"
+                                              Margin="5"
+                                              VerticalAlignment="Center"
+                                              Style="{StaticResource ModernCheckBox}"/>
 
-                                        <!-- Итоговые часы -->
-                                        <Border Grid.Row="2" Grid.Column="2"
-                                                Background="{StaticResource HeaderBackgroundBrush}"
-                                                CornerRadius="4"
-                                                Padding="10,5"
-                                                Margin="10,5,5,5">
-                                            <TextBlock Text="{Binding EditingRequest.WorkedHours, StringFormat='Итого: {0:F1} ч'}"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{StaticResource TextBrush}"/>
-                                        </Border>
-                                    </Grid>
-                                </StackPanel>
-                            </Border>
+                                    <!-- Итоговые часы -->
+                                    <Border Grid.Row="2" Grid.Column="2"
+                                            Background="{DynamicResource HeaderBackgroundBrush}"
+                                            CornerRadius="4"
+                                            Padding="10,5"
+                                            Margin="10,5,5,5"
+                                            BorderBrush="{DynamicResource BorderBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="{Binding EditingRequest.WorkedHours, StringFormat='Итого: {0:F1} ч'}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextBrush}"/>
+                                    </Border>
+                                </Grid>
+                            </GroupBox>
 
                             <!-- Статусы -->
-                            <Border Background="#FFF9F9F9"
-                                    CornerRadius="6"
-                                    Padding="15"
-                                    Margin="0,0,0,15">
+                            <GroupBox Header="Статус" 
+                                      Style="{StaticResource ModernGroupBox}"
+                                      Foreground="{DynamicResource TextBrush}">
                                 <StackPanel>
-                                    <TextBlock Text="Статус"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Margin="0,0,0,10"/>
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
@@ -804,51 +799,50 @@
                                         <CheckBox Grid.Column="0" 
                                                   Content="Отработано"
                                                   IsChecked="{Binding EditingRequest.IsWorked}"
-                                                  Margin="5"/>
+                                                  Margin="5"
+                                                  Style="{StaticResource ModernCheckBox}"/>
                                         <CheckBox Grid.Column="1" 
                                                   Content="Не предоставлена"
                                                   IsChecked="{Binding EditingRequest.IsNotProvided}"
-                                                  Margin="5"/>
+                                                  Margin="5"
+                                                  Style="{StaticResource ModernCheckBox}"/>
                                         <CheckBox Grid.Column="2" 
                                                   Content="Актировка"
                                                   IsChecked="{Binding EditingRequest.IsWeatherCancellation}"
-                                                  Margin="5"/>
+                                                  Margin="5"
+                                                  Style="{StaticResource ModernCheckBox}"/>
                                     </Grid>
 
                                     <TextBox Text="{Binding EditingRequest.CancellationReason}"
                                              Height="32"
                                              Margin="5,10,5,5"
                                              Visibility="{Binding EditingRequest.IsNotProvided, Converter={StaticResource BoolToVis}}"
+                                             Style="{StaticResource ModernTextBox}"
                                              ToolTip="Причина не предоставления..."/>
                                 </StackPanel>
-                            </Border>
+                            </GroupBox>
 
                             <!-- Комментарий -->
-                            <Border Background="#FFF9F9F9"
-                                    CornerRadius="6"
-                                    Padding="15"
-                                    Margin="0,0,0,15">
-                                <StackPanel>
-                                    <TextBlock Text="Комментарий"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextBrush}"
-                                               Margin="0,0,0,10"/>
-                                    <TextBox Text="{Binding EditingRequest.Comment}"
-                                             Height="80"
-                                             TextWrapping="Wrap"
-                                             AcceptsReturn="True"
-                                             Margin="5"/>
-                                </StackPanel>
-                            </Border>
+                            <GroupBox Header="Комментарий" 
+                                      Style="{StaticResource ModernGroupBox}"
+                                      Foreground="{DynamicResource TextBrush}">
+                                <TextBox Text="{Binding EditingRequest.Comment}"
+                                         Height="80"
+                                         TextWrapping="Wrap"
+                                         AcceptsReturn="True"
+                                         Margin="5"
+                                         Style="{StaticResource ModernTextBox}"/>
+                            </GroupBox>
 
                             <!-- Информация о блокировке -->
                             <Border Background="#FFFFE0E0"
                                     CornerRadius="4"
                                     Padding="10"
-                                    Visibility="{Binding EditingRequest.IsBlocked, Converter={StaticResource BoolToVis}}">
+                                    Visibility="{Binding EditingRequest.IsBlocked, Converter={StaticResource BoolToVis}}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1">
                                 <TextBlock Text="Запись заблокирована другим пользователем"
-                                           Foreground="{StaticResource ErrorBrush}"
+                                           Foreground="{DynamicResource ErrorBrush}"
                                            FontWeight="SemiBold"/>
                             </Border>
                         </StackPanel>
@@ -863,13 +857,15 @@
                                 Command="{Binding SaveRequestCommand}"
                                 Width="100"
                                 Height="35"
-                                Margin="5"/>
+                                Margin="5"
+                                Style="{StaticResource ModernButton}"/>
                         <Button Content="Отмена"
                                 Command="{Binding CancelEditCommand}"
                                 Background="#FF9E9E9E"
                                 Width="100"
                                 Height="35"
-                                Margin="5"/>
+                                Margin="5"
+                                Style="{StaticResource ModernButton}"/>
                     </StackPanel>
                 </Grid>
             </Border>

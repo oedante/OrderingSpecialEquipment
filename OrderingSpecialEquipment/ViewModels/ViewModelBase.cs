@@ -26,7 +26,7 @@ namespace OrderingSpecialEquipment.ViewModels
         /// Вызов события изменения свойства
         /// </summary>
         /// <param name="propertyName">Имя свойства</param>
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        public virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

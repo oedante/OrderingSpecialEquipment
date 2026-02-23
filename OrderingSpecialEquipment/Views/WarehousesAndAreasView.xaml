@@ -9,14 +9,16 @@
         Title="Склады и территории" 
         WindowStartupLocation="CenterOwner"
         Width="1000" Height="600"
-        MinWidth="800" MinHeight="400">
+        MinWidth="800" MinHeight="400"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <converters:BooleanToYesNoConverter x:Key="BoolToYesNo"/>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="10" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -24,17 +26,41 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="0" Background="#FFF0F0F0" Height="40">
-            <Button x:Name="btnAddWarehouse" Content="➕ Добавить склад" Click="BtnAddWarehouse_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnEditWarehouse" Content="✏️ Редактировать склад" Click="BtnEditWarehouse_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnDeleteWarehouse" Content="🗑️ Удалить склад" Click="BtnDeleteWarehouse_Click" Margin="2" Padding="8,3"/>
-            <Separator/>
-            <Button x:Name="btnAddArea" Content="➕ Добавить территорию" Click="BtnAddArea_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnEditArea" Content="✏️ Редактировать территорию" Click="BtnEditArea_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnDeleteArea" Content="🗑️ Удалить территорию" Click="BtnDeleteArea_Click" Margin="2" Padding="8,3"/>
-            <Button x:Name="btnLinkAreas" Content="🔗 Привязать территории" Click="BtnLinkAreas_Click" Margin="2" Padding="8,3"/>
-            <Separator/>
-            <Button x:Name="btnRefresh" Content="🔄 Обновить" Click="BtnRefresh_Click" Margin="2" Padding="8,3"/>
+        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+            <Button x:Name="btnAddWarehouse" Content="➕ Добавить склад" 
+                    Click="BtnAddWarehouse_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnEditWarehouse" Content="✏️ Редактировать склад" 
+                    Click="BtnEditWarehouse_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnDeleteWarehouse" Content="🗑️ Удалить склад" 
+                    Click="BtnDeleteWarehouse_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
+            <Button x:Name="btnAddArea" Content="➕ Добавить территорию" 
+                    Click="BtnAddArea_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnEditArea" Content="✏️ Редактировать территорию" 
+                    Click="BtnEditArea_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnDeleteArea" Content="🗑️ Удалить территорию" 
+                    Click="BtnDeleteArea_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnLinkAreas" Content="🔗 Привязать территории" 
+                    Click="BtnLinkAreas_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
+            <Separator Style="{StaticResource ModernSeparator}"/>
+            <Button x:Name="btnRefresh" Content="🔄 Обновить" 
+                    Click="BtnRefresh_Click" 
+                    Margin="2" Padding="8,3"
+                    Style="{StaticResource ModernButton}"/>
         </ToolBar>
 
         <!-- Основная область -->
@@ -46,25 +72,36 @@
             </Grid.ColumnDefinitions>
 
             <!-- Левая часть - склады -->
-            <Border Grid.Column="0" BorderBrush="#FFD0D0D0" BorderThickness="1" CornerRadius="3">
+            <Border Grid.Column="0" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#FFE8E8E8" Padding="5" CornerRadius="3,3,0,0">
+                    <Border Grid.Row="0" 
+                            Background="{DynamicResource HeaderBackgroundBrush}" 
+                            Padding="5" 
+                            CornerRadius="4,4,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Склады" FontWeight="Bold" FontSize="14"/>
+                            <TextBlock Text="Склады" 
+                                       FontWeight="Bold" 
+                                       FontSize="14"
+                                       Foreground="{DynamicResource TextBrush}"/>
                             <ComboBox Grid.Column="1" x:Name="cmbDepartmentFilter" 
-                                      Width="150" Height="25"
+                                      Width="150" 
+                                      Height="25"
                                       DisplayMemberPath="Name"
                                       SelectedValuePath="Id"
-                                      SelectionChanged="CmbDepartmentFilter_SelectionChanged"/>
+                                      SelectionChanged="CmbDepartmentFilter_SelectionChanged"
+                                      Style="{StaticResource ModernComboBox}"/>
                         </Grid>
                     </Border>
 
@@ -75,31 +112,66 @@
                               SelectionUnit="FullRow"
                               SelectionChanged="DgWarehouses_SelectionChanged"
                               MouseDoubleClick="DgWarehouses_MouseDoubleClick"
-                              Margin="0">
+                              Margin="0"
+                              Style="{StaticResource ModernDataGrid}"
+                              RowStyle="{StaticResource ModernDataGridRow}"
+                              CellStyle="{StaticResource ModernDataGridCell}"
+                              ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                              Background="{DynamicResource BackgroundBrush}"
+                              Foreground="{DynamicResource TextBrush}"
+                              RowBackground="{DynamicResource BackgroundBrush}"
+                              AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                              BorderBrush="{DynamicResource BorderBrush}"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70"/>
-                            <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="Адрес" Binding="{Binding Address}" Width="150"/>
-                            <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" Width="70"/>
+                            <DataGridTextColumn Header="ID" 
+                                                Binding="{Binding Id}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridTextColumn Header="Наименование" 
+                                                Binding="{Binding Name}" 
+                                                Width="*"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridTextColumn Header="Адрес" 
+                                                Binding="{Binding Address}" 
+                                                Width="150"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridCheckBoxColumn Header="Активен" 
+                                                    Binding="{Binding IsActive}" 
+                                                    Width="70"
+                                                    CellStyle="{StaticResource ModernDataGridCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
             </Border>
 
             <!-- Разделитель -->
-            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" 
-                          Background="#FFD0D0D0" Width="5"/>
+            <GridSplitter Grid.Column="1" 
+                          HorizontalAlignment="Stretch" 
+                          Background="{DynamicResource BorderBrush}" 
+                          Width="5"/>
 
             <!-- Правая часть - территории -->
-            <Border Grid.Column="2" BorderBrush="#FFD0D0D0" BorderThickness="1" CornerRadius="3">
+            <Border Grid.Column="2" 
+                    BorderBrush="{DynamicResource BorderBrush}" 
+                    BorderThickness="1" 
+                    CornerRadius="4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#FFE8E8E8" Padding="5" CornerRadius="3,3,0,0">
-                        <TextBlock x:Name="txtAreasTitle" Text="Территории" FontWeight="Bold" FontSize="14"/>
+                    <Border Grid.Row="0" 
+                            Background="{DynamicResource HeaderBackgroundBrush}" 
+                            Padding="5" 
+                            CornerRadius="4,4,0,0">
+                        <TextBlock x:Name="txtAreasTitle" 
+                                   Text="Территории" 
+                                   FontWeight="Bold" 
+                                   FontSize="14"
+                                   Foreground="{DynamicResource TextBrush}"/>
                     </Border>
 
                     <DataGrid x:Name="dgAreas" Grid.Row="1" 
@@ -108,13 +180,39 @@
                               SelectionMode="Single"
                               SelectionUnit="FullRow"
                               MouseDoubleClick="DgAreas_MouseDoubleClick"
-                              Margin="0">
+                              Margin="0"
+                              Style="{StaticResource ModernDataGrid}"
+                              RowStyle="{StaticResource ModernDataGridRow}"
+                              CellStyle="{StaticResource ModernDataGridCell}"
+                              ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                              Background="{DynamicResource BackgroundBrush}"
+                              Foreground="{DynamicResource TextBrush}"
+                              RowBackground="{DynamicResource BackgroundBrush}"
+                              AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                              BorderBrush="{DynamicResource BorderBrush}"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70"/>
-                            <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="Тип" Binding="{Binding AreaType}" Width="100"/>
-                            <DataGridTextColumn Header="Макс. вместимость" Binding="{Binding MaxCapacity}" Width="100"/>
-                            <DataGridCheckBoxColumn Header="Активна" Binding="{Binding IsActive}" Width="70"/>
+                            <DataGridTextColumn Header="ID" 
+                                                Binding="{Binding Id}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridTextColumn Header="Наименование" 
+                                                Binding="{Binding Name}" 
+                                                Width="*"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridTextColumn Header="Тип" 
+                                                Binding="{Binding AreaType}" 
+                                                Width="100"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridTextColumn Header="Макс. вместимость" 
+                                                Binding="{Binding MaxCapacity}" 
+                                                Width="100"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                            <DataGridCheckBoxColumn Header="Активна" 
+                                                    Binding="{Binding IsActive}" 
+                                                    Width="70"
+                                                    CellStyle="{StaticResource ModernDataGridCell}"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>
@@ -122,9 +220,11 @@
         </Grid>
 
         <!-- Статус бар -->
-        <StatusBar Grid.Row="2" Background="#FFF0F0F0">
+        <StatusBar Grid.Row="2" Style="{StaticResource ModernStatusBar}">
             <StatusBarItem>
-                <TextBlock x:Name="txtStatus" Text="Готов"/>
+                <TextBlock x:Name="txtStatus" 
+                           Text="Готов" 
+                           Foreground="{DynamicResource TextBrush}"/>
             </StatusBarItem>
         </StatusBar>
 
@@ -134,33 +234,68 @@
                PopupAnimation="Fade"
                AllowsTransparency="True"
                StaysOpen="False"
-               IsOpen="{Binding IsOpen, Mode=TwoWay, RelativeSource={RelativeSource Mode=Self}}">
-            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
-                    CornerRadius="5" Padding="20" Width="450">
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}" Width="450">
                 <StackPanel>
-                    <TextBlock x:Name="WarehousePopupTitle" Text="Добавление склада" 
-                               FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="WarehousePopupTitle" 
+                               Text="Добавление склада" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,15"
+                               Foreground="{DynamicResource TextBrush}"/>
 
-                    <TextBlock Text="Наименование:" Margin="0,5"/>
-                    <TextBox x:Name="txtWarehouseName" Height="30" Margin="0,0,0,10"/>
+                    <TextBlock Text="Наименование:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBox x:Name="txtWarehouseName" 
+                             Height="30" 
+                             Margin="0,0,0,10"
+                             Style="{StaticResource ModernTextBox}"/>
 
-                    <TextBlock Text="Отдел:" Margin="0,5"/>
+                    <TextBlock Text="Отдел:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <ComboBox x:Name="cmbWarehouseDepartment" 
                               DisplayMemberPath="Name"
                               SelectedValuePath="Id"
-                              Height="30" Margin="0,0,0,10"/>
+                              Height="30" 
+                              Margin="0,0,0,10"
+                              Style="{StaticResource ModernComboBox}"/>
 
-                    <TextBlock Text="Адрес:" Margin="0,5"/>
-                    <TextBox x:Name="txtWarehouseAddress" Height="60" TextWrapping="Wrap" 
-                             AcceptsReturn="True" Margin="0,0,0,10"/>
+                    <TextBlock Text="Адрес:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBox x:Name="txtWarehouseAddress" 
+                             Height="60" 
+                             TextWrapping="Wrap" 
+                             AcceptsReturn="True" 
+                             Margin="0,0,0,10"
+                             Style="{StaticResource ModernTextBox}"/>
 
-                    <CheckBox x:Name="chkWarehouseIsActive" Content="Активен" IsChecked="True" Margin="0,5"/>
+                    <CheckBox x:Name="chkWarehouseIsActive" 
+                              Content="Активен" 
+                              IsChecked="True" 
+                              Margin="0,5"
+                              Style="{StaticResource ModernCheckBox}"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                        <Button x:Name="btnSaveWarehouse" Content="Сохранить" Width="100" Height="35" 
-                                Margin="5" Click="BtnSaveWarehouse_Click"/>
-                        <Button x:Name="btnCancelWarehouse" Content="Отмена" Width="100" Height="35" 
-                                Margin="5" Click="BtnCancelWarehouse_Click"/>
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,20,0,0">
+                        <Button x:Name="btnSaveWarehouse" 
+                                Content="Сохранить" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnSaveWarehouse_Click"
+                                Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="btnCancelWarehouse" 
+                                Content="Отмена" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnCancelWarehouse_Click"
+                                Style="{StaticResource ModernButton}"
+                                Background="#FF9E9E9E"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -171,36 +306,73 @@
                Placement="Center"
                PopupAnimation="Fade"
                AllowsTransparency="True"
-               StaysOpen="False">
-            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
-                    CornerRadius="5" Padding="20" Width="400">
+               StaysOpen="False"
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}" Width="400">
                 <StackPanel>
-                    <TextBlock x:Name="AreaPopupTitle" Text="Добавление территории" 
-                               FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock x:Name="AreaPopupTitle" 
+                               Text="Добавление территории" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,15"
+                               Foreground="{DynamicResource TextBrush}"/>
 
-                    <TextBlock Text="Наименование:" Margin="0,5"/>
-                    <TextBox x:Name="txtAreaName" Height="30" Margin="0,0,0,10"/>
+                    <TextBlock Text="Наименование:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBox x:Name="txtAreaName" 
+                             Height="30" 
+                             Margin="0,0,0,10"
+                             Style="{StaticResource ModernTextBox}"/>
 
-                    <TextBlock Text="Тип территории:" Margin="0,5"/>
-                    <ComboBox x:Name="cmbAreaType" Height="30" Margin="0,0,0,10">
-                        <ComboBoxItem Content="Разгрузка"/>
-                        <ComboBoxItem Content="Погрузка"/>
-                        <ComboBoxItem Content="Хранение"/>
-                        <ComboBoxItem Content="Открытое хранение"/>
-                        <ComboBoxItem Content="Крытое хранение"/>
-                        <ComboBoxItem Content="Ремонтная зона"/>
+                    <TextBlock Text="Тип территории:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <ComboBox x:Name="cmbAreaType" 
+                              Height="30" 
+                              Margin="0,0,0,10"
+                              Style="{StaticResource ModernComboBox}">
+                        <ComboBoxItem Content="Разгрузка" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="Погрузка" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="Хранение" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="Открытое хранение" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="Крытое хранение" Style="{StaticResource ModernComboBoxItem}"/>
+                        <ComboBoxItem Content="Ремонтная зона" Style="{StaticResource ModernComboBoxItem}"/>
                     </ComboBox>
 
-                    <TextBlock Text="Максимальная вместимость:" Margin="0,5"/>
-                    <TextBox x:Name="txtAreaCapacity" Text="" Height="30" Margin="0,0,0,10"/>
+                    <TextBlock Text="Максимальная вместимость:" 
+                               Margin="0,5"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBox x:Name="txtAreaCapacity" 
+                             Text="" 
+                             Height="30" 
+                             Margin="0,0,0,10"
+                             Style="{StaticResource ModernTextBox}"/>
 
-                    <CheckBox x:Name="chkAreaIsActive" Content="Активна" IsChecked="True" Margin="0,5"/>
+                    <CheckBox x:Name="chkAreaIsActive" 
+                              Content="Активна" 
+                              IsChecked="True" 
+                              Margin="0,5"
+                              Style="{StaticResource ModernCheckBox}"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                        <Button x:Name="btnSaveArea" Content="Сохранить" Width="100" Height="35" 
-                                Margin="5" Click="BtnSaveArea_Click"/>
-                        <Button x:Name="btnCancelArea" Content="Отмена" Width="100" Height="35" 
-                                Margin="5" Click="BtnCancelArea_Click"/>
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,20,0,0">
+                        <Button x:Name="btnSaveArea" 
+                                Content="Сохранить" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnSaveArea_Click"
+                                Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="btnCancelArea" 
+                                Content="Отмена" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnCancelArea_Click"
+                                Style="{StaticResource ModernButton}"
+                                Background="#FF9E9E9E"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -211,9 +383,9 @@
                Placement="Center"
                PopupAnimation="Fade"
                AllowsTransparency="True"
-               StaysOpen="False">
-            <Border Background="White" BorderBrush="#FF404040" BorderThickness="1" 
-                    CornerRadius="5" Padding="20" Width="500" Height="400">
+               StaysOpen="False"
+               Style="{StaticResource ModernPopup}">
+            <Border Style="{StaticResource PopupBorderStyle}" Width="500" Height="400">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -221,19 +393,40 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Привязка территорий к складу" 
-                               FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+                    <TextBlock Grid.Row="0" 
+                               Text="Привязка территорий к складу" 
+                               FontSize="16" 
+                               FontWeight="Bold" 
+                               Margin="0,0,0,15"
+                               Foreground="{DynamicResource TextBrush}"/>
 
                     <ListBox Grid.Row="1" x:Name="lbAreasForLinking" 
                              SelectionMode="Multiple"
                              DisplayMemberPath="Name"
-                             Margin="0,5"/>
+                             Margin="0,5"
+                             Style="{StaticResource ModernListBox}"
+                             Background="{DynamicResource BackgroundBrush}"
+                             Foreground="{DynamicResource TextBrush}"/>
 
-                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                        <Button x:Name="btnSaveLinks" Content="Сохранить" Width="100" Height="35" 
-                                Margin="5" Click="BtnSaveLinks_Click"/>
-                        <Button x:Name="btnCancelLinks" Content="Отмена" Width="100" Height="35" 
-                                Margin="5" Click="BtnCancelLinks_Click"/>
+                    <StackPanel Grid.Row="2" 
+                                Orientation="Horizontal" 
+                                HorizontalAlignment="Right" 
+                                Margin="0,20,0,0">
+                        <Button x:Name="btnSaveLinks" 
+                                Content="Сохранить" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnSaveLinks_Click"
+                                Style="{StaticResource ModernButton}"/>
+                        <Button x:Name="btnCancelLinks" 
+                                Content="Отмена" 
+                                Width="100" 
+                                Height="35" 
+                                Margin="5" 
+                                Click="BtnCancelLinks_Click"
+                                Style="{StaticResource ModernButton}"
+                                Background="#FF9E9E9E"/>
                     </StackPanel>
                 </Grid>
             </Border>

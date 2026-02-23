@@ -1,17 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OrderingSpecialEquipment.Models;
+using OrderingSpecialEquipment.Services;
 using OrderingSpecialEquipment.Services.Interfaces;
 using OrderingSpecialEquipment.Utils;
 using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System.Windows.Data;
-using System.ComponentModel;
 using System.Collections.Generic;
-using System.Windows;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Data;
+using System.Windows.Input;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
@@ -27,6 +28,7 @@ namespace OrderingSpecialEquipment.ViewModels
         private readonly IDbContextFactory _contextFactory;
         private readonly IShiftRequestService _shiftRequestService;
         private readonly IEquipmentService _equipmentService;
+        private readonly IThemeService _themeService;
 
         private bool _isLeftPanelVisible = false;
         private bool _isOnlyFavorites;
@@ -54,9 +56,17 @@ namespace OrderingSpecialEquipment.ViewModels
         private bool _hasLunchBreak = true;
         private ICollectionView _groupedShiftRequests;
         private double _leftPanelWidth = 0;
+        private bool _isDarkTheme;
+
         #endregion
 
         #region Свойства
+
+        public bool IsDarkTheme
+        {
+            get => _isDarkTheme;
+            set => SetProperty(ref _isDarkTheme, value);
+        }
 
         public double LeftPanelWidth
         {
@@ -374,6 +384,8 @@ namespace OrderingSpecialEquipment.ViewModels
         #endregion
 
         #region Команды
+
+        public ICommand ToggleThemeCommand { get; set; }
         public ICommand ToggleLeftPanelCommand { get; set; }
         public ICommand AddRequestCommand { get; set; }
         public ICommand EditRequestCommand { get; set; }
@@ -403,7 +415,8 @@ namespace OrderingSpecialEquipment.ViewModels
             IDatabaseService databaseService,
             IShiftRequestService shiftRequestService,
             IEquipmentService equipmentService,
-            IDbContextFactory contextFactory)
+            IDbContextFactory contextFactory,
+            IThemeService themeService)
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
@@ -411,6 +424,7 @@ namespace OrderingSpecialEquipment.ViewModels
             _shiftRequestService = shiftRequestService ?? throw new ArgumentNullException(nameof(shiftRequestService));
             _equipmentService = equipmentService ?? throw new ArgumentNullException(nameof(equipmentService));
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
+            _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
 
             InitializeCommands();
             SubscribeToEvents();
@@ -418,6 +432,17 @@ namespace OrderingSpecialEquipment.ViewModels
             _selectedDate = DateTime.UtcNow.Date;
             _leftPanelWidth = 0; // Начальная ширина
             _isLeftPanelVisible = false; // Панель не видима
+
+            _themeService = themeService;
+            _isDarkTheme = _themeService.IsDarkTheme;
+
+            // Подписка на изменение темы:
+            _themeService.ThemeChanged += (s, isDark) =>
+            {
+                IsDarkTheme = isDark;
+                // Можно перезагрузить данные если нужно
+            };
+
         }
         #endregion
 
@@ -444,6 +469,7 @@ namespace OrderingSpecialEquipment.ViewModels
             OpenUsersCommand = new RelayCommand(() => OpenReference("Users"), () => _authorizationService.HasSpecialPermission("ManageUsers") || _authorizationService.IsSystemAdmin);
             OpenTransportReportCommand = new RelayCommand(() => OpenReport("Transport"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             OpenShiftReportCommand = new RelayCommand(() => OpenReport("Shift"), () => _authorizationService.HasSpecialPermission("ViewReports"));
+            ToggleThemeCommand = new RelayCommand(ToggleTheme);
         }
 
         private void SubscribeToEvents()
@@ -1203,6 +1229,17 @@ namespace OrderingSpecialEquipment.ViewModels
                 window.ShowDialog();
             }
         }
+
+        private void ToggleTheme(object parameter)
+        {
+            _themeService.ToggleTheme();
+            // Обновляем свойство для отображения состояния чекбокса
+            IsDarkTheme = _themeService.IsDarkTheme;
+
+            // Перезагружаем данные если нужно (опционально)
+            // _ = LoadDataAsync();
+        }
+
         #endregion
     }
 }

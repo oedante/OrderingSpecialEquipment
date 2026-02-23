@@ -4,13 +4,23 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:local="clr-namespace:OrderingSpecialEquipment.Views"
-        mc:Ignorable="d" d:DesignWidth="500"
+        mc:Ignorable="d" 
+        d:DesignHeight="600" d:DesignWidth="500"
         Title="Настройки подключения к базе данных" 
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        SizeToContent="WidthAndHeight" Height="566">
+        SizeToContent="WidthAndHeight"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
-    <Grid Margin="20">
+    <Window.Resources>
+        <Style x:Key="SettingsGroupBox" TargetType="GroupBox" BasedOn="{StaticResource ModernGroupBox}">
+            <Setter Property="Margin" Value="0,5"/>
+            <Setter Property="Padding" Value="10"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -19,21 +29,25 @@
 
         <!-- Заголовок -->
         <TextBlock Grid.Row="0" Text="Настройки подключения к БД" 
-                   FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+                   FontSize="18" FontWeight="Bold" 
+                   Foreground="{DynamicResource TextBrush}"
+                   Margin="0,0,0,20"/>
 
         <!-- Форма настроек -->
         <StackPanel Grid.Row="1" Margin="0,0,0,20">
 
-            <GroupBox Header="Тип базы данных" Margin="0,5">
+            <GroupBox Header="Тип базы данных" Style="{StaticResource SettingsGroupBox}">
                 <StackPanel>
                     <RadioButton x:Name="rbPostgreSQL" Content="PostgreSQL" 
-                                 IsChecked="True" Margin="5" GroupName="DbType"/>
+                                 IsChecked="True" Margin="5" GroupName="DbType"
+                                 Style="{StaticResource ModernRadioButton}"/>
                     <RadioButton x:Name="rbSqlServer" Content="MS SQL Server" 
-                                 Margin="5" GroupName="DbType"/>
+                                 Margin="5" GroupName="DbType"
+                                 Style="{StaticResource ModernRadioButton}"/>
                 </StackPanel>
             </GroupBox>
 
-            <GroupBox Header="Параметры подключения" Margin="0,5">
+            <GroupBox Header="Параметры подключения" Style="{StaticResource SettingsGroupBox}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -51,72 +65,104 @@
 
                     <!-- Сервер -->
                     <TextBlock Grid.Row="0" Grid.Column="0" Text="Сервер:" 
-                               VerticalAlignment="Center" Margin="5"/>
+                               VerticalAlignment="Center" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <TextBox x:Name="txtServer" Grid.Row="0" Grid.Column="1" 
-                             Text="localhost" Margin="5" Height="30"/>
+                             Text="localhost" Style="{StaticResource ModernTextBox}"/>
 
                     <!-- Порт -->
                     <TextBlock Grid.Row="1" Grid.Column="0" Text="Порт:" 
-                               VerticalAlignment="Center" Margin="5"/>
+                               VerticalAlignment="Center" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <TextBox x:Name="txtPort" Grid.Row="1" Grid.Column="1" 
-                             Text="5432" Margin="5" Height="30"/>
+                             Text="5432" Style="{StaticResource ModernTextBox}"/>
 
                     <!-- Имя БД -->
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="База данных:" 
-                               VerticalAlignment="Center" Margin="5"/>
+                               VerticalAlignment="Center" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <TextBox x:Name="txtDatabase" Grid.Row="2" Grid.Column="1" 
-                             Text="OrderingSpecialEquipment" Margin="5" Height="30"/>
+                             Text="OrderingSpecialEquipment" Style="{StaticResource ModernTextBox}"/>
 
                     <!-- Пользователь -->
                     <TextBlock Grid.Row="3" Grid.Column="0" Text="Пользователь:" 
-                               VerticalAlignment="Center" Margin="5"/>
+                               VerticalAlignment="Center" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <TextBox x:Name="txtUsername" Grid.Row="3" Grid.Column="1" 
-                             Text="postgres" Margin="5" Height="30"/>
+                             Text="postgres" Style="{StaticResource ModernTextBox}"/>
 
                     <!-- Пароль -->
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Пароль:" 
-                               VerticalAlignment="Center" Margin="5"/>
+                               VerticalAlignment="Center" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <PasswordBox x:Name="txtPassword" Grid.Row="4" Grid.Column="1" 
-                                 Margin="5" Height="30"/>
+                                 Style="{StaticResource ModernPasswordBox}"/>
 
                     <!-- Разделитель -->
                     <Border Grid.Row="5" Grid.ColumnSpan="2" 
-                            Height="1" Background="#FFE0E0E0" Margin="5"/>
+                            Height="1" Background="{DynamicResource BorderBrush}" Margin="5"/>
 
                     <!-- Строка подключения (только для просмотра) -->
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="Строка подключения:" 
-                               VerticalAlignment="Top" Margin="5"/>
+                               VerticalAlignment="Top" Margin="5"
+                               Foreground="{DynamicResource TextBrush}"/>
                     <TextBox x:Name="txtConnectionString" Grid.Row="6" Grid.Column="1" 
-                             IsReadOnly="True" Background="#FFF5F5F5" 
-                             TextWrapping="Wrap" MinHeight="60" Margin="5"/>
+                             IsReadOnly="True" Background="{DynamicResource HeaderBackgroundBrush}" 
+                             TextWrapping="Wrap" MinHeight="60" 
+                             Style="{StaticResource ModernTextBox}"
+                             Foreground="{DynamicResource TextBrush}"/>
                 </Grid>
             </GroupBox>
 
             <!-- Индикатор успешного подключения -->
             <Border x:Name="borderSuccess"  
-                    CornerRadius="3" Padding="10" Margin="0,5"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4" 
+                    Padding="10" 
+                    Margin="0,5"
                     Visibility="Collapsed">
                 <TextBlock x:Name="txtSuccess" Foreground="Green" 
-                           Text="Подключение успешно установлено!"/>
+                           Text="Подключение успешно установлено!"
+                           FontWeight="SemiBold"/>
             </Border>
 
             <!-- Индикатор ошибки -->
             <Border x:Name="borderError" Background="#FFFFE0E0" 
-                    CornerRadius="3" Padding="10" Margin="0,5"
+                    BorderBrush="{DynamicResource ErrorBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4" 
+                    Padding="10" 
+                    Margin="0,5"
                     Visibility="Collapsed">
-                <TextBlock x:Name="txtError" Foreground="Red" 
-                           Text="Ошибка подключения!"/>
+                <TextBlock x:Name="txtError" Foreground="{DynamicResource ErrorBrush}" 
+                           Text="Ошибка подключения!"
+                           FontWeight="SemiBold"/>
             </Border>
         </StackPanel>
 
         <!-- Кнопки -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="btnTest" Content="Проверить подключение" 
-                    Width="180" Height="35" Margin="5" Click="BtnTest_Click"/>
+                    Style="{StaticResource ModernButton}" 
+                    Width="180" 
+                    Height="35"
+                    Margin="5"
+                    Click="BtnTest_Click"/>
             <Button x:Name="btnSave" Content="Сохранить" 
-                    Width="100" Height="35" Margin="5" Click="BtnSave_Click" IsEnabled="False"/>
+                    Style="{StaticResource ModernButton}" 
+                    Width="100"
+                    Height="35"
+                    Margin="5"
+                    Click="BtnSave_Click" 
+                    IsEnabled="False"/>
             <Button x:Name="btnCancel" Content="Отмена" 
-                    Width="100" Height="35" Margin="5" Click="BtnCancel_Click"/>
+                    Style="{StaticResource ModernButton}" 
+                    Width="100"
+                    Height="35"
+                    Margin="5"
+                    Background="#FF9E9E9E"
+                    Click="BtnCancel_Click"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -9,7 +9,9 @@
         Title="Пользователи и права доступа" 
         WindowStartupLocation="CenterOwner"
         Width="1000" Height="700"
-        MinWidth="800" MinHeight="500">
+        MinWidth="800" MinHeight="500"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <converters:BooleanToYesNoConverter x:Key="BoolToYesNo"/>
@@ -17,10 +19,14 @@
         <converters:InverseBooleanConverter x:Key="InverseBool"/>
     </Window.Resources>
 
-    <TabControl Margin="10">
+    <TabControl Margin="10" 
+                Style="{StaticResource ModernTabControl}"
+                Background="{DynamicResource BackgroundBrush}"
+                Foreground="{DynamicResource TextBrush}">
+
         <!-- Вкладка Роли -->
-        <TabItem Header="Роли">
-            <Grid>
+        <TabItem Header="Роли" Style="{StaticResource ModernTabItem}">
+            <Grid Background="{DynamicResource BackgroundBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -28,12 +34,24 @@
                 </Grid.RowDefinitions>
 
                 <!-- Панель инструментов ролей -->
-                <ToolBar Grid.Row="0" Background="#FFF0F0F0" Height="40">
-                    <Button x:Name="btnAddRole" Content="➕ Добавить роль" Click="BtnAddRole_Click" Margin="2" Padding="8,3"/>
-                    <Button x:Name="btnEditRole" Content="✏️ Редактировать роль" Click="BtnEditRole_Click" Margin="2" Padding="8,3"/>
-                    <Button x:Name="btnDeleteRole" Content="🗑️ Удалить роль" Click="BtnDeleteRole_Click" Margin="2" Padding="8,3"/>
-                    <Separator/>
-                    <Button x:Name="btnRefreshRoles" Content="🔄 Обновить" Click="BtnRefreshRoles_Click" Margin="2" Padding="8,3"/>
+                <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+                    <Button x:Name="btnAddRole" Content="➕ Добавить роль" 
+                            Click="BtnAddRole_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="btnEditRole" Content="✏️ Редактировать роль" 
+                            Click="BtnEditRole_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="btnDeleteRole" Content="🗑️ Удалить роль" 
+                            Click="BtnDeleteRole_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Separator Style="{StaticResource ModernSeparator}"/>
+                    <Button x:Name="btnRefreshRoles" Content="🔄 Обновить" 
+                            Click="BtnRefreshRoles_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
                 </ToolBar>
 
                 <!-- Таблица ролей -->
@@ -44,29 +62,60 @@
                           SelectionUnit="FullRow"
                           MouseDoubleClick="DgRoles_MouseDoubleClick"
                           Margin="0,5"
-                          RowHeight="25">
+                          RowHeight="25"
+                          Style="{StaticResource ModernDataGrid}"
+                          RowStyle="{StaticResource ModernDataGridRow}"
+                          CellStyle="{StaticResource ModernDataGridCell}"
+                          ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                          Background="{DynamicResource BackgroundBrush}"
+                          Foreground="{DynamicResource TextBrush}"
+                          RowBackground="{DynamicResource BackgroundBrush}"
+                          AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                          BorderBrush="{DynamicResource BorderBrush}"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70"/>
-                        <DataGridTextColumn Header="Код" Binding="{Binding Code}" Width="80"/>
-                        <DataGridTextColumn Header="Наименование" Binding="{Binding Name}" Width="150"/>
-                        <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="200"/>
-                        <DataGridCheckBoxColumn Header="Системная" Binding="{Binding IsSystem}" Width="70"/>
-                        <DataGridCheckBoxColumn Header="Активна" Binding="{Binding IsActive}" Width="70"/>
+                        <DataGridTextColumn Header="ID" 
+                                            Binding="{Binding Id}" 
+                                            Width="70"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Код" 
+                                            Binding="{Binding Code}" 
+                                            Width="80"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Наименование" 
+                                            Binding="{Binding Name}" 
+                                            Width="150"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Описание" 
+                                            Binding="{Binding Description}" 
+                                            Width="200"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridCheckBoxColumn Header="Системная" 
+                                                Binding="{Binding IsSystem}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridCheckBoxColumn Header="Активна" 
+                                                Binding="{Binding IsActive}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
 
                 <!-- Статус бар -->
-                <StatusBar Grid.Row="2" Background="#FFF0F0F0">
+                <StatusBar Grid.Row="2" Style="{StaticResource ModernStatusBar}">
                     <StatusBarItem>
-                        <TextBlock x:Name="txtRolesStatus" Text="Готов"/>
+                        <TextBlock x:Name="txtRolesStatus" 
+                                   Text="Готов" 
+                                   Foreground="{DynamicResource TextBrush}"/>
                     </StatusBarItem>
                 </StatusBar>
             </Grid>
         </TabItem>
 
         <!-- Вкладка Пользователи -->
-        <TabItem Header="Пользователи">
-            <Grid>
+        <TabItem Header="Пользователи" Style="{StaticResource ModernTabItem}">
+            <Grid Background="{DynamicResource BackgroundBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -74,15 +123,32 @@
                 </Grid.RowDefinitions>
 
                 <!-- Панель инструментов пользователей -->
-                <ToolBar Grid.Row="0" Background="#FFF0F0F0" Height="40">
-                    <Button x:Name="btnAddUser" Content="➕ Добавить пользователя" Click="BtnAddUser_Click" Margin="2" Padding="8,3"/>
-                    <Button x:Name="btnEditUser" Content="✏️ Редактировать пользователя" Click="BtnEditUser_Click" Margin="2" Padding="8,3"/>
-                    <Button x:Name="btnDeleteUser" Content="🗑️ Удалить пользователя" Click="BtnDeleteUser_Click" Margin="2" Padding="8,3"/>
-                    <Separator/>
-                    <Button x:Name="btnRefreshUsers" Content="🔄 Обновить" Click="BtnRefreshUsers_Click" Margin="2" Padding="8,3"/>
-                    <Separator/>
-                    <CheckBox x:Name="chkShowInactiveUsers" Content="Показывать неактивных" 
-                              VerticalAlignment="Center" Margin="5,0" Checked="ChkShowInactiveUsers_Changed" Unchecked="ChkShowInactiveUsers_Changed"/>
+                <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+                    <Button x:Name="btnAddUser" Content="➕ Добавить пользователя" 
+                            Click="BtnAddUser_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="btnEditUser" Content="✏️ Редактировать пользователя" 
+                            Click="BtnEditUser_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Button x:Name="btnDeleteUser" Content="🗑️ Удалить пользователя" 
+                            Click="BtnDeleteUser_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Separator Style="{StaticResource ModernSeparator}"/>
+                    <Button x:Name="btnRefreshUsers" Content="🔄 Обновить" 
+                            Click="BtnRefreshUsers_Click" 
+                            Margin="2" Padding="8,3"
+                            Style="{StaticResource ModernButton}"/>
+                    <Separator Style="{StaticResource ModernSeparator}"/>
+                    <CheckBox x:Name="chkShowInactiveUsers" 
+                              Content="Показывать неактивных" 
+                              VerticalAlignment="Center" 
+                              Margin="5,0" 
+                              Checked="ChkShowInactiveUsers_Changed" 
+                              Unchecked="ChkShowInactiveUsers_Changed"
+                              Style="{StaticResource ModernCheckBox}"/>
                 </ToolBar>
 
                 <!-- Таблица пользователей -->
@@ -93,39 +159,85 @@
                           SelectionUnit="FullRow"
                           MouseDoubleClick="DgUsers_MouseDoubleClick"
                           Margin="0,5"
-                          RowHeight="25">
+                          RowHeight="25"
+                          Style="{StaticResource ModernDataGrid}"
+                          RowStyle="{StaticResource ModernDataGridRow}"
+                          CellStyle="{StaticResource ModernDataGridCell}"
+                          ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                          Background="{DynamicResource BackgroundBrush}"
+                          Foreground="{DynamicResource TextBrush}"
+                          RowBackground="{DynamicResource BackgroundBrush}"
+                          AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                          BorderBrush="{DynamicResource BorderBrush}"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70"/>
-                        <DataGridTextColumn Header="Windows логин" Binding="{Binding WindowsLogin}" Width="120"/>
-                        <DataGridTextColumn Header="Полное имя" Binding="{Binding FullName}" Width="150"/>
-                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="150"/>
-                        <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="100"/>
-                        <DataGridTextColumn Header="Роль" Binding="{Binding Role.Name}" Width="120"/>
-                        <DataGridTextColumn Header="Отдел по умолч." Binding="{Binding DefaultDepartment.Name}" Width="120"/>
-                        <DataGridCheckBoxColumn Header="Все отделы" Binding="{Binding HasAllDepartments}" Width="70"/>
-                        <DataGridCheckBoxColumn Header="Активен" Binding="{Binding IsActive}" Width="70"/>
+                        <DataGridTextColumn Header="ID" 
+                                            Binding="{Binding Id}" 
+                                            Width="70"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Windows логин" 
+                                            Binding="{Binding WindowsLogin}" 
+                                            Width="120"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Полное имя" 
+                                            Binding="{Binding FullName}" 
+                                            Width="150"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Email" 
+                                            Binding="{Binding Email}" 
+                                            Width="150"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Телефон" 
+                                            Binding="{Binding Phone}" 
+                                            Width="100"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Роль" 
+                                            Binding="{Binding Role.Name}" 
+                                            Width="120"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridTextColumn Header="Отдел по умолч." 
+                                            Binding="{Binding DefaultDepartment.Name}" 
+                                            Width="120"
+                                            CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridCheckBoxColumn Header="Все отделы" 
+                                                Binding="{Binding HasAllDepartments}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
+                        <DataGridCheckBoxColumn Header="Активен" 
+                                                Binding="{Binding IsActive}" 
+                                                Width="70"
+                                                CellStyle="{StaticResource ModernDataGridCell}"/>
                     </DataGrid.Columns>
                 </DataGrid>
 
                 <!-- Статус бар -->
-                <StatusBar Grid.Row="2" Background="#FFF0F0F0">
+                <StatusBar Grid.Row="2" Style="{StaticResource ModernStatusBar}">
                     <StatusBarItem>
-                        <TextBlock x:Name="txtUsersStatus" Text="Готов"/>
+                        <TextBlock x:Name="txtUsersStatus" 
+                                   Text="Готов" 
+                                   Foreground="{DynamicResource TextBrush}"/>
                     </StatusBarItem>
                 </StatusBar>
             </Grid>
         </TabItem>
 
         <!-- Вкладка Доступ к отделам и складам -->
-        <TabItem Header="Доступ к отделам и складам">
-            <Grid>
+        <TabItem Header="Доступ к отделам и складам" Style="{StaticResource ModernTabItem}">
+            <Grid Background="{DynamicResource BackgroundBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
                 <!-- Выбор пользователя -->
-                <Border Grid.Row="0" Background="#FFF5F5F5" Padding="10" Margin="0,0,0,5">
+                <Border Grid.Row="0" 
+                        Background="{DynamicResource HeaderBackgroundBrush}" 
+                        Padding="10" 
+                        Margin="0,0,0,5"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -134,17 +246,27 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="Пользователь:" VerticalAlignment="Center" Margin="5,0"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="Пользователь:" 
+                                   VerticalAlignment="Center" 
+                                   Margin="5,0"
+                                   Foreground="{DynamicResource TextBrush}"/>
                         <ComboBox Grid.Column="1" x:Name="cmbAccessUser" 
-                                  Height="30" Margin="5,0"
+                                  Height="30" 
+                                  Margin="5,0"
                                   DisplayMemberPath="FullName"
                                   SelectedValuePath="Id"
-                                  SelectionChanged="CmbAccessUser_SelectionChanged"/>
+                                  SelectionChanged="CmbAccessUser_SelectionChanged"
+                                  Style="{StaticResource ModernComboBox}"/>
 
                         <Button Grid.Column="3" x:Name="btnRefreshAccess" 
-                                Content="Обновить" Width="80" Height="30" 
-                                HorizontalAlignment="Right" Margin="5"
-                                Click="BtnRefreshAccess_Click"/>
+                                Content="Обновить" 
+                                Width="80" 
+                                Height="30" 
+                                HorizontalAlignment="Right" 
+                                Margin="5"
+                                Click="BtnRefreshAccess_Click"
+                                Style="{StaticResource ModernButton}"/>
                     </Grid>
                 </Border>
 
@@ -157,7 +279,10 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Отделы -->
-                    <Border Grid.Column="0" BorderBrush="#FFD0D0D0" BorderThickness="1" CornerRadius="3">
+                    <Border Grid.Column="0" 
+                            BorderBrush="{DynamicResource BorderBrush}" 
+                            BorderThickness="1" 
+                            CornerRadius="4">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -165,38 +290,60 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Background="#FFE8E8E8" Padding="5" CornerRadius="3,3,0,0">
-                                <TextBlock Text="Доступные отделы" FontWeight="Bold" FontSize="14"/>
+                            <Border Grid.Row="0" 
+                                    Background="{DynamicResource HeaderBackgroundBrush}" 
+                                    Padding="5" 
+                                    CornerRadius="4,4,0,0">
+                                <TextBlock Text="Доступные отделы" 
+                                           FontWeight="Bold" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextBrush}"/>
                             </Border>
 
-                            <ListBox x:Name="lbDepartments" Grid.Row="1" 
+                            <ListBox x:Name="lbDepartments" 
+                                     Grid.Row="1" 
                                      DisplayMemberPath="Name"
                                      SelectionMode="Single"
                                      SelectionChanged="LbDepartments_SelectionChanged"
-                                     Margin="0,5"/>
+                                     Margin="0,5"
+                                     Style="{StaticResource ModernListBox}"
+                                     Background="{DynamicResource BackgroundBrush}"
+                                     Foreground="{DynamicResource TextBrush}"/>
 
-                            <Border Grid.Row="2" Background="#FFF5F5F5" Padding="5">
+                            <Border Grid.Row="2" 
+                                    Background="{DynamicResource HeaderBackgroundBrush}" 
+                                    Padding="5"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,1,0,0">
                                 <StackPanel>
                                     <CheckBox x:Name="chkHasAllWarehouses" 
                                               Content="Доступ ко всем складам отдела"
                                               Margin="5"
                                               Checked="ChkHasAllWarehouses_Changed"
-                                              Unchecked="ChkHasAllWarehouses_Changed"/>
+                                              Unchecked="ChkHasAllWarehouses_Changed"
+                                              Style="{StaticResource ModernCheckBox}"/>
                                     <Button x:Name="btnSaveDepartmentAccess" 
                                             Content="Сохранить доступ к отделу"
-                                            Height="30" Margin="5"
-                                            Click="BtnSaveDepartmentAccess_Click"/>
+                                            Height="30" 
+                                            Margin="5"
+                                            Click="BtnSaveDepartmentAccess_Click"
+                                            Style="{StaticResource ModernButton}"/>
                                 </StackPanel>
                             </Border>
                         </Grid>
                     </Border>
 
                     <!-- Разделитель -->
-                    <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" 
-                                  Background="#FFD0D0D0" Width="5"/>
+                    <GridSplitter Grid.Column="1" 
+                                  HorizontalAlignment="Stretch" 
+                                  Background="{DynamicResource BorderBrush}" 
+                                  Width="5"/>
 
                     <!-- Склады -->
-                    <Border Grid.Column="2" BorderBrush="#FFD0D0D0" BorderThickness="1" CornerRadius="3">
+                    <Border Grid.Column="2" 
+                            BorderBrush="{DynamicResource BorderBrush}" 
+                            BorderThickness="1" 
+                            CornerRadius="4">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -204,20 +351,37 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <Border Grid.Row="0" Background="#FFE8E8E8" Padding="5" CornerRadius="3,3,0,0">
-                                <TextBlock x:Name="txtWarehousesTitle" Text="Склады выбранного отдела" FontWeight="Bold" FontSize="14"/>
+                            <Border Grid.Row="0" 
+                                    Background="{DynamicResource HeaderBackgroundBrush}" 
+                                    Padding="5" 
+                                    CornerRadius="4,4,0,0">
+                                <TextBlock x:Name="txtWarehousesTitle" 
+                                           Text="Склады выбранного отдела" 
+                                           FontWeight="Bold" 
+                                           FontSize="14"
+                                           Foreground="{DynamicResource TextBrush}"/>
                             </Border>
 
-                            <ListBox x:Name="lbWarehouses" Grid.Row="1" 
+                            <ListBox x:Name="lbWarehouses" 
+                                     Grid.Row="1" 
                                      DisplayMemberPath="Name"
                                      SelectionMode="Multiple"
-                                     Margin="0,5"/>
+                                     Margin="0,5"
+                                     Style="{StaticResource ModernListBox}"
+                                     Background="{DynamicResource BackgroundBrush}"
+                                     Foreground="{DynamicResource TextBrush}"/>
 
-                            <Border Grid.Row="2" Background="#FFF5F5F5" Padding="5">
+                            <Border Grid.Row="2" 
+                                    Background="{DynamicResource HeaderBackgroundBrush}" 
+                                    Padding="5"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="0,1,0,0">
                                 <Button x:Name="btnSaveWarehouseAccess" 
                                         Content="Сохранить доступ к складам"
-                                        Height="30" Margin="5"
-                                        Click="BtnSaveWarehouseAccess_Click"/>
+                                        Height="30" 
+                                        Margin="5"
+                                        Click="BtnSaveWarehouseAccess_Click"
+                                        Style="{StaticResource ModernButton}"/>
                             </Border>
                         </Grid>
                     </Border>

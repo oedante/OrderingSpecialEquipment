@@ -1,39 +1,44 @@
 ﻿<Application x:Class="OrderingSpecialEquipment.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:OrderingSpecialEquipment"
              Startup="Application_Startup"
              DispatcherUnhandledException="Application_DispatcherUnhandledException">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!-- Подключаем общие стили -->
+                <!-- Сначала загружаем тему -->
+                <ResourceDictionary Source="Resources/Themes/LightTheme.xaml"/>
+                <!-- Потом загружаем стили -->
                 <ResourceDictionary Source="Resources/Styles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Базовые стили для всех окон -->
-            <Style TargetType="Window">
-                <Setter Property="FontFamily" Value="Segoe UI"/>
-                <Setter Property="FontSize" Value="12"/>
-                <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            </Style>
+            <!-- Конвертеры -->
+            <BooleanToVisibilityConverter x:Key="BoolToVis"/>
 
-            <!-- Глобальные стили по умолчанию -->
+            <!-- Глобальные стили по умолчанию - только для элементов, которые точно не вызовут конфликтов -->
+            <Style TargetType="Window" BasedOn="{StaticResource ModernWindow}"/>
             <Style TargetType="Button" BasedOn="{StaticResource ModernButton}"/>
             <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}"/>
+            <Style TargetType="PasswordBox" BasedOn="{StaticResource ModernPasswordBox}"/>
             <Style TargetType="ComboBox" BasedOn="{StaticResource ModernComboBox}"/>
+            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource ModernComboBoxItem}"/>
             <Style TargetType="DatePicker" BasedOn="{StaticResource ModernDatePicker}"/>
             <Style TargetType="CheckBox" BasedOn="{StaticResource ModernCheckBox}"/>
-            <Style TargetType="DataGrid" BasedOn="{StaticResource ModernDataGrid}"/>
+            <Style TargetType="RadioButton" BasedOn="{StaticResource ModernRadioButton}"/>
             <Style TargetType="ListBox" BasedOn="{StaticResource ModernListBox}"/>
             <Style TargetType="ListBoxItem" BasedOn="{StaticResource ModernListBoxItem}"/>
+            <Style TargetType="TabControl" BasedOn="{StaticResource ModernTabControl}"/>
+            <Style TargetType="TabItem" BasedOn="{StaticResource ModernTabItem}"/>
             <Style TargetType="GroupBox" BasedOn="{StaticResource ModernGroupBox}"/>
-            <Style TargetType="StatusBar" BasedOn="{StaticResource ModernStatusBar}"/>
             <Style TargetType="ToolBar" BasedOn="{StaticResource ModernToolBar}"/>
+            <Style TargetType="StatusBar" BasedOn="{StaticResource ModernStatusBar}"/>
             <Style TargetType="Menu" BasedOn="{StaticResource ModernMenu}"/>
-
-            <!-- Конвертеры, которые могут понадобиться глобально -->
-            <!-- (они уже определены в MainWindow.xaml, но можно добавить и сюда) -->
+            <Style TargetType="MenuItem" BasedOn="{StaticResource ModernMenuItem}"/>
+            <Style TargetType="Separator" BasedOn="{StaticResource ModernSeparator}"/>
+            <Style TargetType="Popup" BasedOn="{StaticResource ModernPopup}"/>
+            <Style TargetType="Border" BasedOn="{StaticResource ModernBorder}"/>
+            <Style TargetType="ScrollViewer" BasedOn="{StaticResource ModernScrollViewer}"/>
+            <Style TargetType="ProgressBar" BasedOn="{StaticResource ModernProgressBar}"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

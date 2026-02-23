@@ -62,6 +62,12 @@ namespace OrderingSpecialEquipment
                 // Настройка DI контейнера
                 ConfigureServices();
 
+                // ПОЛУЧАЕМ СЕРВИС ТЕМЫ
+                var themeService = Services.GetRequiredService<IThemeService>();
+
+                // ЗАГРУЖАЕМ ТЕМУ ДО СОЗДАНИЯ ГЛАВНОГО ОКНА
+                themeService.LoadThemeResources();
+
                 // Настройка строки подключения по умолчанию при первом запуске
                 await SetupDefaultConnectionStringAsync();
 
@@ -70,7 +76,6 @@ namespace OrderingSpecialEquipment
 
                 if (!dbConnected)
                 {
-                    // Если нет подключения, показываем предупреждение, но продолжаем
                     MessageBox.Show(
                         "Не удалось подключиться к базе данных. Приложение будет запущено, но некоторые функции будут недоступны.\n\n" +
                         "Для настройки подключения используйте меню 'Файл' -> 'Настройки подключения'.",
@@ -79,7 +84,6 @@ namespace OrderingSpecialEquipment
                         MessageBoxImage.Warning);
                 }
 
-                // Аутентификация пользователя (только если есть подключение к БД)
                 if (dbConnected)
                 {
                     await AuthenticateUserAsync();
@@ -89,7 +93,7 @@ namespace OrderingSpecialEquipment
                     _logger?.Warning("Аутентификация пропущена - нет подключения к БД");
                 }
 
-                // Запуск главного окна
+                // СОЗДАЕМ ГЛАВНОЕ ОКНО ПОСЛЕ ЗАГРУЗКИ ТЕМЫ
                 var mainWindow = Services.GetRequiredService<MainWindow>();
                 mainWindow.Show();
             }
@@ -194,6 +198,7 @@ namespace OrderingSpecialEquipment
             services.AddSingleton<IDatabaseService, DatabaseService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
+            services.AddSingleton<IThemeService, ThemeService>();
 
             // Регистрация фабрики контекстов
             services.AddSingleton<IDbContextFactory, DbContextFactory>();

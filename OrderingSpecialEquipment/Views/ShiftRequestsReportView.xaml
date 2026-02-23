@@ -9,14 +9,16 @@
         Title="Детализация заявок" 
         WindowStartupLocation="CenterOwner"
         Width="1200" Height="600"
-        MinWidth="900" MinHeight="400">
+        MinWidth="900" MinHeight="400"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}">
 
     <Window.Resources>
         <converters:CurrencyFormatConverter x:Key="CurrencyFormat"/>
         <converters:BooleanToYesNoConverter x:Key="BoolToYesNo"/>
     </Window.Resources>
 
-    <Grid Margin="10">
+    <Grid Margin="10" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -25,7 +27,13 @@
         </Grid.RowDefinitions>
 
         <!-- Панель параметров отчета -->
-        <Border Grid.Row="0" Background="#FFF5F5F5" Padding="10" CornerRadius="5" Margin="0,0,0,10">
+        <Border Grid.Row="0" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,0,0,10"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -35,33 +43,69 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Отдел:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Отдел:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="1" x:Name="cmbDepartment" 
-                          Height="30" Margin="5,0"
+                          Height="30" 
+                          Margin="5,0"
                           DisplayMemberPath="Name"
-                          SelectedValuePath="Id"/>
+                          SelectedValuePath="Id"
+                          Style="{StaticResource ModernComboBox}"/>
 
-                <TextBlock Grid.Column="2" Text="Период:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="2" 
+                           Text="Период:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="5,0">
-                    <DatePicker x:Name="dpDateFrom" Width="120" Height="30" Margin="0,0,5,0"/>
-                    <TextBlock Text="—" VerticalAlignment="Center" Margin="2,0"/>
-                    <DatePicker x:Name="dpDateTo" Width="120" Height="30" Margin="5,0,0,0"/>
+                    <DatePicker x:Name="dpDateFrom" 
+                                Width="120" 
+                                Height="30" 
+                                Margin="0,0,5,0"
+                                Style="{StaticResource ModernDatePicker}"/>
+                    <TextBlock Text="—" 
+                               VerticalAlignment="Center" 
+                               Margin="2,0"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <DatePicker x:Name="dpDateTo" 
+                                Width="120" 
+                                Height="30" 
+                                Margin="5,0,0,0"
+                                Style="{StaticResource ModernDatePicker}"/>
                 </StackPanel>
 
                 <Button Grid.Column="4" x:Name="btnGenerate" 
-                        Content="Сформировать отчет" Width="150" Height="35" 
-                        HorizontalAlignment="Right" Margin="5"
-                        Click="BtnGenerate_Click"/>
+                        Content="Сформировать отчет" 
+                        Width="150" 
+                        Height="35" 
+                        HorizontalAlignment="Right" 
+                        Margin="5"
+                        Click="BtnGenerate_Click"
+                        Style="{StaticResource ModernButton}"/>
 
                 <Button Grid.Column="4" x:Name="btnExport" 
-                        Content="📊 Экспорт в Excel" Width="150" Height="35" 
-                        HorizontalAlignment="Right" Margin="5,0,160,0"
-                        Click="BtnExport_Click"/>
+                        Content="📊 Экспорт в Excel" 
+                        Width="150" 
+                        Height="35" 
+                        HorizontalAlignment="Right" 
+                        Margin="5,0,160,0"
+                        Click="BtnExport_Click"
+                        Style="{StaticResource ModernButton}"
+                        Background="{DynamicResource AccentBrush}"/>
             </Grid>
         </Border>
 
         <!-- Фильтры -->
-        <Border Grid.Row="1" Background="#FFF5F5F5" Padding="10" CornerRadius="5" Margin="0,0,0,10">
+        <Border Grid.Row="1" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,0,0,10"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -72,21 +116,31 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Техника:" VerticalAlignment="Center" Margin="5,0"/>
+                <TextBlock Grid.Column="0" 
+                           Text="Техника:" 
+                           VerticalAlignment="Center" 
+                           Margin="5,0"
+                           Foreground="{DynamicResource TextBrush}"/>
                 <ComboBox Grid.Column="1" x:Name="cmbEquipment" 
-                          Height="30" Margin="5,0"
+                          Height="30" 
+                          Margin="5,0"
                           DisplayMemberPath="Name"
-                          SelectedValuePath="Id"/>
+                          SelectedValuePath="Id"
+                          Style="{StaticResource ModernComboBox}"/>
 
                 <CheckBox Grid.Column="2" x:Name="chkShowOnlyWorked" 
                           Content="Только отработанные" 
-                          VerticalAlignment="Center" Margin="15,0,0,0"/>
+                          VerticalAlignment="Center" 
+                          Margin="15,0,0,0"
+                          Style="{StaticResource ModernCheckBox}"/>
 
                 <CheckBox Grid.Column="3" x:Name="chkGroupByEquipment" 
                           Content="Группировать по технике" 
-                          VerticalAlignment="Center" Margin="15,0,0,0"
+                          VerticalAlignment="Center" 
+                          Margin="15,0,0,0"
                           Checked="ChkGroupByEquipment_Changed"
-                          Unchecked="ChkGroupByEquipment_Changed"/>
+                          Unchecked="ChkGroupByEquipment_Changed"
+                          Style="{StaticResource ModernCheckBox}"/>
             </Grid>
         </Border>
 
@@ -95,26 +149,82 @@
                   AutoGenerateColumns="False" 
                   IsReadOnly="True"
                   Margin="0,5"
-                  RowHeight="30">
+                  RowHeight="30"
+                  Style="{StaticResource ModernDataGrid}"
+                  RowStyle="{StaticResource ModernDataGridRow}"
+                  CellStyle="{StaticResource ModernDataGridCell}"
+                  ColumnHeaderStyle="{StaticResource ModernDataGridColumnHeader}"
+                  Background="{DynamicResource BackgroundBrush}"
+                  Foreground="{DynamicResource TextBrush}"
+                  RowBackground="{DynamicResource BackgroundBrush}"
+                  AlternatingRowBackground="{DynamicResource DataGridAlternatingRowBrush}"
+                  BorderBrush="{DynamicResource BorderBrush}"
+                  GridLinesVisibility="Horizontal"
+                  HorizontalGridLinesBrush="{DynamicResource BorderBrush}">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Дата" Binding="{Binding Date, StringFormat=dd.MM.yyyy}" Width="90"/>
-                <DataGridTextColumn Header="Смена" Binding="{Binding ShiftName}" Width="70"/>
-                <DataGridTextColumn Header="Отдел" Binding="{Binding DepartmentName}" Width="120"/>
-                <DataGridTextColumn Header="Склад" Binding="{Binding WarehouseName}" Width="120"/>
-                <DataGridTextColumn Header="Территория" Binding="{Binding AreaName}" Width="120"/>
-                <DataGridTextColumn Header="Техника" Binding="{Binding EquipmentName}" Width="150"/>
-                <DataGridTextColumn Header="Госномер" Binding="{Binding PlateNumber}" Width="100"/>
-                <DataGridTextColumn Header="Арендодатель" Binding="{Binding LessorName}" Width="150"/>
-                <DataGridTextColumn Header="Кол-во" Binding="{Binding RequestedCount}" Width="50"/>
-                <DataGridTextColumn Header="Часы" Binding="{Binding WorkedHours}" Width="60"/>
-                <DataGridTextColumn Header="Стоимость" Binding="{Binding ActualCost, Converter={StaticResource CurrencyFormat}}" Width="100"/>
-                <DataGridTextColumn Header="Отработано" Binding="{Binding IsWorked, Converter={StaticResource BoolToYesNo}}" Width="80"/>
-                <DataGridTextColumn Header="Комментарий" Binding="{Binding Comment}" Width="200"/>
+                <DataGridTextColumn Header="Дата" 
+                                    Binding="{Binding Date, StringFormat=dd.MM.yyyy}" 
+                                    Width="90"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Смена" 
+                                    Binding="{Binding ShiftName}" 
+                                    Width="70"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Отдел" 
+                                    Binding="{Binding DepartmentName}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Склад" 
+                                    Binding="{Binding WarehouseName}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Территория" 
+                                    Binding="{Binding AreaName}" 
+                                    Width="120"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Техника" 
+                                    Binding="{Binding EquipmentName}" 
+                                    Width="150"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Госномер" 
+                                    Binding="{Binding PlateNumber}" 
+                                    Width="100"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Арендодатель" 
+                                    Binding="{Binding LessorName}" 
+                                    Width="150"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Кол-во" 
+                                    Binding="{Binding RequestedCount}" 
+                                    Width="50"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Часы" 
+                                    Binding="{Binding WorkedHours}" 
+                                    Width="60"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Стоимость" 
+                                    Binding="{Binding ActualCost, Converter={StaticResource CurrencyFormat}}" 
+                                    Width="100"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Отработано" 
+                                    Binding="{Binding IsWorked, Converter={StaticResource BoolToYesNo}}" 
+                                    Width="80"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
+                <DataGridTextColumn Header="Комментарий" 
+                                    Binding="{Binding Comment}" 
+                                    Width="200"
+                                    CellStyle="{StaticResource ModernDataGridCell}"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <!-- Итоговая строка -->
-        <Border Grid.Row="3" Background="#FFF0F0F0" Padding="10" CornerRadius="5" Margin="0,5,0,0">
+        <Border Grid.Row="3" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="10" 
+                CornerRadius="4" 
+                Margin="0,5,0,0"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -122,24 +232,40 @@
                     <ColumnDefinition Width="150"/>
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="ИТОГО:" FontWeight="Bold" FontSize="14"/>
+                <TextBlock Grid.Column="0" 
+                           Text="ИТОГО:" 
+                           FontWeight="Bold" 
+                           FontSize="14"
+                           Foreground="{DynamicResource TextBrush}"/>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="Всего часов: " FontWeight="Bold"/>
-                    <TextBlock x:Name="txtTotalHours" FontWeight="Bold"/>
+                    <TextBlock Text="Всего часов: " 
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock x:Name="txtTotalHours" 
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <TextBlock Text="Всего стоимость: " FontWeight="Bold"/>
-                    <TextBlock x:Name="txtTotalCost" FontWeight="Bold"/>
+                    <TextBlock Text="Всего стоимость: " 
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock x:Name="txtTotalCost" 
+                               FontWeight="Bold"
+                               Foreground="{DynamicResource TextBrush}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Статус бар -->
-        <StatusBar Grid.Row="4" Background="#FFF0F0F0" Margin="0,5,0,0">
+        <StatusBar Grid.Row="4" 
+                   Style="{StaticResource ModernStatusBar}"
+                   Margin="0,5,0,0">
             <StatusBarItem>
-                <TextBlock x:Name="txtStatus" Text="Готов"/>
+                <TextBlock x:Name="txtStatus" 
+                           Text="Готов" 
+                           Foreground="{DynamicResource TextBrush}"/>
             </StatusBarItem>
         </StatusBar>
     </Grid>
