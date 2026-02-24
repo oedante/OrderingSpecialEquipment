@@ -23,6 +23,8 @@ namespace OrderingSpecialEquipment.Controls
         public NumericTextBox()
         {
             InitializeComponent();
+            this.DataContext = this;
+            TextValue = Value.ToString();
         }
 
         public static readonly DependencyProperty ValueProperty =
@@ -39,7 +41,7 @@ namespace OrderingSpecialEquipment.Controls
 
         public static readonly DependencyProperty ControlIsEnabledProperty =
             DependencyProperty.Register("ControlIsEnabled", typeof(bool), typeof(NumericTextBox),
-                new PropertyMetadata(true));
+                new PropertyMetadata(true, OnControlIsEnabledChanged));
 
         public int Value
         {
@@ -83,6 +85,12 @@ namespace OrderingSpecialEquipment.Controls
         {
             var control = (NumericTextBox)d;
             control.TextValue = e.NewValue?.ToString() ?? "1";
+        }
+
+        private static void OnControlIsEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (NumericTextBox)d;
+            control.ValueTextBox.IsEnabled = (bool)e.NewValue;
         }
 
         private void ValueTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)

@@ -96,7 +96,7 @@ namespace OrderingSpecialEquipment.Views
                     .Select(tp => tp.Year)
                     .Distinct()
                     .OrderByDescending(y => y)
-                    .ToListAsync();
+                    .ToListAsync(); // Это работает, возвращает List<int>
 
                 var currentYear = DateTime.Now.Year;
                 if (!years.Contains(currentYear))

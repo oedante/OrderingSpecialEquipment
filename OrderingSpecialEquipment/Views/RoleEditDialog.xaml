@@ -3,14 +3,29 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+        xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+        xmlns:local="clr-namespace:OrderingSpecialEquipment.Views"
         mc:Ignorable="d" 
-        d:DesignHeight="700" d:DesignWidth="600"
+        d:DesignHeight="700" d:DesignWidth="700"
         Title="Редактирование роли" 
         WindowStartupLocation="CenterOwner"
-        Width="600" Height="700"
-        ResizeMode="NoResize"
+        Width="700" Height="700"
         Background="{DynamicResource WindowBackgroundBrush}"
         Foreground="{DynamicResource TextBrush}">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- Конвертер для уровня доступа -->
+        <local:AccessLevelToTextConverter x:Key="AccessLevelToText"/>
+
+        <!-- Стиль для ComboBox в таблице -->
+        <Style x:Key="AccessLevelComboBox" TargetType="ComboBox" BasedOn="{StaticResource ModernComboBox}">
+            <Setter Property="Width" Value="100"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+    </Window.Resources>
 
     <Grid Margin="20" Background="{DynamicResource BackgroundBrush}">
         <Grid.RowDefinitions>
@@ -19,224 +34,672 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Основная информация -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="Код роли:" 
-                       Margin="0,5"
-                       Foreground="{DynamicResource TextBrush}"/>
-            <TextBox x:Name="txtCode" 
-                     Height="30" 
-                     Margin="0,0,0,5"
-                     Style="{StaticResource ModernTextBox}"/>
+        <!-- ============================================= -->
+        <!-- ОСНОВНАЯ ИНФОРМАЦИЯ О РОЛИ                    -->
+        <!-- ============================================= -->
+        <Border Grid.Row="0" 
+                Background="{DynamicResource HeaderBackgroundBrush}" 
+                Padding="15" 
+                CornerRadius="4" 
+                Margin="0,0,0,15"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-            <TextBlock Text="Наименование:" 
-                       Margin="0,5"
-                       Foreground="{DynamicResource TextBrush}"/>
-            <TextBox x:Name="txtName" 
-                     Height="30" 
-                     Margin="0,0,0,5"
-                     Style="{StaticResource ModernTextBox}"/>
+                <!-- Код роли -->
+                <TextBlock Grid.Row="0" Grid.Column="0" 
+                           Text="Код роли:" 
+                           VerticalAlignment="Center" 
+                           Margin="5"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBox Grid.Row="0" Grid.Column="1" 
+                         x:Name="txtCode" 
+                         Height="30" 
+                         Margin="5"
+                         Style="{StaticResource ModernTextBox}"/>
 
-            <TextBlock Text="Описание:" 
-                       Margin="0,5"
-                       Foreground="{DynamicResource TextBrush}"/>
-            <TextBox x:Name="txtDescription" 
-                     Height="60" 
-                     TextWrapping="Wrap" 
-                     AcceptsReturn="True" 
-                     Margin="0,0,0,5"
-                     Style="{StaticResource ModernTextBox}"/>
-        </StackPanel>
+                <!-- Наименование -->
+                <TextBlock Grid.Row="0" Grid.Column="2" 
+                           Text="Наименование:" 
+                           VerticalAlignment="Center" 
+                           Margin="5"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBox Grid.Row="0" Grid.Column="3" 
+                         x:Name="txtName" 
+                         Height="30" 
+                         Margin="5"
+                         Style="{StaticResource ModernTextBox}"/>
 
-        <!-- Права доступа -->
-        <GroupBox Grid.Row="1" 
-                  Header="Права доступа к таблицам" 
-                  Margin="0,5"
-                  Style="{StaticResource ModernGroupBox}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto"
-                          Style="{StaticResource ModernScrollViewer}">
-                <StackPanel>
-                    <CheckBox x:Name="chkDepartmentsRead" 
-                              Content="Departments - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkDepartmentsWrite" 
-                              Content="Departments - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- Описание -->
+                <TextBlock Grid.Row="1" Grid.Column="0" 
+                           Text="Описание:" 
+                           VerticalAlignment="Center" 
+                           Margin="5"
+                           Foreground="{DynamicResource TextBrush}"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" 
+                         x:Name="txtDescription" 
+                         Height="30" 
+                         Margin="5"
+                         Style="{StaticResource ModernTextBox}"/>
+            </Grid>
+        </Border>
 
-                    <CheckBox x:Name="chkEquipmentsRead" 
-                              Content="Equipments - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkEquipmentsWrite" 
-                              Content="Equipments - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+        <!-- ============================================= -->
+        <!-- ТАБЛИЦА ПРАВ ДОСТУПА                           -->
+        <!-- ============================================= -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Style="{StaticResource ModernScrollViewer}">
+            <StackPanel Margin="0,0,10,0">
 
-                    <CheckBox x:Name="chkLessorOrganizationsRead" 
-                              Content="LessorOrganizations - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkLessorOrganizationsWrite" 
-                              Content="LessorOrganizations - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- Заголовок секции -->
+                <Border Background="{DynamicResource HeaderBackgroundBrush}" 
+                        Padding="8" 
+                        CornerRadius="4,4,0,0" 
+                        Margin="0,5,0,0">
+                    <TextBlock Text="Права доступа к таблицам" 
+                               FontWeight="Bold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </Border>
 
-                    <CheckBox x:Name="chkLicensePlatesRead" 
-                              Content="LicensePlates - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkLicensePlatesWrite" 
-                              Content="LicensePlates - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- Заголовки колонок -->
+                <Grid Margin="5,2,5,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="120"/>
+                        <ColumnDefinition Width="120"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" 
+                               Text="Таблица" 
+                               FontWeight="SemiBold" 
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Grid.Column="1" 
+                               Text="Уровень доступа" 
+                               FontWeight="SemiBold" 
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextBrush}"/>
+                    <TextBlock Grid.Column="2" 
+                               Text="Описание" 
+                               FontWeight="SemiBold" 
+                               HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </Grid>
 
-                    <CheckBox x:Name="chkEquipmentDependenciesRead" 
-                              Content="EquipmentDependencies - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkEquipmentDependenciesWrite" 
-                              Content="EquipmentDependencies - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- Departments -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox x:Name="chkTransportProgramRead" 
-                              Content="TransportProgram - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkTransportProgramWrite" 
-                              Content="TransportProgram - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="Departments (Отделы)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbDepartmentsAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление отделами" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
 
-                    <CheckBox x:Name="chkShiftRequestsRead" 
-                              Content="ShiftRequests - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkShiftRequestsWrite" 
-                              Content="ShiftRequests - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- Equipments -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox x:Name="chkWarehousesRead" 
-                              Content="Warehouses - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkWarehousesWrite" 
-                              Content="Warehouses - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="Equipments (Техника)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbEquipmentsAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление техникой" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
 
-                    <CheckBox x:Name="chkWarehouseAreasRead" 
-                              Content="WarehouseAreas - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkWarehouseAreasWrite" 
-                              Content="WarehouseAreas - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- LessorOrganizations -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox x:Name="chkUsersRead" 
-                              Content="Users - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkUsersWrite" 
-                              Content="Users - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="LessorOrganizations (Арендодатели)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbLessorOrganizationsAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление арендодателями" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
 
-                    <CheckBox x:Name="chkRolesRead" 
-                              Content="Roles - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkRolesWrite" 
-                              Content="Roles - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- LicensePlates -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox x:Name="chkUserDepartmentAccessRead" 
-                              Content="UserDepartmentAccess - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkUserDepartmentAccessWrite" 
-                              Content="UserDepartmentAccess - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="LicensePlates (Госномера)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbLicensePlatesAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление госномерами" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
 
-                    <CheckBox x:Name="chkUserWarehouseAccessRead" 
-                              Content="UserWarehouseAccess - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkUserWarehouseAccessWrite" 
-                              Content="UserWarehouseAccess - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                <!-- EquipmentDependencies -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-                    <CheckBox x:Name="chkUserFavoritesRead" 
-                              Content="UserFavorites - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkUserFavoritesWrite" 
-                              Content="UserFavorites - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="EquipmentDependencies (Зависимости)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbEquipmentDependenciesAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление зависимостями" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
 
-                    <CheckBox x:Name="chkAuditLogsRead" 
-                              Content="AuditLogs - чтение" 
-                              Margin="5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                    <CheckBox x:Name="chkAuditLogsWrite" 
-                              Content="AuditLogs - запись" 
-                              Margin="5,0,5,5"
-                              Style="{StaticResource ModernCheckBox}"/>
-                </StackPanel>
-            </ScrollViewer>
-        </GroupBox>
+                <!-- TransportProgram -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
 
-        <!-- Специальные права -->
-        <GroupBox Grid.Row="1" 
-                  Header="Специальные права" 
-                  Margin="0,5"
-                  Style="{StaticResource ModernGroupBox}">
-            <StackPanel>
-                <CheckBox x:Name="chkExportData" 
-                          Content="Экспорт данных" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkViewReports" 
-                          Content="Просмотр отчетов" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkManageAllDepartments" 
-                          Content="Управление всеми отделами" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkManageUsers" 
-                          Content="Управление пользователями" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkSystemAdmin" 
-                          Content="Системный администратор" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkConfigureConnection" 
-                          Content="Настройка подключения к БД" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkIsSystem" 
-                          Content="Системная роль" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
-                <CheckBox x:Name="chkIsActive" 
-                          Content="Активна" 
-                          IsChecked="True" 
-                          Margin="5"
-                          Style="{StaticResource ModernCheckBox}"/>
+                        <TextBlock Grid.Column="0" 
+                                   Text="TransportProgram (Транспортная программа)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbTransportProgramAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление программой" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- ShiftRequests -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="ShiftRequests (Заявки)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbShiftRequestsAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление заявками" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Warehouses -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="Warehouses (Склады)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbWarehousesAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление складами" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- WarehouseAreas -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="WarehouseAreas (Территории)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbWarehouseAreasAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление территориями" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Users -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="Users (Пользователи)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbUsersAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление пользователями" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Roles -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="Roles (Роли)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbRolesAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление ролями" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- UserDepartmentAccess -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="UserDepartmentAccess (Доступ к отделам)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbUserDepartmentAccessAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление доступом" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- UserWarehouseAccess -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="UserWarehouseAccess (Доступ к складам)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbUserWarehouseAccessAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление доступом" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- UserFavorites -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="UserFavorites (Избранное)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbUserFavoritesAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Управление избранным" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- AuditLogs -->
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" 
+                                   Text="AuditLogs (Журнал аудита)" 
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"/>
+                        <ComboBox Grid.Column="1" 
+                                  x:Name="cmbAuditLogsAccess" 
+                                  SelectedIndex="0"
+                                  Style="{StaticResource AccessLevelComboBox}">
+                            <ComboBoxItem Content="Запрещено" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Только чтение" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            <ComboBoxItem Content="Полный доступ" Tag="2" Style="{StaticResource ModernComboBoxItem}"/>
+                        </ComboBox>
+                        <TextBlock Grid.Column="2" 
+                                   Text="Просмотр журнала" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextLightBrush}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Разделитель -->
+                <Border Height="10" Margin="0,5"/>
+
+                <!-- ============================================= -->
+                <!-- СПЕЦИАЛЬНЫЕ ПРАВА                              -->
+                <!-- ============================================= -->
+                <Border Background="{DynamicResource HeaderBackgroundBrush}" 
+                        Padding="8" 
+                        CornerRadius="4,4,0,0" 
+                        Margin="0,5,0,0">
+                    <TextBlock Text="Специальные права" 
+                               FontWeight="Bold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </Border>
+
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <CheckBox x:Name="chkExportData" 
+                                      Content="Экспорт данных" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                            <CheckBox x:Name="chkViewReports" 
+                                      Content="Просмотр отчетов" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                            <CheckBox x:Name="chkManageAllDepartments" 
+                                      Content="Управление всеми отделами" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <CheckBox x:Name="chkManageUsers" 
+                                      Content="Управление пользователями" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                            <CheckBox x:Name="chkSystemAdmin" 
+                                      Content="Системный администратор" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                            <CheckBox x:Name="chkConfigureConnection" 
+                                      Content="Настройка подключения к БД" 
+                                      Margin="5"
+                                      Style="{StaticResource ModernCheckBox}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ============================================= -->
+                <!-- ДОПОЛНИТЕЛЬНЫЕ НАСТРОЙКИ                       -->
+                <!-- ============================================= -->
+                <Border Background="{DynamicResource HeaderBackgroundBrush}" 
+                        Padding="8" 
+                        CornerRadius="4,4,0,0" 
+                        Margin="0,5,0,0">
+                    <TextBlock Text="Дополнительные настройки" 
+                               FontWeight="Bold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource TextBrush}"/>
+                </Border>
+
+                <Border BorderBrush="{DynamicResource BorderBrush}" 
+                        BorderThickness="0,0,0,1" 
+                        Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox Grid.Column="0" 
+                                  x:Name="chkIsSystem" 
+                                  Content="Системная роль" 
+                                  Margin="5"
+                                  Style="{StaticResource ModernCheckBox}"/>
+                        <CheckBox Grid.Column="1" 
+                                  x:Name="chkIsActive" 
+                                  Content="Активна" 
+                                  IsChecked="True" 
+                                  Margin="5"
+                                  Style="{StaticResource ModernCheckBox}"/>
+                    </Grid>
+                </Border>
             </StackPanel>
-        </GroupBox>
+        </ScrollViewer>
 
-        <!-- Кнопки -->
+        <!-- ============================================= -->
+        <!-- КНОПКИ                                         -->
+        <!-- ============================================= -->
         <StackPanel Grid.Row="2" 
                     Orientation="Horizontal" 
                     HorizontalAlignment="Right" 

@@ -32,6 +32,7 @@
     <Color x:Key="DataGridHeaderColor">#FFF0F0F0</Color>
     <Color x:Key="DataGridSelectedRowColor">#FFE3F2FD</Color>
     <Color x:Key="DataGridHoverRowColor">#FFF5F5F5</Color>
+    <Color x:Key="DataGridSelectionColor">#FFE3F2FD</Color>
 
     <Color x:Key="ToolBarBackgroundColor">#FFF8F8F8</Color>
     <Color x:Key="StatusBarBackgroundColor">#FFF0F0F0</Color>
@@ -76,6 +77,9 @@
     <SolidColorBrush x:Key="DataGridSelectedRowBrush" Color="{StaticResource DataGridSelectedRowColor}"/>
     <SolidColorBrush x:Key="DataGridHoverRowBrush" Color="{StaticResource DataGridHoverRowColor}"/>
 
+    <!-- Цвет текста для выбранной строки таблицы (может переопределяться темой) -->
+    <SolidColorBrush x:Key="DataGridSelectedForegroundBrush" Color="{StaticResource TextDarkColor}"/>
+
     <SolidColorBrush x:Key="ToolBarBackgroundBrush" Color="{StaticResource ToolBarBackgroundColor}"/>
     <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="{StaticResource StatusBarBackgroundColor}"/>
     <SolidColorBrush x:Key="MenuBackgroundBrush" Color="{StaticResource MenuBackgroundColor}"/>
@@ -86,5 +90,8 @@
     <SolidColorBrush x:Key="ScrollBarBackgroundBrush" Color="{StaticResource ScrollBarBackgroundColor}"/>
     <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource ScrollBarThumbColor}"/>
     <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="{StaticResource ScrollBarThumbHoverColor}"/>
+
+    <SolidColorBrush x:Key="DataGridSelectionBrush" Color="{StaticResource DataGridSelectionColor}"/>
+    
 
 </ResourceDictionary>

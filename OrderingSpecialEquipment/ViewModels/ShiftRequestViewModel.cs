@@ -4,7 +4,6 @@ using OrderingSpecialEquipment.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows;
 
 namespace OrderingSpecialEquipment.ViewModels
 {
@@ -13,6 +12,8 @@ namespace OrderingSpecialEquipment.ViewModels
     /// </summary>
     public class ShiftRequestViewModel : ViewModelBase, IDisposable
     {
+        #region Поля
+
         private readonly ShiftRequest _request;
         private readonly IAuthorizationService _authorizationService;
         private readonly IDatabaseService _databaseService;
@@ -24,11 +25,9 @@ namespace OrderingSpecialEquipment.ViewModels
         private bool _isUpdatingRelatedProperties = false;
         private bool _disposed = false;
 
-        // Кэши для производительности
         private List<Warehouse> _availableWarehouses;
         private List<WarehouseArea> _availableAreas;
 
-        // Навигационные свойства для привязки
         private Department _department;
         private Warehouse _warehouse;
         private WarehouseArea _area;
@@ -36,7 +35,15 @@ namespace OrderingSpecialEquipment.ViewModels
         private LessorOrganization _lessorOrganization;
         private LicensePlate _licensePlate;
 
-        public ShiftRequestViewModel(ShiftRequest request,
+        #endregion
+
+        #region Конструктор
+
+        /// <summary>
+        /// Конструктор ShiftRequestViewModel
+        /// </summary>
+        public ShiftRequestViewModel(
+            ShiftRequest request,
             IAuthorizationService authorizationService,
             IDatabaseService databaseService,
             IDbContextFactory contextFactory,
@@ -49,29 +56,50 @@ namespace OrderingSpecialEquipment.ViewModels
             _parent = parent ?? throw new ArgumentNullException(nameof(parent));
         }
 
-        public List<LicensePlate> FilteredLicensePlates => _parent?.FilteredLicensePlates ?? new List<LicensePlate>();
+        #endregion
+
+        #region Свойства для привязки
+
+        /// <summary>
+        /// Оригинальная заявка
+        /// </summary>
         public ShiftRequest OriginalRequest => _request;
+
+        /// <summary>
+        /// Ключ заявки
+        /// </summary>
         public int Key => _request.Key;
 
+        /// <summary>
+        /// Новая ли заявка
+        /// </summary>
         public bool IsNew
         {
             get => _isNew;
             set => SetProperty(ref _isNew, value);
         }
 
+        /// <summary>
+        /// Редактируется ли заявка
+        /// </summary>
         public bool IsEdit
         {
             get => _isEdit;
             set => SetProperty(ref _isEdit, value);
         }
 
+        /// <summary>
+        /// Развернута ли заявка
+        /// </summary>
         public bool IsExpanded
         {
             get => _isExpanded;
             set => SetProperty(ref _isExpanded, value);
         }
 
-        // Основные свойства
+        /// <summary>
+        /// Дата заявки
+        /// </summary>
         public DateTime Date
         {
             get => _request.Date;
@@ -83,6 +111,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Смена (0 - дневная, 1 - ночная)
+        /// </summary>
         public int Shift
         {
             get => _request.Shift;
@@ -95,15 +126,21 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Название смены
+        /// </summary>
         public string ShiftName => _request.Shift == 0 ? "Дневная" : "Ночная";
 
+        /// <summary>
+        /// ID техники
+        /// </summary>
         public string EquipmentId
         {
             get => _request.EquipmentId;
             set
             {
                 _request.EquipmentId = value;
-                _equipment = null; // Сбрасываем кэш
+                _equipment = null;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(EquipmentName));
                 OnPropertyChanged(nameof(CanOrderMultiple));
@@ -116,6 +153,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Название техники
+        /// </summary>
         public string EquipmentName
         {
             get
@@ -128,6 +168,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID госномера
+        /// </summary>
         public string LicensePlateId
         {
             get => _request.LicensePlateId;
@@ -138,7 +181,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 {
                     _isUpdatingRelatedProperties = true;
                     _request.LicensePlateId = value;
-                    _licensePlate = null; // Сбрасываем кэш
+                    _licensePlate = null;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(PlateNumber));
                     OnPropertyChanged(nameof(PlateDisplay));
@@ -160,6 +203,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Номер госномера
+        /// </summary>
         public string PlateNumber
         {
             get
@@ -172,6 +218,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Отображение госномера
+        /// </summary>
         public string PlateDisplay
         {
             get
@@ -185,24 +234,29 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID склада
+        /// </summary>
         public string WarehouseId
         {
             get => _request.WarehouseId;
             set
             {
                 _request.WarehouseId = value;
-                _warehouse = null; // Сбрасываем кэш
-                _availableAreas = null; // Сбрасываем кэш территорий
+                _warehouse = null;
+                _availableAreas = null;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(WarehouseName));
                 OnPropertyChanged(nameof(AvailableAreas));
 
-                // Сбрасываем территорию при смене склада
                 AreaId = null;
                 Area = null;
             }
         }
 
+        /// <summary>
+        /// Название склада
+        /// </summary>
         public string WarehouseName
         {
             get
@@ -215,19 +269,25 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID территории
+        /// </summary>
         public string AreaId
         {
             get => _request.AreaId;
             set
             {
                 _request.AreaId = value;
-                _area = null; // Сбрасываем кэш
+                _area = null;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(AreaName));
                 OnPropertyChanged(nameof(GroupDisplayString));
             }
         }
 
+        /// <summary>
+        /// Название территории
+        /// </summary>
         public string AreaName
         {
             get
@@ -240,6 +300,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID арендодателя
+        /// </summary>
         public string LessorOrganizationId
         {
             get => _request.LessorOrganizationId;
@@ -250,10 +313,11 @@ namespace OrderingSpecialEquipment.ViewModels
                 {
                     _isUpdatingRelatedProperties = true;
                     _request.LessorOrganizationId = value;
-                    _lessorOrganization = null; // Сбрасываем кэш
+                    _lessorOrganization = null;
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(LessorName));
                     OnPropertyChanged(nameof(GroupDisplayString));
+
                     _parent?.NotifyPropertyChanged(nameof(MainWindowViewModel.FilteredLicensePlates));
 
                     if (!string.IsNullOrEmpty(LicensePlateId))
@@ -273,6 +337,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Название арендодателя
+        /// </summary>
         public string LessorName
         {
             get
@@ -285,6 +352,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Запрошенное количество
+        /// </summary>
         public int RequestedCount
         {
             get => _request.RequestedCount;
@@ -299,6 +369,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Отработанные часы
+        /// </summary>
         public decimal? WorkedHours
         {
             get => _request.WorkedHours;
@@ -313,6 +386,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Фактическая стоимость
+        /// </summary>
         public decimal? ActualCost
         {
             get => _request.ActualCost;
@@ -323,6 +399,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Отработано
+        /// </summary>
         public bool IsWorked
         {
             get => _request.IsWorked;
@@ -334,6 +413,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Не предоставлена
+        /// </summary>
         public bool IsNotProvided
         {
             get => _request.IsNotProvided;
@@ -350,6 +432,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Актировка
+        /// </summary>
         public bool IsWeatherCancellation
         {
             get => _request.IsWeatherCancellation;
@@ -366,6 +451,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Причина отмены
+        /// </summary>
         public string CancellationReason
         {
             get => _request.CancellationReason;
@@ -376,10 +464,24 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Заблокирована ли
+        /// </summary>
         public bool IsBlocked => _request.IsBlocked;
+
+        /// <summary>
+        /// ID пользователя, заблокировавшего
+        /// </summary>
         public string LockedByUserId => _request.LockedByUserId;
+
+        /// <summary>
+        /// Время блокировки
+        /// </summary>
         public DateTime? LockedAt => _request.LockedAt;
 
+        /// <summary>
+        /// Комментарий
+        /// </summary>
         public string Comment
         {
             get => _request.Comment;
@@ -390,24 +492,41 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// ID создателя
+        /// </summary>
         public string CreatedByUserId => _request.CreatedByUserId;
+
+        /// <summary>
+        /// Имя создателя
+        /// </summary>
         public string CreatedByUser => _request.CreatedByUser?.FullName ?? "";
+
+        /// <summary>
+        /// Дата создания
+        /// </summary>
         public DateTime CreatedAt => _request.CreatedAt;
 
+        /// <summary>
+        /// ID отдела
+        /// </summary>
         public string DepartmentId
         {
             get => _request.DepartmentId;
             set
             {
                 _request.DepartmentId = value;
-                _department = null; // Сбрасываем кэш
-                _availableWarehouses = null; // Сбрасываем кэш складов
+                _department = null;
+                _availableWarehouses = null;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(DepartmentName));
                 OnPropertyChanged(nameof(AvailableWarehouses));
             }
         }
 
+        /// <summary>
+        /// Название отдела
+        /// </summary>
         public string DepartmentName
         {
             get
@@ -420,7 +539,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        // Группировка в одну строку
+        /// <summary>
+        /// Строка для группировки
+        /// </summary>
         public string GroupDisplayString
         {
             get
@@ -434,6 +555,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Валидность заявки
+        /// </summary>
         public bool IsValid
         {
             get
@@ -444,10 +568,24 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Можно ли редактировать технику
+        /// </summary>
         public bool CanEditEquipment => _authorizationService.CanWriteTable("Equipments");
+
+        /// <summary>
+        /// Можно ли редактировать склад
+        /// </summary>
         public bool CanEditWarehouse => _authorizationService.CanWriteTable("Warehouses");
+
+        /// <summary>
+        /// Можно ли редактировать арендодателя
+        /// </summary>
         public bool CanEditLessor => _authorizationService.CanWriteTable("LessorOrganizations");
 
+        /// <summary>
+        /// Можно ли заказать несколько единиц
+        /// </summary>
         public bool CanOrderMultiple
         {
             get
@@ -460,7 +598,28 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        // Навигационные свойства для привязки
+        /// <summary>
+        /// Цвет фона строки
+        /// </summary>
+        public string RowBackgroundColor
+        {
+            get
+            {
+                if (IsBlocked) return "#FFF0F0F0";
+                if (IsWorked) return "#FFE0FFE0";
+                if (IsNotProvided) return "#FFFFE0E0";
+                if (IsWeatherCancellation) return "#FFE0F0FF";
+                return "White";
+            }
+        }
+
+        #endregion
+
+        #region Навигационные свойства
+
+        /// <summary>
+        /// Отдел
+        /// </summary>
         public Department Department
         {
             get
@@ -487,6 +646,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Склад
+        /// </summary>
         public Warehouse Warehouse
         {
             get
@@ -513,6 +675,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Территория
+        /// </summary>
         public WarehouseArea Area
         {
             get
@@ -539,6 +704,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Техника
+        /// </summary>
         public Equipment Equipment
         {
             get
@@ -566,6 +734,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Арендодатель
+        /// </summary>
         public LessorOrganization LessorOrganization
         {
             get
@@ -592,6 +763,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Госномер
+        /// </summary>
         public LicensePlate LicensePlate
         {
             get
@@ -619,7 +793,6 @@ namespace OrderingSpecialEquipment.ViewModels
                 LicensePlateId = value?.Id;
                 OnPropertyChanged(nameof(PlateDisplay));
 
-                // Автоматически подтягиваем арендодателя
                 if (value != null && !_isUpdatingRelatedProperties)
                 {
                     LessorOrganizationId = value.LessorOrganizationId;
@@ -627,7 +800,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        // Доступные склады для выбранного отдела
+        /// <summary>
+        /// Доступные склады для выбранного отдела
+        /// </summary>
         public List<Warehouse> AvailableWarehouses
         {
             get
@@ -656,7 +831,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        // Доступные территории для выбранного склада (через связи многие-ко-многим)
+        /// <summary>
+        /// Доступные территории для выбранного склада
+        /// </summary>
         public List<WarehouseArea> AvailableAreas
         {
             get
@@ -669,7 +846,6 @@ namespace OrderingSpecialEquipment.ViewModels
                     try
                     {
                         using var context = _contextFactory.CreateDbContext();
-                        // Загружаем территории через связи (многие-ко-многим)
                         _availableAreas = context.Set<WarehouseAreaLink>()
                             .Include(wal => wal.Area)
                             .Where(wal => wal.WarehouseId == WarehouseId)
@@ -689,30 +865,31 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
-        public string RowBackgroundColor
-        {
-            get
-            {
-                if (IsBlocked) return "#FFF0F0F0";
-                if (IsWorked) return "#FFE0FFE0";
-                if (IsNotProvided) return "#FFFFE0E0";
-                if (IsWeatherCancellation) return "#FFE0F0FF";
-                return "White";
-            }
-        }
+        #endregion
 
+        #region Методы
+
+        /// <summary>
+        /// Очистка кэша
+        /// </summary>
         public void Cleanup()
         {
             _availableWarehouses = null;
             _availableAreas = null;
         }
 
+        /// <summary>
+        /// Освобождение ресурсов
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
+        /// <summary>
+        /// Освобождение ресурсов
+        /// </summary>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
@@ -725,9 +902,14 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Деструктор
+        /// </summary>
         ~ShiftRequestViewModel()
         {
             Dispose(false);
         }
+
+        #endregion
     }
 }

@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d" 
         d:DesignHeight="600" d:DesignWidth="1000"
         Title="Арендодатели и госномера" 
@@ -27,36 +28,50 @@
 
         <!-- Панель инструментов -->
         <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
-            <Button x:Name="btnAddLessor" Content="➕ Добавить арендодателя" 
-                    Click="BtnAddLessor_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnEditLessor" Content="✏️ Редактировать арендодателя" 
-                    Click="BtnEditLessor_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnDeleteLessor" Content="🗑️ Удалить арендодателя" 
-                    Click="BtnDeleteLessor_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnAddLessor" Click="BtnAddLessor_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="PlusBox" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Добавить арендодателя"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnEditLessor" Click="BtnEditLessor_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Pencil" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Редактировать арендодателя"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnDeleteLessor" Click="BtnDeleteLessor_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Delete" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Удалить арендодателя"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
-            <Button x:Name="btnAddPlate" Content="➕ Добавить госномер" 
-                    Click="BtnAddPlate_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnEditPlate" Content="✏️ Редактировать госномер" 
-                    Click="BtnEditPlate_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnDeletePlate" Content="🗑️ Удалить госномер" 
-                    Click="BtnDeletePlate_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnAddPlate" Click="BtnAddPlate_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="PlusBox" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Добавить госномер"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnEditPlate" Click="BtnEditPlate_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Pencil" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Редактировать госномер"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnDeletePlate" Click="BtnDeletePlate_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Delete" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Удалить госномер"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
-            <Button x:Name="btnRefresh" Content="🔄 Обновить" 
-                    Click="BtnRefresh_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnRefresh" Click="BtnRefresh_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Обновить"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
             <CheckBox x:Name="chkShowInactive" Content="Показывать неактивные" 
                       VerticalAlignment="Center" Margin="5,0" 

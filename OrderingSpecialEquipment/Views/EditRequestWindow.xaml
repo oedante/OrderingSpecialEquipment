@@ -1,0 +1,371 @@
+<Window x:Class="OrderingSpecialEquipment.Views.EditRequestWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:OrderingSpecialEquipment.Controls"
+        xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Редактирование заявки"
+        SizeToContent="WidthAndHeight"
+        Width="720"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PopupBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        Loaded="Window_Loaded"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <converters:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
+    </Window.Resources>
+
+    <Border Style="{StaticResource PopupBorderStyle}" Padding="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Заголовок -->
+            <TextBlock Grid.Row="0"
+                       Text="{Binding EditingRequest.IsNew, Converter={StaticResource BooleanToTextConverter}, ConverterParameter='Новая заявка;Редактирование заявки'}"
+                       FontSize="18"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource TextBrush}"
+                       Margin="0,0,0,10"/>
+
+            <!-- Форма редактирования -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          MaxHeight="600"
+                          Style="{StaticResource ModernScrollViewer}">
+                <StackPanel Margin="0,0,10,0">
+                    <!-- Основная информация -->
+                    <GroupBox Header="Основная информация" 
+                              Style="{StaticResource ModernGroupBox}"
+                              Foreground="{DynamicResource TextBrush}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Дата -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Дата:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <DatePicker Grid.Row="0" Grid.Column="1" x:Name="FirstDatePicker"
+                                        SelectedDate="{Binding EditingRequest.Date, Mode=TwoWay}"
+                                        Height="32"
+                                        Margin="5"
+                                        Style="{StaticResource ModernDatePicker}"/>
+
+                            <!-- Смена -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Смена:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="1" Grid.Column="1"
+                                      SelectedValue="{Binding EditingRequest.Shift, Mode=TwoWay}"
+                                      SelectedValuePath="Tag"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}">
+                                <ComboBoxItem Content="Дневная" Tag="0" Style="{StaticResource ModernComboBoxItem}"/>
+                                <ComboBoxItem Content="Ночная" Tag="1" Style="{StaticResource ModernComboBoxItem}"/>
+                            </ComboBox>
+
+                            <!-- Отдел -->
+                            <TextBlock Grid.Row="2" Grid.Column="0" 
+                                       Text="Отдел:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="2" Grid.Column="1"
+                                      ItemsSource="{Binding AccessibleDepartments}"
+                                      SelectedItem="{Binding EditingRequest.Department}"
+                                      DisplayMemberPath="Name"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}"/>
+
+                            <!-- Склад -->
+                            <TextBlock Grid.Row="3" Grid.Column="0" 
+                                       Text="Склад:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="3" Grid.Column="1"
+                                      ItemsSource="{Binding EditingRequest.AvailableWarehouses}"
+                                      SelectedItem="{Binding EditingRequest.Warehouse}"
+                                      DisplayMemberPath="Name"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}"/>
+
+                            <!-- Территория -->
+                            <TextBlock Grid.Row="4" Grid.Column="0" 
+                                       Text="Территория:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="4" Grid.Column="1"
+                                      ItemsSource="{Binding EditingRequest.AvailableAreas}"
+                                      SelectedItem="{Binding EditingRequest.Area}"
+                                      DisplayMemberPath="Name"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}"/>
+
+                            <!-- Техника -->
+                            <TextBlock Grid.Row="5" Grid.Column="0" 
+                                       Text="Техника:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="5" Grid.Column="1"
+                                      ItemsSource="{Binding AvailableEquipmentsForDepartment}"
+                                      SelectedItem="{Binding EditingRequest.Equipment}"
+                                      DisplayMemberPath="Name"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}"/>
+
+                            <!-- Количество -->
+                            <TextBlock Grid.Row="6" Grid.Column="0" 
+                                       Text="Количество:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <controls:NumericTextBox Grid.Row="6" Grid.Column="1"
+                                                      Value="{Binding EditingRequest.RequestedCount}"
+                                                      MinValue="1"
+                                                      ControlIsEnabled="{Binding EditingRequest.CanOrderMultiple}"
+                                                      Height="32"
+                                                      Margin="5"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Детали заказа -->
+                    <GroupBox Header="Детали заказа" 
+                              Style="{StaticResource ModernGroupBox}"
+                              Foreground="{DynamicResource TextBrush}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Арендодатель -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Арендодатель:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                      ItemsSource="{Binding AllLessorOrganizations}"
+                                      SelectedItem="{Binding EditingRequest.LessorOrganization}"
+                                      DisplayMemberPath="Name"
+                                      Height="32"
+                                      Margin="5"
+                                      Style="{StaticResource ModernComboBox}"/>
+
+                            <!-- Госномер -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Госномер:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <controls:SearchableComboBox Grid.Row="1" Grid.Column="1"
+                                                          ItemsSource="{Binding AllLicensePlates}"
+                                                          SelectedItem="{Binding EditingRequest.LicensePlate}"
+                                                          FilterByOrganization="{Binding EditingRequest.LessorOrganizationId}"
+                                                          FilterByEquipment="{Binding EditingRequest.EquipmentId}"
+                                                          DisplayMemberPath="PlateDisplay"
+                                                          Height="32"
+                                                          Margin="5"
+                                                          x:Name="SearchableComboBoxControl"/>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Время работы -->
+                    <GroupBox Header="Время работы" 
+                              Style="{StaticResource ModernGroupBox}"
+                              Foreground="{DynamicResource TextBrush}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="120"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Время начала -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" 
+                                       Text="Начало:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <controls:TimePicker Grid.Row="0" Grid.Column="1"
+                                                 Value="{Binding StartTime}"
+                                                 Height="32"
+                                                 Margin="5"/>
+
+                            <!-- Время окончания -->
+                            <TextBlock Grid.Row="1" Grid.Column="0" 
+                                       Text="Окончание:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="5"
+                                       Foreground="{DynamicResource TextBrush}"/>
+                            <controls:TimePicker Grid.Row="1" Grid.Column="1"
+                                                 Value="{Binding EndTime}"
+                                                 Height="32"
+                                                 Margin="5"/>
+
+                            <!-- Чекбокс обеда -->
+                            <CheckBox Grid.Row="2" Grid.Column="1"
+                                      Content="Вычесть 1 час на обед (если более 5 часов)"
+                                      IsChecked="{Binding HasLunchBreak}"
+                                      Margin="5"
+                                      VerticalAlignment="Center"
+                                      Style="{StaticResource ModernCheckBox}"/>
+
+                            <!-- Итоговые часы -->
+                            <Border Grid.Row="2" Grid.Column="2"
+                                    Background="{DynamicResource HeaderBackgroundBrush}"
+                                    CornerRadius="4"
+                                    Padding="10,5"
+                                    Margin="10,5,5,5"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="ClockOutline" Width="16" Height="16" Margin="0,0,5,0" Foreground="{DynamicResource TextBrush}"/>
+                                    <TextBlock Text="{Binding EditingRequest.WorkedHours, StringFormat='Итого: {0:F1} ч'}"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextBrush}"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </GroupBox>
+
+                    <!-- Статусы -->
+                    <GroupBox Header="Статус" 
+                              Style="{StaticResource ModernGroupBox}"
+                              Foreground="{DynamicResource TextBrush}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <CheckBox Grid.Column="0" 
+                                          Content="Отработано"
+                                          IsChecked="{Binding EditingRequest.IsWorked}"
+                                          Margin="5"
+                                          Style="{StaticResource ModernCheckBox}"/>
+                                <CheckBox Grid.Column="1" 
+                                          Content="Не предоставлена"
+                                          IsChecked="{Binding EditingRequest.IsNotProvided}"
+                                          Margin="5"
+                                          Style="{StaticResource ModernCheckBox}"/>
+                                <CheckBox Grid.Column="2" 
+                                          Content="Актировка"
+                                          IsChecked="{Binding EditingRequest.IsWeatherCancellation}"
+                                          Margin="5"
+                                          Style="{StaticResource ModernCheckBox}"/>
+                            </Grid>
+
+                            <TextBox Text="{Binding EditingRequest.CancellationReason}"
+                                     Height="32"
+                                     Margin="5,10,5,5"
+                                     Visibility="{Binding EditingRequest.IsNotProvided, Converter={StaticResource BoolToVis}}"
+                                     Style="{StaticResource ModernTextBox}"
+                                     ToolTip="Причина не предоставления..."/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <!-- Комментарий -->
+                    <GroupBox Header="Комментарий" 
+                              Style="{StaticResource ModernGroupBox}"
+                              Foreground="{DynamicResource TextBrush}">
+                        <TextBox Text="{Binding EditingRequest.Comment}"
+                                 Height="80"
+                                 TextWrapping="Wrap"
+                                 AcceptsReturn="True"
+                                 Margin="5"
+                                 Style="{StaticResource ModernTextBox}"/>
+                    </GroupBox>
+
+                    <!-- Информация о блокировке -->
+                    <Border Background="#FFFFE0E0"
+                            CornerRadius="4"
+                            Padding="10"
+                            Visibility="{Binding EditingRequest.IsBlocked, Converter={StaticResource BoolToVis}}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Lock" Width="16" Height="16" Margin="0,0,5,0" Foreground="{DynamicResource ErrorBrush}"/>
+                            <TextBlock Text="Запись заблокирована другим пользователем"
+                                       Foreground="{DynamicResource ErrorBrush}"
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Кнопки -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Margin="0,10,0,0">
+
+                <!-- Кнопка Сохранить -->
+                <Button Command="{Binding SaveRequestCommand}"
+                        Width="100"
+                        Height="35"
+                        Margin="5"
+                        Style="{StaticResource ModernButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ContentSave" Width="16" Height="16" Margin="0,0,5,0" Foreground="White"/>
+                        <TextBlock Text="Сохранить" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Кнопка Отмена -->
+                <Button Command="{Binding CancelEditCommand}"
+                        Background="#FF9E9E9E"
+                        Width="100"
+                        Height="35"
+                        Margin="5"
+                        Style="{StaticResource ModernButton}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Close" Width="16" Height="16" Margin="0,0,5,0" Foreground="White"/>
+                        <TextBlock Text="Отмена" Foreground="White"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

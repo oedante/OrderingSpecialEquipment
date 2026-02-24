@@ -22,6 +22,7 @@ namespace OrderingSpecialEquipment.ViewModels
     public class MainWindowViewModel : ViewModelBase
     {
         #region Поля
+
         private readonly IAuthenticationService _authenticationService;
         private readonly IAuthorizationService _authorizationService;
         private readonly IDatabaseService _databaseService;
@@ -41,7 +42,6 @@ namespace OrderingSpecialEquipment.ViewModels
         private ShiftRequestViewModel _editingRequest;
         private bool _isPopupOpen;
         private bool _isLoading;
-        private bool _isLoadingEquipment = false;
         private readonly SemaphoreSlim _equipmentSemaphore = new SemaphoreSlim(1, 1);
         private string _statusMessage = "Готов";
         private Department _selectedDepartment;
@@ -62,12 +62,18 @@ namespace OrderingSpecialEquipment.ViewModels
 
         #region Свойства
 
+        /// <summary>
+        /// Темная тема активна
+        /// </summary>
         public bool IsDarkTheme
         {
             get => _isDarkTheme;
             set => SetProperty(ref _isDarkTheme, value);
         }
 
+        /// <summary>
+        /// Ширина левой панели
+        /// </summary>
         public double LeftPanelWidth
         {
             get => _leftPanelWidth;
@@ -81,6 +87,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Видимость левой панели
+        /// </summary>
         public bool IsLeftPanelVisible
         {
             get => _isLeftPanelVisible;
@@ -88,15 +97,24 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 if (SetProperty(ref _isLeftPanelVisible, value))
                 {
-                    // При изменении видимости панели обновляем отображаемые смены
                     _ = UpdateDisplayedShiftsAsync();
                 }
             }
         }
 
+        /// <summary>
+        /// Текст кнопки левой панели
+        /// </summary>
         public string LeftPanelButtonText => IsLeftPanelVisible ? "◀" : "▶";
+
+        /// <summary>
+        /// Подсказка кнопки левой панели
+        /// </summary>
         public string LeftPanelButtonToolTip => IsLeftPanelVisible ? "Скрыть панель техники" : "Показать панель техники";
 
+        /// <summary>
+        /// Показывать только избранное
+        /// </summary>
         public bool IsOnlyFavorites
         {
             get => _isOnlyFavorites;
@@ -109,6 +127,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Выбранная дата
+        /// </summary>
         public DateTime SelectedDate
         {
             get => _selectedDate;
@@ -124,8 +145,14 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Отображаемая дата
+        /// </summary>
         public string DisplayDate => _selectedDate.ToString("dd.MM.yyyy");
 
+        /// <summary>
+        /// Отображаемый день недели
+        /// </summary>
         public string DisplayDayOfWeek
         {
             get
@@ -144,12 +171,18 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Коллекция техники для отображения
+        /// </summary>
         public ObservableCollection<EquipmentItemViewModel> EquipmentItems
         {
             get => _equipmentItems;
             set => SetProperty(ref _equipmentItems, value);
         }
 
+        /// <summary>
+        /// Коллекция заявок для отображения
+        /// </summary>
         public ObservableCollection<ShiftRequestViewModel> ShiftRequests
         {
             get => _shiftRequests;
@@ -163,6 +196,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Группированное представление заявок
+        /// </summary>
         public ICollectionView GroupedShiftRequests
         {
             get
@@ -181,30 +217,42 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Выбранная заявка
+        /// </summary>
         public ShiftRequestViewModel SelectedRequest
         {
             get => _selectedRequest;
             set => SetProperty(ref _selectedRequest, value);
         }
 
+        /// <summary>
+        /// Выбранная техника
+        /// </summary>
         public EquipmentItemViewModel SelectedEquipment
         {
             get => _selectedEquipment;
             set
             {
-                if (SetProperty(ref _selectedEquipment, value) && value != null)
+                if (SetProperty(ref _selectedEquipment, value))
                 {
-                    CreateNewRequestFromEquipment(value);
+                    // Автоматическое создание заявки убрано
                 }
             }
         }
 
+        /// <summary>
+        /// Режим редактирования активен
+        /// </summary>
         public bool IsEditMode
         {
             get => _isEditMode;
             set => SetProperty(ref _isEditMode, value);
         }
 
+        /// <summary>
+        /// Редактируемая заявка
+        /// </summary>
         public ShiftRequestViewModel EditingRequest
         {
             get => _editingRequest;
@@ -214,6 +262,14 @@ namespace OrderingSpecialEquipment.ViewModels
                 {
                     if (value != null)
                     {
+                        value.PropertyChanged += (s, e) =>
+                        {
+                            if (e.PropertyName == nameof(ShiftRequestViewModel.Shift))
+                            {
+                                UpdateTimeBasedOnShift();
+                            }
+                        };
+
                         if (value.WorkedHours.HasValue)
                         {
                             double hours = (double)value.WorkedHours.Value;
@@ -223,9 +279,7 @@ namespace OrderingSpecialEquipment.ViewModels
                         }
                         else
                         {
-                            StartTime = TimeSpan.FromHours(8);
-                            EndTime = TimeSpan.FromHours(17);
-                            HasLunchBreak = true;
+                            UpdateTimeBasedOnShift();
                         }
                     }
                     OnPropertyChanged(nameof(FilteredLicensePlates));
@@ -233,6 +287,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Открыто ли всплывающее окно редактирования
+        /// </summary>
         public bool IsPopupOpen
         {
             get => _isPopupOpen;
@@ -246,22 +303,42 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Идет загрузка
+        /// </summary>
         public bool IsLoading
         {
             get => _isLoading;
             set => SetProperty(ref _isLoading, value);
         }
 
+        /// <summary>
+        /// Статусное сообщение
+        /// </summary>
         public string StatusMessage
         {
             get => _statusMessage;
             set => SetProperty(ref _statusMessage, value);
         }
 
+        /// <summary>
+        /// Текущий пользователь
+        /// </summary>
         public User CurrentUser => _authenticationService.CurrentUser;
+
+        /// <summary>
+        /// Подключена ли база данных
+        /// </summary>
         public bool IsDatabaseConnected => _databaseService.IsConnected;
+
+        /// <summary>
+        /// Заголовок окна
+        /// </summary>
         public string WindowTitle => $"Управление заявками на спецтехнику - {CurrentUser?.FullName ?? "Не авторизован"}";
 
+        /// <summary>
+        /// Выбранный отдел
+        /// </summary>
         public Department SelectedDepartment
         {
             get => _selectedDepartment;
@@ -277,30 +354,45 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Доступные отделы
+        /// </summary>
         public List<Department> AccessibleDepartments
         {
             get => _accessibleDepartments;
             set => SetProperty(ref _accessibleDepartments, value);
         }
 
+        /// <summary>
+        /// Доступные склады
+        /// </summary>
         public List<Warehouse> AccessibleWarehouses
         {
             get => _accessibleWarehouses;
             set => SetProperty(ref _accessibleWarehouses, value);
         }
 
+        /// <summary>
+        /// Вся техника
+        /// </summary>
         public List<Equipment> AllEquipments
         {
             get => _allEquipments;
             set => SetProperty(ref _allEquipments, value);
         }
 
+        /// <summary>
+        /// Все госномера
+        /// </summary>
         public List<LicensePlate> AllLicensePlates
         {
             get => _allLicensePlates;
             set => SetProperty(ref _allLicensePlates, value);
         }
 
+        /// <summary>
+        /// Отфильтрованные госномера для текущего арендодателя
+        /// </summary>
         public List<LicensePlate> FilteredLicensePlates
         {
             get
@@ -313,18 +405,24 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Все арендодатели
+        /// </summary>
         public List<LessorOrganization> AllLessorOrganizations
         {
             get => _allLessorOrganizations;
             set => SetProperty(ref _allLessorOrganizations, value);
         }
 
+        /// <summary>
+        /// Доступная техника для выбранного отдела
+        /// </summary>
         public List<Equipment> AvailableEquipmentsForDepartment
         {
             get
             {
                 if (SelectedDepartment == null || AllEquipments == null)
-                    return AllEquipments ?? new List<Equipment>();
+                    return new List<Equipment>();
 
                 try
                 {
@@ -334,18 +432,28 @@ namespace OrderingSpecialEquipment.ViewModels
                         .Select(tp => tp.EquipmentId)
                         .ToHashSet();
 
-                    return AllEquipments
+                    var available = AllEquipments
                         .Where(e => tpEquipmentIds.Contains(e.Id))
                         .ToList();
+
+                    System.Diagnostics.Debug.WriteLine($"AvailableEquipmentsForDepartment: {available.Count} items for department {SelectedDepartment.Name}");
+
+                    if (available.Count == 0 && AllEquipments != null)
+                        return AllEquipments.ToList();
+
+                    return available;
                 }
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Ошибка загрузки доступной техники: {ex.Message}");
-                    return AllEquipments ?? new List<Equipment>();
+                    return new List<Equipment>();
                 }
             }
         }
 
+        /// <summary>
+        /// Время начала работы
+        /// </summary>
         public TimeSpan? StartTime
         {
             get => _startTime;
@@ -358,6 +466,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Время окончания работы
+        /// </summary>
         public TimeSpan? EndTime
         {
             get => _endTime;
@@ -370,6 +481,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Вычитать обеденный перерыв
+        /// </summary>
         public bool HasLunchBreak
         {
             get => _hasLunchBreak;
@@ -381,6 +495,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 }
             }
         }
+
         #endregion
 
         #region Команды
@@ -406,9 +521,16 @@ namespace OrderingSpecialEquipment.ViewModels
         public ICommand OpenTransportReportCommand { get; set; }
         public ICommand OpenShiftReportCommand { get; set; }
         public ICommand RequestDoubleClickCommand { get; set; }
+        public ICommand AddDayShiftCommand { get; set; }
+        public ICommand AddNightShiftCommand { get; set; }
+
         #endregion
 
         #region Конструктор
+
+        /// <summary>
+        /// Конструктор MainWindowViewModel
+        /// </summary>
         public MainWindowViewModel(
             IAuthenticationService authenticationService,
             IAuthorizationService authorizationService,
@@ -430,23 +552,25 @@ namespace OrderingSpecialEquipment.ViewModels
             SubscribeToEvents();
 
             _selectedDate = DateTime.UtcNow.Date;
-            _leftPanelWidth = 0; // Начальная ширина
-            _isLeftPanelVisible = false; // Панель не видима
+            _leftPanelWidth = 0;
+            _isLeftPanelVisible = false;
 
             _themeService = themeService;
             _isDarkTheme = _themeService.IsDarkTheme;
 
-            // Подписка на изменение темы:
             _themeService.ThemeChanged += (s, isDark) =>
             {
                 IsDarkTheme = isDark;
-                // Можно перезагрузить данные если нужно
             };
-
         }
+
         #endregion
 
         #region Инициализация
+
+        /// <summary>
+        /// Инициализация команд
+        /// </summary>
         private void InitializeCommands()
         {
             ToggleLeftPanelCommand = new RelayCommand(ToggleLeftPanel);
@@ -470,8 +594,13 @@ namespace OrderingSpecialEquipment.ViewModels
             OpenTransportReportCommand = new RelayCommand(() => OpenReport("Transport"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             OpenShiftReportCommand = new RelayCommand(() => OpenReport("Shift"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             ToggleThemeCommand = new RelayCommand(ToggleTheme);
+            AddDayShiftCommand = new RelayCommand<EquipmentItemViewModel>(AddDayShiftRequest);
+            AddNightShiftCommand = new RelayCommand<EquipmentItemViewModel>(AddNightShiftRequest);
         }
 
+        /// <summary>
+        /// Подписка на события
+        /// </summary>
         private void SubscribeToEvents()
         {
             _databaseService.ConnectionStateChanged += (s, e) =>
@@ -493,9 +622,14 @@ namespace OrderingSpecialEquipment.ViewModels
                 }
             };
         }
+
         #endregion
 
         #region Методы инициализации
+
+        /// <summary>
+        /// Асинхронная инициализация ViewModel
+        /// </summary>
         public async Task InitializeAsync()
         {
             if (_databaseService.IsConnected && _authenticationService.IsAuthenticated)
@@ -506,6 +640,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Загрузка доступных отделов
+        /// </summary>
         private async Task LoadAccessibleDepartmentsAsync()
         {
             try
@@ -523,6 +660,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Загрузка данных
+        /// </summary>
         private async Task LoadDataAsync()
         {
             IsLoading = true;
@@ -530,7 +670,6 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 StatusMessage = "Загрузка данных...";
 
-                // Загружаем последовательно для избежания конфликтов
                 await LoadMonthlyHoursLeftAsync();
                 await LoadEquipmentAsync();
                 await LoadShiftRequestsAsync();
@@ -559,15 +698,12 @@ namespace OrderingSpecialEquipment.ViewModels
 
                 System.Diagnostics.Debug.WriteLine("Загрузка данных для выпадающих списков...");
 
-                // Загружаем отделы
                 var departments = await _authorizationService.GetAccessibleDepartmentsAsync();
                 AccessibleDepartments = departments;
 
-                // Загружаем склады
                 var warehouses = await _authorizationService.GetAccessibleWarehousesAsync();
                 AccessibleWarehouses = warehouses;
 
-                // Загружаем технику
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     AllEquipments = await context.Equipments
@@ -575,9 +711,9 @@ namespace OrderingSpecialEquipment.ViewModels
                         .OrderBy(e => e.Name)
                         .ToListAsync();
                     System.Diagnostics.Debug.WriteLine($"Загружено техники: {AllEquipments.Count}");
+                    OnPropertyChanged(nameof(AvailableEquipmentsForDepartment));
                 }
 
-                // Загружаем госномера
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     AllLicensePlates = await context.LicensePlates
@@ -588,7 +724,6 @@ namespace OrderingSpecialEquipment.ViewModels
                     System.Diagnostics.Debug.WriteLine($"Загружено госномеров: {AllLicensePlates.Count}");
                 }
 
-                // Загружаем арендодателей
                 using (var context = _contextFactory.CreateDbContext())
                 {
                     AllLessorOrganizations = await context.LessorOrganizations
@@ -606,6 +741,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Загрузка оставшихся часов по транспортной программе
+        /// </summary>
         private async Task LoadMonthlyHoursLeftAsync()
         {
             try
@@ -649,6 +787,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Загрузка техники
+        /// </summary>
         private async Task LoadEquipmentAsync()
         {
             if (!await _equipmentSemaphore.WaitAsync(0))
@@ -746,26 +887,33 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Обновление отображаемых смен
+        /// </summary>
         public async Task UpdateDisplayedShiftsAsync()
         {
             await LoadShiftRequestsAsync();
             await LoadEquipmentAsync();
         }
 
+        /// <summary>
+        /// Получение дат для отображения в зависимости от видимости левой панели
+        /// </summary>
         private (DateTime nightDate, DateTime dayDate) GetDisplayDates()
         {
             if (_isLeftPanelVisible)
             {
-                // Панель ОТКРЫТА: ночь ТЕКУЩЕГО дня, день СЛЕДУЮЩЕГО дня
                 return (_selectedDate, _selectedDate.AddDays(1));
             }
             else
             {
-                // Панель СКРЫТА: ночь ПРЕДЫДУЩЕГО дня, день ТЕКУЩЕГО дня
                 return (_selectedDate.AddDays(-1), _selectedDate);
             }
         }
 
+        /// <summary>
+        /// Загрузка заявок
+        /// </summary>
         private async Task LoadShiftRequestsAsync()
         {
             if (!_authenticationService.IsAuthenticated || !_databaseService.IsConnected)
@@ -797,13 +945,49 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Обновление времени в зависимости от выбранной смены
+        /// </summary>
+        private void UpdateTimeBasedOnShift()
+        {
+            if (EditingRequest == null) return;
+
+            if (EditingRequest.WorkedHours.HasValue && EditingRequest.WorkedHours.Value > 0)
+                return;
+
+            if (EditingRequest.Shift == 0) // Дневная смена
+            {
+                StartTime = TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(30));
+                EndTime = TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30));
+            }
+            else // Ночная смена
+            {
+                StartTime = TimeSpan.FromHours(19).Add(TimeSpan.FromMinutes(30));
+                EndTime = TimeSpan.FromHours(6).Add(TimeSpan.FromMinutes(30)).Add(TimeSpan.FromDays(1));
+            }
+            HasLunchBreak = true;
+        }
+
+        /// <summary>
+        /// Обновление отработанных часов при изменении времени
+        /// </summary>
         private void UpdateWorkedHours()
         {
             if (EditingRequest == null) return;
 
-            if (StartTime.HasValue && EndTime.HasValue && EndTime > StartTime)
+            if (StartTime.HasValue && EndTime.HasValue)
             {
-                double hours = (EndTime.Value - StartTime.Value).TotalHours;
+                double hours;
+
+                if (EndTime > StartTime)
+                {
+                    hours = (EndTime.Value - StartTime.Value).TotalHours;
+                }
+                else
+                {
+                    hours = (EndTime.Value.Add(TimeSpan.FromDays(1)) - StartTime.Value).TotalHours;
+                }
+
                 if (HasLunchBreak && hours > 5)
                 {
                     hours -= 1;
@@ -812,18 +996,25 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Уведомление об изменении свойства
+        /// </summary>
         public void NotifyPropertyChanged(string propertyName)
         {
             OnPropertyChanged(propertyName);
         }
+
         #endregion
 
         #region Команды левой панели
+
+        /// <summary>
+        /// Переключение видимости левой панели
+        /// </summary>
         private void ToggleLeftPanel(object parameter)
         {
             IsLeftPanelVisible = !IsLeftPanelVisible;
 
-            // Анимируем изменение ширины
             if (IsLeftPanelVisible)
             {
                 LeftPanelWidth = 250;
@@ -833,10 +1024,12 @@ namespace OrderingSpecialEquipment.ViewModels
                 LeftPanelWidth = 0;
             }
 
-            // Обновляем отображение смен
             _ = UpdateDisplayedShiftsAsync();
         }
 
+        /// <summary>
+        /// Переключение избранного
+        /// </summary>
         private async void ToggleFavorite(EquipmentItemViewModel equipmentItem)
         {
             if (equipmentItem == null) return;
@@ -869,9 +1062,102 @@ namespace OrderingSpecialEquipment.ViewModels
                     "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        /// <summary>
+        /// Добавление заявки на дневную смену
+        /// </summary>
+        private void AddDayShiftRequest(EquipmentItemViewModel equipment)
+        {
+            if (equipment == null) return;
+
+            var (nightDate, dayDate) = GetDisplayDates();
+
+            var newRequest = new ShiftRequest
+            {
+                Date = _isLeftPanelVisible ? nightDate : dayDate,
+                Shift = 0,
+                EquipmentId = equipment.Equipment.Id,
+                RequestedCount = 1,
+                CreatedByUserId = _authenticationService.CurrentUser.Id,
+                CreatedAt = DateTime.UtcNow,
+                DepartmentId = SelectedDepartment?.Id
+            };
+
+            EditingRequest = new ShiftRequestViewModel(newRequest, _authorizationService, _databaseService, _contextFactory, this);
+            EditingRequest.IsNew = true;
+
+            StartTime = TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(30));
+            EndTime = TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30));
+            HasLunchBreak = true;
+
+            SetDefaultWarehouseAndArea();
+
+            OnPropertyChanged(nameof(AvailableEquipmentsForDepartment));
+
+            IsEditMode = true;
+            IsPopupOpen = true;
+        }
+
+        /// <summary>
+        /// Добавление заявки на ночную смену
+        /// </summary>
+        private void AddNightShiftRequest(EquipmentItemViewModel equipment)
+        {
+            if (equipment == null) return;
+
+            var (nightDate, dayDate) = GetDisplayDates();
+
+            var newRequest = new ShiftRequest
+            {
+                Date = _isLeftPanelVisible ? nightDate : dayDate,
+                Shift = 1,
+                EquipmentId = equipment.Equipment.Id,
+                RequestedCount = 1,
+                CreatedByUserId = _authenticationService.CurrentUser.Id,
+                CreatedAt = DateTime.UtcNow,
+                DepartmentId = SelectedDepartment?.Id
+            };
+
+            EditingRequest = new ShiftRequestViewModel(newRequest, _authorizationService, _databaseService, _contextFactory, this);
+            EditingRequest.IsNew = true;
+
+            StartTime = TimeSpan.FromHours(19).Add(TimeSpan.FromMinutes(30));
+            EndTime = TimeSpan.FromHours(6).Add(TimeSpan.FromMinutes(30)).Add(TimeSpan.FromDays(1));
+            HasLunchBreak = true;
+
+            SetDefaultWarehouseAndArea();
+
+            IsEditMode = true;
+            IsPopupOpen = true;
+
+            OnPropertyChanged(nameof(AvailableEquipmentsForDepartment));
+        }
+
+        /// <summary>
+        /// Установка склада и территории по умолчанию
+        /// </summary>
+        private void SetDefaultWarehouseAndArea()
+        {
+            if (EditingRequest == null) return;
+
+            if (EditingRequest.AvailableWarehouses != null && EditingRequest.AvailableWarehouses.Any())
+            {
+                EditingRequest.Warehouse = EditingRequest.AvailableWarehouses.First();
+
+                if (EditingRequest.AvailableAreas != null && EditingRequest.AvailableAreas.Any())
+                {
+                    EditingRequest.Area = EditingRequest.AvailableAreas.First();
+                }
+            }
+        }
+
         #endregion
 
         #region Команды заявок
+
+        /// <summary>
+        /// Проверка возможности добавления заявки
+        /// </summary>
         private bool CanAddRequest(object parameter)
         {
             return _authorizationService.CanWriteTable("ShiftRequests") &&
@@ -879,6 +1165,9 @@ namespace OrderingSpecialEquipment.ViewModels
                    SelectedDepartment != null;
         }
 
+        /// <summary>
+        /// Добавление новой заявки
+        /// </summary>
         private void AddNewRequest(object parameter)
         {
             var (nightDate, dayDate) = GetDisplayDates();
@@ -895,14 +1184,19 @@ namespace OrderingSpecialEquipment.ViewModels
             EditingRequest = new ShiftRequestViewModel(newRequest, _authorizationService, _databaseService, _contextFactory, this);
             EditingRequest.IsNew = true;
 
-            StartTime = TimeSpan.FromHours(8);
-            EndTime = TimeSpan.FromHours(17);
-            HasLunchBreak = true;
+            UpdateTimeBasedOnShift();
+
+            SetDefaultWarehouseAndArea();
+
+            OnPropertyChanged(nameof(AvailableEquipmentsForDepartment));
 
             IsEditMode = true;
             IsPopupOpen = true;
         }
 
+        /// <summary>
+        /// Проверка возможности редактирования заявки
+        /// </summary>
         private bool CanEditRequest(ShiftRequestViewModel request)
         {
             if (request == null || !_authorizationService.CanWriteTable("ShiftRequests"))
@@ -912,6 +1206,9 @@ namespace OrderingSpecialEquipment.ViewModels
             return true;
         }
 
+        /// <summary>
+        /// Начало редактирования заявки
+        /// </summary>
         private async void StartEditRequest(ShiftRequestViewModel request)
         {
             if (request == null) return;
@@ -922,7 +1219,6 @@ namespace OrderingSpecialEquipment.ViewModels
 
                 await _shiftRequestService.LockRequestAsync(request.Key, _authenticationService.CurrentUser.Id);
 
-                // Создаем копию для редактирования с полной загрузкой связанных данных
                 using var context = _contextFactory.CreateDbContext();
                 var fullRequest = await context.ShiftRequests
                     .Include(sr => sr.Equipment)
@@ -943,7 +1239,6 @@ namespace OrderingSpecialEquipment.ViewModels
                 EditingRequest = new ShiftRequestViewModel(fullRequest, _authorizationService, _databaseService, _contextFactory, this);
                 EditingRequest.IsEdit = true;
 
-                // Явно устанавливаем навигационные свойства
                 EditingRequest.Department = fullRequest.Department;
                 EditingRequest.Warehouse = fullRequest.Warehouse;
                 EditingRequest.Area = fullRequest.Area;
@@ -951,28 +1246,53 @@ namespace OrderingSpecialEquipment.ViewModels
                 EditingRequest.LessorOrganization = fullRequest.LessorOrganization;
                 EditingRequest.LicensePlate = fullRequest.LicensePlate;
 
-                // Устанавливаем выбранный отдел в родительской ViewModel для фильтрации
                 if (fullRequest.Department != null)
                 {
                     SelectedDepartment = fullRequest.Department;
                 }
 
-                // Инициализация времени
-                if (fullRequest.WorkedHours.HasValue)
+                if (fullRequest.WorkedHours.HasValue && fullRequest.WorkedHours.Value > 0)
                 {
                     double hours = (double)fullRequest.WorkedHours.Value;
-                    StartTime = TimeSpan.FromHours(8);
-                    EndTime = StartTime.Value.Add(TimeSpan.FromHours(hours));
+
+                    if (fullRequest.Shift == 0)
+                    {
+                        StartTime = TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(30));
+                        EndTime = StartTime.Value.Add(TimeSpan.FromHours(hours));
+
+                        if (EndTime > TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30)))
+                        {
+                            EndTime = TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30));
+                        }
+                    }
+                    else
+                    {
+                        StartTime = TimeSpan.FromHours(19).Add(TimeSpan.FromMinutes(30));
+                        EndTime = StartTime.Value.Add(TimeSpan.FromHours(hours));
+
+                        if (EndTime > TimeSpan.FromHours(30).Add(TimeSpan.FromMinutes(30)))
+                        {
+                            EndTime = TimeSpan.FromHours(30).Add(TimeSpan.FromMinutes(30));
+                        }
+                    }
+
                     HasLunchBreak = hours > 5;
                 }
                 else
                 {
-                    StartTime = TimeSpan.FromHours(8);
-                    EndTime = TimeSpan.FromHours(17);
+                    if (fullRequest.Shift == 0)
+                    {
+                        StartTime = TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(30));
+                        EndTime = TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30));
+                    }
+                    else
+                    {
+                        StartTime = TimeSpan.FromHours(19).Add(TimeSpan.FromMinutes(30));
+                        EndTime = TimeSpan.FromHours(6).Add(TimeSpan.FromMinutes(30)).Add(TimeSpan.FromDays(1));
+                    }
                     HasLunchBreak = true;
                 }
 
-                // Обновляем фильтрацию госномеров
                 OnPropertyChanged(nameof(FilteredLicensePlates));
 
                 IsEditMode = true;
@@ -986,6 +1306,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Проверка возможности сохранения заявки
+        /// </summary>
         private bool CanSaveRequest(object parameter)
         {
             return EditingRequest != null &&
@@ -994,6 +1317,9 @@ namespace OrderingSpecialEquipment.ViewModels
                    _databaseService.IsConnected;
         }
 
+        /// <summary>
+        /// Сохранение заявки
+        /// </summary>
         private async void SaveRequest(object parameter)
         {
             try
@@ -1025,6 +1351,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Добавление зависимой техники
+        /// </summary>
         private async Task AddDependentEquipmentAsync(ShiftRequestViewModel mainRequest)
         {
             try
@@ -1037,24 +1366,24 @@ namespace OrderingSpecialEquipment.ViewModels
 
                 foreach (var dep in dependencies)
                 {
-                    for (int i = 0; i < dep.RequiredCount; i++)
+                    var dependentRequest = new ShiftRequest
                     {
-                        var dependentRequest = new ShiftRequest
-                        {
-                            Date = mainRequest.Date,
-                            Shift = mainRequest.Shift,
-                            EquipmentId = dep.DependentEquipmentId,
-                            WarehouseId = mainRequest.WarehouseId,
-                            AreaId = mainRequest.AreaId,
-                            LessorOrganizationId = mainRequest.LessorOrganizationId,
-                            RequestedCount = 1,
-                            CreatedByUserId = _authenticationService.CurrentUser.Id,
-                            CreatedAt = DateTime.UtcNow,
-                            DepartmentId = mainRequest.DepartmentId,
-                            Comment = $"Зависимость от {mainRequest.EquipmentName}"
-                        };
-                        await _shiftRequestService.AddAsync(dependentRequest);
-                    }
+                        Date = mainRequest.Date,
+                        Shift = mainRequest.Shift,
+                        EquipmentId = dep.DependentEquipmentId,
+                        WarehouseId = mainRequest.WarehouseId,
+                        AreaId = mainRequest.AreaId,
+                        LessorOrganizationId = mainRequest.LessorOrganizationId,
+                        RequestedCount = dep.RequiredCount,
+                        CreatedByUserId = _authenticationService.CurrentUser.Id,
+                        CreatedAt = DateTime.UtcNow,
+                        DepartmentId = mainRequest.DepartmentId,
+                        Comment = $"Зависимость от {mainRequest.EquipmentName}. Требуется: {dep.RequiredCount} ед."
+                    };
+
+                    await _shiftRequestService.AddAsync(dependentRequest);
+
+                    System.Diagnostics.Debug.WriteLine($"Добавлена зависимость: {dep.DependentEquipment?.Name} x{dep.RequiredCount}");
                 }
             }
             catch (Exception ex)
@@ -1063,6 +1392,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Отмена редактирования
+        /// </summary>
         private async void CancelEdit(object parameter)
         {
             if (EditingRequest != null && !EditingRequest.IsNew)
@@ -1077,6 +1409,9 @@ namespace OrderingSpecialEquipment.ViewModels
             IsPopupOpen = false;
         }
 
+        /// <summary>
+        /// Проверка возможности удаления заявки
+        /// </summary>
         private bool CanDeleteRequest(ShiftRequestViewModel request)
         {
             return request != null &&
@@ -1084,6 +1419,9 @@ namespace OrderingSpecialEquipment.ViewModels
                    _databaseService.IsConnected;
         }
 
+        /// <summary>
+        /// Удаление заявки
+        /// </summary>
         private async void DeleteRequest(ShiftRequestViewModel request)
         {
             if (request == null) return;
@@ -1109,6 +1447,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Создание новой заявки из техники
+        /// </summary>
         private void CreateNewRequestFromEquipment(EquipmentItemViewModel equipment)
         {
             var (nightDate, dayDate) = GetDisplayDates();
@@ -1126,14 +1467,27 @@ namespace OrderingSpecialEquipment.ViewModels
             EditingRequest = new ShiftRequestViewModel(newRequest, _authorizationService, _databaseService, _contextFactory, this);
             EditingRequest.IsNew = true;
 
-            StartTime = TimeSpan.FromHours(8);
-            EndTime = TimeSpan.FromHours(17);
+            if (_isLeftPanelVisible)
+            {
+                StartTime = TimeSpan.FromHours(19).Add(TimeSpan.FromMinutes(30));
+                EndTime = TimeSpan.FromHours(6).Add(TimeSpan.FromMinutes(30)).Add(TimeSpan.FromDays(1));
+            }
+            else
+            {
+                StartTime = TimeSpan.FromHours(7).Add(TimeSpan.FromMinutes(30));
+                EndTime = TimeSpan.FromHours(18).Add(TimeSpan.FromMinutes(30));
+            }
             HasLunchBreak = true;
+
+            SetDefaultWarehouseAndArea();
 
             IsEditMode = true;
             IsPopupOpen = true;
         }
 
+        /// <summary>
+        /// Проверка возможности экспорта в Excel
+        /// </summary>
         private bool CanExportToExcel(object parameter)
         {
             return _authorizationService.HasSpecialPermission("ExportData") &&
@@ -1142,41 +1496,65 @@ namespace OrderingSpecialEquipment.ViewModels
                    _databaseService.IsConnected;
         }
 
+        /// <summary>
+        /// Экспорт в Excel
+        /// </summary>
         private void ExportToExcel(object parameter)
         {
             var requests = ShiftRequests.Select(vm => vm.OriginalRequest).ToList();
             ExcelExporter.ExportShiftRequests(requests);
         }
+
         #endregion
 
         #region Навигация по датам
+
+        /// <summary>
+        /// Предыдущий день
+        /// </summary>
         private void PreviousDay(object parameter)
         {
             SelectedDate = SelectedDate.AddDays(-1);
         }
 
+        /// <summary>
+        /// Следующий день
+        /// </summary>
         private void NextDay(object parameter)
         {
             SelectedDate = SelectedDate.AddDays(1);
         }
+
         #endregion
 
         #region Настройки подключения
+
+        /// <summary>
+        /// Проверка возможности открытия настроек подключения
+        /// </summary>
         private bool CanOpenConnectionSettings(object parameter)
         {
             return _authorizationService.HasSpecialPermission("ConfigureConnection") ||
                    _authorizationService.IsSystemAdmin;
         }
 
+        /// <summary>
+        /// Открытие настроек подключения
+        /// </summary>
         private void OpenConnectionSettings(object parameter)
         {
             var settingsWindow = new Views.ConnectionSettingsWindow();
             settingsWindow.Owner = Application.Current.MainWindow;
             settingsWindow.ShowDialog();
         }
+
         #endregion
 
         #region Открытие справочников и отчетов
+
+        /// <summary>
+        /// Открытие справочника
+        /// </summary>
         private void OpenReference(string referenceName)
         {
             Window window = null;
@@ -1210,6 +1588,9 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Открытие отчета
+        /// </summary>
         private void OpenReport(string reportName)
         {
             Window window = null;
@@ -1230,14 +1611,13 @@ namespace OrderingSpecialEquipment.ViewModels
             }
         }
 
+        /// <summary>
+        /// Переключение темы
+        /// </summary>
         private void ToggleTheme(object parameter)
         {
             _themeService.ToggleTheme();
-            // Обновляем свойство для отображения состояния чекбокса
             IsDarkTheme = _themeService.IsDarkTheme;
-
-            // Перезагружаем данные если нужно (опционально)
-            // _ = LoadDataAsync();
         }
 
         #endregion

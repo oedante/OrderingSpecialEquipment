@@ -36,12 +36,44 @@ namespace OrderingSpecialEquipment.Views
             _viewModel = App.Services.GetRequiredService<MainWindowViewModel>();
             DataContext = _viewModel;
 
-            // Подписываемся на изменение видимости панели для запуска анимации
+            // Подписка на изменение свойств ViewModel.
+            // 1) При изменении видимости левой панели запускается анимация.
+            // 2) При установке флага IsPopupOpen = true открываем модальное окно редактирования заявки.
             _viewModel.PropertyChanged += (s, e) =>
             {
                 if (e.PropertyName == nameof(MainWindowViewModel.IsLeftPanelVisible) && !_isAnimating)
                 {
                     StartPanelAnimation(_viewModel.IsLeftPanelVisible);
+                    return;
+                }
+
+                // Открываем модальное окно редактирования заявки
+                if (e.PropertyName == nameof(MainWindowViewModel.IsPopupOpen))
+                {
+                    try
+                    {
+                        if (_viewModel.IsPopupOpen)
+                        {
+                            // Проверяем, нет ли уже открытого окна
+                            foreach (Window window in Application.Current.Windows)
+                            {
+                                if (window is EditRequestWindow && window.IsVisible)
+                                {
+                                    window.Activate();
+                                    return;
+                                }
+                            }
+
+                            var editWindow = new EditRequestWindow();
+                            editWindow.Owner = this;
+                            editWindow.DataContext = _viewModel;
+                            editWindow.ShowDialog();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Ошибка при открытии окна редактирования: {ex.Message}");
+                    }
                 }
             };
 
@@ -87,7 +119,8 @@ namespace OrderingSpecialEquipment.Views
                 animation.Completed += (s, e) =>
                 {
                     _isAnimating = false;
-                    _viewModel.UpdateDisplayedShiftsAsync();
+                    // Используем async void для fire-and-forget вызова
+                    _ = _viewModel.UpdateDisplayedShiftsAsync();
 
                     // Устанавливаем финальное значение в ViewModel
                     _viewModel.LeftPanelWidth = show ? 250 : 0;
@@ -102,7 +135,7 @@ namespace OrderingSpecialEquipment.Views
                 // Если анимация не сработала, просто устанавливаем ширину
                 LeftPanelColumn.Width = show ? new GridLength(250) : new GridLength(0);
                 _viewModel.LeftPanelWidth = show ? 250 : 0;
-                _viewModel.UpdateDisplayedShiftsAsync();
+                _ = _viewModel.UpdateDisplayedShiftsAsync();
                 _isAnimating = false;
             }
         }
@@ -142,12 +175,14 @@ namespace OrderingSpecialEquipment.Views
         {
             try
             {
-                if (sender is TextBlock textBlock && textBlock.Tag is EquipmentItemViewModel equipment)
+                // Поддерживаем разные UI-элементы (TextBlock или PackIcon) в качестве источника события
+                if (sender is FrameworkElement fe && fe.Tag is EquipmentItemViewModel equipment)
                 {
                     if (_viewModel.ToggleFavoriteCommand.CanExecute(equipment))
                     {
                         _viewModel.ToggleFavoriteCommand.Execute(equipment);
                     }
+                    // Предотвращаем дальнейшее всплытие события
                     e.Handled = true;
                 }
             }
@@ -192,12 +227,26 @@ namespace OrderingSpecialEquipment.Views
     /// </summary>
     public class GridLengthAnimation : AnimationTimeline
     {
+        #region Свойства
+
         public override Type TargetPropertyType => typeof(GridLength);
 
-        protected override Freezable CreateInstanceCore()
-        {
-            return new GridLengthAnimation();
-        }
+        #endregion
+
+        #region Зависимые свойства
+
+        public static readonly DependencyProperty FromProperty =
+            DependencyProperty.Register("From", typeof(GridLength), typeof(GridLengthAnimation));
+
+        public static readonly DependencyProperty ToProperty =
+            DependencyProperty.Register("To", typeof(GridLength), typeof(GridLengthAnimation));
+
+        public static readonly DependencyProperty EasingFunctionProperty =
+            DependencyProperty.Register("EasingFunction", typeof(IEasingFunction), typeof(GridLengthAnimation));
+
+        #endregion
+
+        #region Свойства
 
         public GridLength From
         {
@@ -205,17 +254,11 @@ namespace OrderingSpecialEquipment.Views
             set { SetValue(FromProperty, value); }
         }
 
-        public static readonly DependencyProperty FromProperty =
-            DependencyProperty.Register("From", typeof(GridLength), typeof(GridLengthAnimation));
-
         public GridLength To
         {
             get { return (GridLength)GetValue(ToProperty); }
             set { SetValue(ToProperty, value); }
         }
-
-        public static readonly DependencyProperty ToProperty =
-            DependencyProperty.Register("To", typeof(GridLength), typeof(GridLengthAnimation));
 
         public IEasingFunction EasingFunction
         {
@@ -223,10 +266,23 @@ namespace OrderingSpecialEquipment.Views
             set { SetValue(EasingFunctionProperty, value); }
         }
 
-        public static readonly DependencyProperty EasingFunctionProperty =
-            DependencyProperty.Register("EasingFunction", typeof(IEasingFunction), typeof(GridLengthAnimation));
+        #endregion
 
-        public event EventHandler Completed;
+        #region События
+
+        /// <summary>
+        /// Событие завершения анимации
+        /// </summary>
+        public new event EventHandler Completed;
+
+        #endregion
+
+        #region Методы
+
+        protected override Freezable CreateInstanceCore()
+        {
+            return new GridLengthAnimation();
+        }
 
         public override object GetCurrentValue(object defaultOriginValue, object defaultDestinationValue, AnimationClock animationClock)
         {
@@ -252,6 +308,8 @@ namespace OrderingSpecialEquipment.Views
 
             return new GridLength(newValue, From.IsStar ? GridUnitType.Star : GridUnitType.Pixel);
         }
+
+        #endregion
     }
 
     /// <summary>
@@ -259,12 +317,18 @@ namespace OrderingSpecialEquipment.Views
     /// </summary>
     public static class ColumnDefinitionWidthAnimation
     {
+        #region Свойства зависимостей
+
         public static readonly DependencyProperty WidthProperty =
             DependencyProperty.RegisterAttached(
                 "Width",
                 typeof(double),
                 typeof(ColumnDefinitionWidthAnimation),
                 new PropertyMetadata(OnWidthChanged));
+
+        #endregion
+
+        #region Методы
 
         public static void SetWidth(ColumnDefinition element, double value)
         {
@@ -283,5 +347,7 @@ namespace OrderingSpecialEquipment.Views
                 column.Width = new GridLength((double)e.NewValue);
             }
         }
+
+        #endregion
     }
 }

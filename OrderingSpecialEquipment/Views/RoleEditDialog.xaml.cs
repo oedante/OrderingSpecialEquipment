@@ -3,11 +3,40 @@ using Microsoft.Extensions.DependencyInjection;
 using OrderingSpecialEquipment.Models;
 using OrderingSpecialEquipment.Services.Interfaces;
 using System;
+using System.Globalization;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace OrderingSpecialEquipment.Views
 {
+    /// <summary>
+    /// Конвертер для отображения уровня доступа в текст
+    /// </summary>
+    public class AccessLevelToTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is short level)
+            {
+                return level switch
+                {
+                    0 => "Запрещено",
+                    1 => "Чтение",
+                    2 => "Полный доступ",
+                    _ => "Неизвестно"
+                };
+            }
+            return "Запрещено";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     /// <summary>
     /// Диалог редактирования роли
     /// </summary>
@@ -29,10 +58,12 @@ namespace OrderingSpecialEquipment.Views
         public RoleEditDialog()
         {
             InitializeComponent();
-
             _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _role = new Role { IsActive = true };
             _isEditMode = false;
+
+            // Устанавливаем значения по умолчанию
+            SetDefaultPermissions();
         }
 
         /// <summary>
@@ -41,7 +72,6 @@ namespace OrderingSpecialEquipment.Views
         public RoleEditDialog(Role role)
         {
             InitializeComponent();
-
             _contextFactory = App.Services.GetRequiredService<IDbContextFactory>();
             _role = role;
             _isEditMode = true;
@@ -51,7 +81,40 @@ namespace OrderingSpecialEquipment.Views
 
         #endregion
 
-        #region Загрузка данных
+        #region Методы
+
+        /// <summary>
+        /// Установка прав по умолчанию
+        /// </summary>
+        private void SetDefaultPermissions()
+        {
+            // Все права по умолчанию - "Запрещено" (индекс 0)
+            cmbDepartmentsAccess.SelectedIndex = 0;
+            cmbEquipmentsAccess.SelectedIndex = 0;
+            cmbLessorOrganizationsAccess.SelectedIndex = 0;
+            cmbLicensePlatesAccess.SelectedIndex = 0;
+            cmbEquipmentDependenciesAccess.SelectedIndex = 0;
+            cmbTransportProgramAccess.SelectedIndex = 0;
+            cmbShiftRequestsAccess.SelectedIndex = 0;
+            cmbWarehousesAccess.SelectedIndex = 0;
+            cmbWarehouseAreasAccess.SelectedIndex = 0;
+            cmbUsersAccess.SelectedIndex = 0;
+            cmbRolesAccess.SelectedIndex = 0;
+            cmbUserDepartmentAccessAccess.SelectedIndex = 0;
+            cmbUserWarehouseAccessAccess.SelectedIndex = 0;
+            cmbUserFavoritesAccess.SelectedIndex = 0;
+            cmbAuditLogsAccess.SelectedIndex = 0;
+
+            // Специальные права
+            chkExportData.IsChecked = false;
+            chkViewReports.IsChecked = false;
+            chkManageAllDepartments.IsChecked = false;
+            chkManageUsers.IsChecked = false;
+            chkSystemAdmin.IsChecked = false;
+            chkConfigureConnection.IsChecked = false;
+            chkIsSystem.IsChecked = false;
+            chkIsActive.IsChecked = true;
+        }
 
         /// <summary>
         /// Загрузка данных роли в форму
@@ -62,51 +125,22 @@ namespace OrderingSpecialEquipment.Views
             txtName.Text = _role.Name;
             txtDescription.Text = _role.Description;
 
-            // Права на чтение/запись
-            chkDepartmentsRead.IsChecked = _role.TAB_Departments >= 1;
-            chkDepartmentsWrite.IsChecked = _role.TAB_Departments >= 2;
-
-            chkEquipmentsRead.IsChecked = _role.TAB_Equipments >= 1;
-            chkEquipmentsWrite.IsChecked = _role.TAB_Equipments >= 2;
-
-            chkLessorOrganizationsRead.IsChecked = _role.TAB_LessorOrganizations >= 1;
-            chkLessorOrganizationsWrite.IsChecked = _role.TAB_LessorOrganizations >= 2;
-
-            chkLicensePlatesRead.IsChecked = _role.TAB_LicensePlates >= 1;
-            chkLicensePlatesWrite.IsChecked = _role.TAB_LicensePlates >= 2;
-
-            chkEquipmentDependenciesRead.IsChecked = _role.TAB_EquipmentDependencies >= 1;
-            chkEquipmentDependenciesWrite.IsChecked = _role.TAB_EquipmentDependencies >= 2;
-
-            chkTransportProgramRead.IsChecked = _role.TAB_TransportProgram >= 1;
-            chkTransportProgramWrite.IsChecked = _role.TAB_TransportProgram >= 2;
-
-            chkShiftRequestsRead.IsChecked = _role.TAB_ShiftRequests >= 1;
-            chkShiftRequestsWrite.IsChecked = _role.TAB_ShiftRequests >= 2;
-
-            chkWarehousesRead.IsChecked = _role.TAB_Warehouses >= 1;
-            chkWarehousesWrite.IsChecked = _role.TAB_Warehouses >= 2;
-
-            chkWarehouseAreasRead.IsChecked = _role.TAB_WarehouseAreas >= 1;
-            chkWarehouseAreasWrite.IsChecked = _role.TAB_WarehouseAreas >= 2;
-
-            chkUsersRead.IsChecked = _role.TAB_Users >= 1;
-            chkUsersWrite.IsChecked = _role.TAB_Users >= 2;
-
-            chkRolesRead.IsChecked = _role.TAB_Roles >= 1;
-            chkRolesWrite.IsChecked = _role.TAB_Roles >= 2;
-
-            chkUserDepartmentAccessRead.IsChecked = _role.TAB_UserDepartmentAccess >= 1;
-            chkUserDepartmentAccessWrite.IsChecked = _role.TAB_UserDepartmentAccess >= 2;
-
-            chkUserWarehouseAccessRead.IsChecked = _role.TAB_UserWarehouseAccess >= 1;
-            chkUserWarehouseAccessWrite.IsChecked = _role.TAB_UserWarehouseAccess >= 2;
-
-            chkUserFavoritesRead.IsChecked = _role.TAB_UserFavorites >= 1;
-            chkUserFavoritesWrite.IsChecked = _role.TAB_UserFavorites >= 2;
-
-            chkAuditLogsRead.IsChecked = _role.TAB_AuditLogs >= 1;
-            chkAuditLogsWrite.IsChecked = _role.TAB_AuditLogs >= 2;
+            // Установка уровня доступа для таблиц
+            SetComboBoxAccess(cmbDepartmentsAccess, _role.TAB_Departments);
+            SetComboBoxAccess(cmbEquipmentsAccess, _role.TAB_Equipments);
+            SetComboBoxAccess(cmbLessorOrganizationsAccess, _role.TAB_LessorOrganizations);
+            SetComboBoxAccess(cmbLicensePlatesAccess, _role.TAB_LicensePlates);
+            SetComboBoxAccess(cmbEquipmentDependenciesAccess, _role.TAB_EquipmentDependencies);
+            SetComboBoxAccess(cmbTransportProgramAccess, _role.TAB_TransportProgram);
+            SetComboBoxAccess(cmbShiftRequestsAccess, _role.TAB_ShiftRequests);
+            SetComboBoxAccess(cmbWarehousesAccess, _role.TAB_Warehouses);
+            SetComboBoxAccess(cmbWarehouseAreasAccess, _role.TAB_WarehouseAreas);
+            SetComboBoxAccess(cmbUsersAccess, _role.TAB_Users);
+            SetComboBoxAccess(cmbRolesAccess, _role.TAB_Roles);
+            SetComboBoxAccess(cmbUserDepartmentAccessAccess, _role.TAB_UserDepartmentAccess);
+            SetComboBoxAccess(cmbUserWarehouseAccessAccess, _role.TAB_UserWarehouseAccess);
+            SetComboBoxAccess(cmbUserFavoritesAccess, _role.TAB_UserFavorites);
+            SetComboBoxAccess(cmbAuditLogsAccess, _role.TAB_AuditLogs);
 
             // Специальные права
             chkExportData.IsChecked = _role.SPEC_ExportData;
@@ -120,6 +154,32 @@ namespace OrderingSpecialEquipment.Views
         }
 
         /// <summary>
+        /// Установка значения в ComboBox по уровню доступа
+        /// </summary>
+        private void SetComboBoxAccess(ComboBox comboBox, short accessLevel)
+        {
+            comboBox.SelectedIndex = accessLevel switch
+            {
+                0 => 0, // Запрещено
+                1 => 1, // Только чтение
+                2 => 2, // Полный доступ
+                _ => 0
+            };
+        }
+
+        /// <summary>
+        /// Получение уровня доступа из ComboBox
+        /// </summary>
+        private short GetAccessLevel(ComboBox comboBox)
+        {
+            if (comboBox.SelectedItem is ComboBoxItem item && item.Tag != null)
+            {
+                return short.Parse(item.Tag.ToString());
+            }
+            return (short)comboBox.SelectedIndex;
+        }
+
+        /// <summary>
         /// Сохранение данных роли
         /// </summary>
         private void SaveRoleData()
@@ -128,22 +188,22 @@ namespace OrderingSpecialEquipment.Views
             _role.Name = txtName.Text.Trim();
             _role.Description = string.IsNullOrWhiteSpace(txtDescription.Text) ? null : txtDescription.Text.Trim();
 
-            // Права на чтение/запись
-            _role.TAB_Departments = GetPermissionLevel(chkDepartmentsRead, chkDepartmentsWrite);
-            _role.TAB_Equipments = GetPermissionLevel(chkEquipmentsRead, chkEquipmentsWrite);
-            _role.TAB_LessorOrganizations = GetPermissionLevel(chkLessorOrganizationsRead, chkLessorOrganizationsWrite);
-            _role.TAB_LicensePlates = GetPermissionLevel(chkLicensePlatesRead, chkLicensePlatesWrite);
-            _role.TAB_EquipmentDependencies = GetPermissionLevel(chkEquipmentDependenciesRead, chkEquipmentDependenciesWrite);
-            _role.TAB_TransportProgram = GetPermissionLevel(chkTransportProgramRead, chkTransportProgramWrite);
-            _role.TAB_ShiftRequests = GetPermissionLevel(chkShiftRequestsRead, chkShiftRequestsWrite);
-            _role.TAB_Warehouses = GetPermissionLevel(chkWarehousesRead, chkWarehousesWrite);
-            _role.TAB_WarehouseAreas = GetPermissionLevel(chkWarehouseAreasRead, chkWarehouseAreasWrite);
-            _role.TAB_Users = GetPermissionLevel(chkUsersRead, chkUsersWrite);
-            _role.TAB_Roles = GetPermissionLevel(chkRolesRead, chkRolesWrite);
-            _role.TAB_UserDepartmentAccess = GetPermissionLevel(chkUserDepartmentAccessRead, chkUserDepartmentAccessWrite);
-            _role.TAB_UserWarehouseAccess = GetPermissionLevel(chkUserWarehouseAccessRead, chkUserWarehouseAccessWrite);
-            _role.TAB_UserFavorites = GetPermissionLevel(chkUserFavoritesRead, chkUserFavoritesWrite);
-            _role.TAB_AuditLogs = GetPermissionLevel(chkAuditLogsRead, chkAuditLogsWrite);
+            // Сохранение уровня доступа для таблиц
+            _role.TAB_Departments = GetAccessLevel(cmbDepartmentsAccess);
+            _role.TAB_Equipments = GetAccessLevel(cmbEquipmentsAccess);
+            _role.TAB_LessorOrganizations = GetAccessLevel(cmbLessorOrganizationsAccess);
+            _role.TAB_LicensePlates = GetAccessLevel(cmbLicensePlatesAccess);
+            _role.TAB_EquipmentDependencies = GetAccessLevel(cmbEquipmentDependenciesAccess);
+            _role.TAB_TransportProgram = GetAccessLevel(cmbTransportProgramAccess);
+            _role.TAB_ShiftRequests = GetAccessLevel(cmbShiftRequestsAccess);
+            _role.TAB_Warehouses = GetAccessLevel(cmbWarehousesAccess);
+            _role.TAB_WarehouseAreas = GetAccessLevel(cmbWarehouseAreasAccess);
+            _role.TAB_Users = GetAccessLevel(cmbUsersAccess);
+            _role.TAB_Roles = GetAccessLevel(cmbRolesAccess);
+            _role.TAB_UserDepartmentAccess = GetAccessLevel(cmbUserDepartmentAccessAccess);
+            _role.TAB_UserWarehouseAccess = GetAccessLevel(cmbUserWarehouseAccessAccess);
+            _role.TAB_UserFavorites = GetAccessLevel(cmbUserFavoritesAccess);
+            _role.TAB_AuditLogs = GetAccessLevel(cmbAuditLogsAccess);
 
             // Специальные права
             _role.SPEC_ExportData = chkExportData.IsChecked == true;
@@ -156,24 +216,13 @@ namespace OrderingSpecialEquipment.Views
             _role.IsActive = chkIsActive.IsChecked == true;
         }
 
-        /// <summary>
-        /// Получение уровня доступа (0-нет, 1-чтение, 2-запись)
-        /// </summary>
-        private short GetPermissionLevel(CheckBox readBox, CheckBox writeBox)
-        {
-            if (writeBox.IsChecked == true)
-                return 2;
-            if (readBox.IsChecked == true)
-                return 1;
-            return 0;
-        }
-
         #endregion
 
         #region Обработчики событий
 
         private async void BtnSave_Click(object sender, RoutedEventArgs e)
         {
+            // Валидация
             if (string.IsNullOrWhiteSpace(txtCode.Text))
             {
                 MessageBox.Show("Код роли обязателен", "Ошибка",

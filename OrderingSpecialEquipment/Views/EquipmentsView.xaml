@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
         xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d" 
         d:DesignHeight="600" d:DesignWidth="900"
         Title="Справочник техники" 
@@ -27,28 +28,38 @@
 
         <!-- Панель инструментов -->
         <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
-            <Button x:Name="btnAdd" Content="➕ Добавить" 
-                    Click="BtnAdd_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnEdit" Content="✏️ Редактировать" 
-                    Click="BtnEdit_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
-            <Button x:Name="btnDelete" Content="🗑️ Удалить" 
-                    Click="BtnDelete_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnAdd" Click="BtnAdd_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="PlusBox" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Добавить"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnEdit" Click="BtnEdit_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Pencil" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Редактировать"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="btnDelete" Click="BtnDelete_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Delete" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Удалить"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
-            <Button x:Name="btnDependencies" Content="🔗 Зависимости" 
-                    Click="BtnDependencies_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnDependencies" Click="BtnDependencies_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Link" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Зависимости"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
-            <Button x:Name="btnRefresh" Content="🔄 Обновить" 
-                    Click="BtnRefresh_Click" 
-                    Margin="2" Padding="8,3"
-                    Style="{StaticResource ModernButton}"/>
+            <Button x:Name="btnRefresh" Click="BtnRefresh_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Refresh" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>
+                    <TextBlock Text="Обновить"/>
+                </StackPanel>
+            </Button>
             <Separator Style="{StaticResource ModernSeparator}"/>
             <CheckBox x:Name="chkShowInactive" Content="Показывать неактивные" 
                       VerticalAlignment="Center" Margin="5,0" 
