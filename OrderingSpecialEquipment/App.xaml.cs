@@ -199,6 +199,7 @@ namespace OrderingSpecialEquipment
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IAuthorizationService, AuthorizationService>();
             services.AddSingleton<IThemeService, ThemeService>();
+            services.AddSingleton<IUserSettingsService, UserSettingsService>();
 
             // Регистрация фабрики контекстов
             services.AddSingleton<IDbContextFactory, DbContextFactory>();
@@ -224,6 +225,7 @@ namespace OrderingSpecialEquipment
             services.AddTransient<ShiftRequestsReportView>();
             services.AddTransient<RoleEditDialog>();
             services.AddTransient<UserEditDialog>();
+            services.AddTransient<UserSettingsViewModel>();
 
             _serviceProvider = services.BuildServiceProvider();
 

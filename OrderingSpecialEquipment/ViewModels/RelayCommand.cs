@@ -18,7 +18,7 @@ namespace OrderingSpecialEquipment.ViewModels
         #region Конструкторы
 
         /// <summary>
-        /// Конструктор команды
+        /// Конструктор команды с параметром object?
         /// </summary>
         /// <param name="execute">Действие при выполнении</param>
         /// <param name="canExecute">Функция проверки возможности выполнения</param>

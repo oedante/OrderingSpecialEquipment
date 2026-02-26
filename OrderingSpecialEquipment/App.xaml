@@ -1,7 +1,8 @@
 ﻿<Application x:Class="OrderingSpecialEquipment.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="clr-namespace:OrderingSpecialEquipment.Controls"
+             xmlns:controls="clr-namespace:OrderingSpecialEquipment.Controls" 
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
              Startup="Application_Startup"
              DispatcherUnhandledException="Application_DispatcherUnhandledException">
     <Application.Resources>
@@ -21,6 +22,7 @@
 
             <!-- Конвертеры -->
             <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+            <converters:BooleanToTextConverter x:Key="BoolToText"/>
 
             <!-- Глобальные стили по умолчанию - только для элементов, которые точно не вызовут конфликтов -->
             <Style TargetType="Window" BasedOn="{StaticResource ModernWindow}"/>

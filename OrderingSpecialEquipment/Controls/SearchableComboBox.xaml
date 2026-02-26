@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OrderingSpecialEquipment.Controls"
              xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="300"
              x:Name="SearchableComboBoxControl">
@@ -23,63 +24,39 @@
                   DisplayMemberPath="{Binding ElementName=SearchableComboBoxControl, Path=DisplayMemberPath}"
                   Style="{StaticResource ModernComboBox}"
                   Height="32"
-                  StaysOpenOnEdit="True"/>
+                  StaysOpenOnEdit="True"
+                  VerticalContentAlignment="Center"
+                  Padding="28,0,20,0"/>
 
-        <!-- Placeholder overlay с иконкой поиска и анимацией -->
-        <Grid IsHitTestVisible="False">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="28"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- Иконка поиска слева -->
+        <materialDesign:PackIcon Grid.Row="0"
+                                  Kind="Magnify"
+                                  Width="16"
+                                  Height="16"
+                                  Margin="8,0,0,0"
+                                  HorizontalAlignment="Left"
+                                  VerticalAlignment="Center"
+                                  Foreground="{DynamicResource TextLightBrush}"
+                                  IsHitTestVisible="False"/>
 
-            <TextBlock Grid.Column="0"
-                       FontFamily="Segoe MDL2 Assets"
-                       Text="\uE721"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Center"
-                       Foreground="{DynamicResource TextLightBrush}"/>
-
-            <TextBlock x:Name="PlaceholderTextBlock"
-                       Grid.Column="1"
-                       Text="{Binding PlaceholderText, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                       VerticalAlignment="Center"
-                       Margin="4,0,30,0"
-                       Foreground="{DynamicResource TextLightBrush}"
-                       Opacity="0">
-                <TextBlock.RenderTransform>
-                    <TranslateTransform Y="0"/>
-                </TextBlock.RenderTransform>
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Opacity" Value="0"/>
-                        <Setter Property="RenderTransform">
-                            <Setter.Value>
-                                <TranslateTransform Y="0"/>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="">
-                                <DataTrigger.EnterActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.22" />
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)" To="0" Duration="0:0:0.22" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.EnterActions>
-                                <DataTrigger.ExitActions>
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.18" />
-                                            <DoubleAnimation Storyboard.TargetProperty="RenderTransform.(TranslateTransform.Y)" To="-6" Duration="0:0:0.18" />
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </DataTrigger.ExitActions>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
-        </Grid>
+        <!-- Placeholder overlay с анимацией -->
+        <TextBlock x:Name="PlaceholderTextBlock"
+                   Text="{Binding PlaceholderText, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                   VerticalAlignment="Center"
+                   Margin="28,0,30,0"
+                   Foreground="{DynamicResource TextLightBrush}"
+                   IsHitTestVisible="False"
+                   Opacity="0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Opacity" Value="0"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding SearchText, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="">
+                            <Setter Property="Opacity" Value="0.7"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
     </Grid>
 </UserControl>

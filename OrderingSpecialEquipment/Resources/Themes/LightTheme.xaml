@@ -92,6 +92,9 @@
     <SolidColorBrush x:Key="ScrollBarThumbHoverBrush" Color="{StaticResource ScrollBarThumbHoverColor}"/>
 
     <SolidColorBrush x:Key="DataGridSelectionBrush" Color="{StaticResource DataGridSelectionColor}"/>
-    
+
+    <SolidColorBrush x:Key="HighlightBrush" Color="#FF42A5F5"/>
+    <SolidColorBrush x:Key="HighlightTextBrush" Color="Black"/>
+
 
 </ResourceDictionary>

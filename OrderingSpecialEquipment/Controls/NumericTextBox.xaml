@@ -10,51 +10,94 @@
 
     <UserControl.Resources>
         <!-- Стиль для кнопок-стрелок (вертикальное расположение) -->
-        <Style x:Key="VerticalSpinButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Height" Value="15"/>
+        <Style x:Key="VerticalSpinButton" TargetType="Button">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="14"/>
             <Setter Property="FontSize" Value="8"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="2,0,0,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Стиль для контейнера стрелок -->
         <Style x:Key="SpinButtonsPanel" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Vertical"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="Margin" Value="0"/>
         </Style>
     </UserControl.Resources>
 
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*"/>
-            <ColumnDefinition Width="Auto"/>
-        </Grid.ColumnDefinitions>
+    <Border BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Background="{DynamicResource BackgroundBrush}"
+            Height="32">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- Текстовое поле -->
-        <TextBox x:Name="ValueTextBox"
-                 Grid.Column="0"
-                 Text="{Binding ElementName=NumericTextBoxControl, Path=TextValue, UpdateSourceTrigger=PropertyChanged}"
-                 Style="{StaticResource ModernTextBox}"
-                 Height="32"
-                 PreviewTextInput="ValueTextBox_PreviewTextInput"
-                 LostFocus="ValueTextBox_LostFocus"
-                 IsEnabled="{Binding ElementName=NumericTextBoxControl, Path=ControlIsEnabled}"
-                 VerticalContentAlignment="Center"/>
+            <!-- Текстовое поле -->
+            <TextBox x:Name="ValueTextBox"
+                     Grid.Column="0"
+                     Text="{Binding ElementName=NumericTextBoxControl, Path=TextValue, UpdateSourceTrigger=PropertyChanged}"
+                     Background="Transparent"
+                     BorderThickness="0"
+                     Padding="8,0,0,0"
+                     VerticalContentAlignment="Center"
+                     FontSize="13"
+                     PreviewTextInput="ValueTextBox_PreviewTextInput"
+                     LostFocus="ValueTextBox_LostFocus"
+                     IsEnabled="{Binding ElementName=NumericTextBoxControl, Path=ControlIsEnabled}"/>
 
-        <!-- Вертикальная панель с кнопками-стрелками -->
-        <StackPanel Grid.Column="1" Style="{StaticResource SpinButtonsPanel}">
-            <Button Content="▲"
-                    Margin="2,0,0,2"
-                    Style="{StaticResource VerticalSpinButton}"
-                    Click="Increase_Click"
-                    IsEnabled="{Binding ElementName=NumericTextBoxControl, Path=ControlIsEnabled}"/>
-            <Button Content="▼"
-                    Style="{StaticResource VerticalSpinButton}"
-                    Click="Decrease_Click"
-                    IsEnabled="{Binding ElementName=NumericTextBoxControl, Path=ControlIsEnabled}"/>
-        </StackPanel>
-    </Grid>
+            <Border Grid.Column="1" HorizontalAlignment="Left" Width="1" Background="{DynamicResource BorderBrush}"/>
+
+            <!-- Вертикальная панель с кнопками-стрелками -->
+            <StackPanel Grid.Column="1" 
+                        Style="{StaticResource SpinButtonsPanel}" 
+                        Width="20">
+
+                <Button Content="▲"
+                        Height="15"
+                        Style="{StaticResource VerticalSpinButton}"
+                        Click="Increase_Click"
+                        IsEnabled="{Binding ControlIsEnabled, ElementName=NumericTextBoxControl}"/>
+
+                <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+                <Button Content="▼"
+                        Height="15"
+                        Style="{StaticResource VerticalSpinButton}"
+                        Click="Decrease_Click"
+                        IsEnabled="{Binding ControlIsEnabled, ElementName=NumericTextBoxControl}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

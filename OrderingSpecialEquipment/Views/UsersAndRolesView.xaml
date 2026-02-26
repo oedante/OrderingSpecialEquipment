@@ -34,7 +34,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Панель инструментов ролей -->
-                <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+                <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}" Height="Auto">
                     <Button x:Name="btnAddRole" Content="➕ Добавить роль" 
                             Click="BtnAddRole_Click" 
                             Margin="2" Padding="8,3"

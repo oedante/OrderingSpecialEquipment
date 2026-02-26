@@ -103,6 +103,14 @@
                           IsChecked="{Binding IsDarkTheme}"
                           Command="{Binding ToggleThemeCommand}"
                           Style="{StaticResource ModernMenuItem}"/>
+                <Separator Style="{StaticResource ModernSeparator}"/>
+                <MenuItem Header="Настройки пользователя" 
+                          Command="{Binding OpenUserSettingsCommand}"
+                          Style="{StaticResource ModernMenuItem}">
+                    <MenuItem.Icon>
+                        <materialDesign:PackIcon Kind="Cog" Width="16" Height="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
 
             <MenuItem Header="Помощь" Style="{StaticResource ModernMenuItem}">
@@ -111,7 +119,7 @@
         </Menu>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="1" Style="{StaticResource ModernToolBar}">
+        <ToolBar Grid.Row="1" Style="{StaticResource ModernToolBar}" Height="Auto">
             <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding PreviousDayCommand}" 
                         ToolTip="Предыдущий день" 
@@ -139,9 +147,9 @@
 
                 <Border Background="{DynamicResource HeaderBackgroundBrush}" 
                         CornerRadius="4" 
-                        Padding="8,4" 
-                        Margin="10,0">
-                    <StackPanel Orientation="Horizontal">
+                        Padding="2,4" 
+                        Margin="2,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Width="140">
                         <TextBlock Text="{Binding DisplayDate}" FontWeight="SemiBold" Margin="0,0,4,0" Foreground="{DynamicResource TextBrush}"/>
                         <TextBlock Text="(" Foreground="{DynamicResource TextBrush}"/>
                         <TextBlock Text="{Binding DisplayDayOfWeek}" Foreground="{DynamicResource TextBrush}"/>

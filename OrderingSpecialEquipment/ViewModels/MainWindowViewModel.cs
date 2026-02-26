@@ -30,6 +30,7 @@ namespace OrderingSpecialEquipment.ViewModels
         private readonly IShiftRequestService _shiftRequestService;
         private readonly IEquipmentService _equipmentService;
         private readonly IThemeService _themeService;
+        private readonly IUserSettingsService _userSettingsService; // ДОБАВЛЕНО
 
         private bool _isLeftPanelVisible = false;
         private bool _isOnlyFavorites;
@@ -123,6 +124,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 if (SetProperty(ref _isOnlyFavorites, value))
                 {
                     _ = LoadEquipmentAsync();
+                    _ = SaveUserPreferenceAsync("OnlyFavorites", value); // ИСПРАВЛЕНО
                 }
             }
         }
@@ -141,6 +143,7 @@ namespace OrderingSpecialEquipment.ViewModels
                     OnPropertyChanged(nameof(DisplayDayOfWeek));
                     _groupedShiftRequests = null;
                     _ = UpdateDisplayedShiftsAsync();
+                    _ = SaveUserPreferenceAsync("LastDate", value.ToString("yyyy-MM-dd")); // ДОБАВЛЕНО
                 }
             }
         }
@@ -350,6 +353,7 @@ namespace OrderingSpecialEquipment.ViewModels
                     _ = LoadEquipmentAsync();
                     _ = LoadShiftRequestsAsync();
                     _ = LoadMonthlyHoursLeftAsync();
+                    _ = SaveUserPreferenceAsync("LastDepartment", value?.Id); // ИСПРАВЛЕНО
                 }
             }
         }
@@ -518,11 +522,13 @@ namespace OrderingSpecialEquipment.ViewModels
         public ICommand OpenLessorsCommand { get; set; }
         public ICommand OpenTransportProgramCommand { get; set; }
         public ICommand OpenUsersCommand { get; set; }
+        public ICommand OpenUserSettingsCommand { get; set; } // ДОБАВЛЕНО
         public ICommand OpenTransportReportCommand { get; set; }
         public ICommand OpenShiftReportCommand { get; set; }
         public ICommand RequestDoubleClickCommand { get; set; }
         public ICommand AddDayShiftCommand { get; set; }
         public ICommand AddNightShiftCommand { get; set; }
+        public ICommand ClearLessorCommand { get; set; } // ДОБАВЛЕНО
 
         #endregion
 
@@ -538,7 +544,8 @@ namespace OrderingSpecialEquipment.ViewModels
             IShiftRequestService shiftRequestService,
             IEquipmentService equipmentService,
             IDbContextFactory contextFactory,
-            IThemeService themeService)
+            IThemeService themeService,
+            IUserSettingsService userSettingsService) // ДОБАВЛЕНО
         {
             _authenticationService = authenticationService ?? throw new ArgumentNullException(nameof(authenticationService));
             _authorizationService = authorizationService ?? throw new ArgumentNullException(nameof(authorizationService));
@@ -547,6 +554,7 @@ namespace OrderingSpecialEquipment.ViewModels
             _equipmentService = equipmentService ?? throw new ArgumentNullException(nameof(equipmentService));
             _contextFactory = contextFactory ?? throw new ArgumentNullException(nameof(contextFactory));
             _themeService = themeService ?? throw new ArgumentNullException(nameof(themeService));
+            _userSettingsService = userSettingsService ?? throw new ArgumentNullException(nameof(userSettingsService)); // ДОБАВЛЕНО
 
             InitializeCommands();
             SubscribeToEvents();
@@ -591,11 +599,13 @@ namespace OrderingSpecialEquipment.ViewModels
             OpenLessorsCommand = new RelayCommand(() => OpenReference("LessorOrganizations"), () => _authorizationService.CanReadTable("LessorOrganizations"));
             OpenTransportProgramCommand = new RelayCommand(() => OpenReference("TransportProgram"), () => _authorizationService.CanReadTable("TransportProgram"));
             OpenUsersCommand = new RelayCommand(() => OpenReference("Users"), () => _authorizationService.HasSpecialPermission("ManageUsers") || _authorizationService.IsSystemAdmin);
+            OpenUserSettingsCommand = new RelayCommand(() => OpenReference("UserSettings"), () => _authorizationService.HasSpecialPermission("ManageUsers") || _authorizationService.IsSystemAdmin); // ДОБАВЛЕНО
             OpenTransportReportCommand = new RelayCommand(() => OpenReport("Transport"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             OpenShiftReportCommand = new RelayCommand(() => OpenReport("Shift"), () => _authorizationService.HasSpecialPermission("ViewReports"));
             ToggleThemeCommand = new RelayCommand(ToggleTheme);
             AddDayShiftCommand = new RelayCommand<EquipmentItemViewModel>(AddDayShiftRequest);
             AddNightShiftCommand = new RelayCommand<EquipmentItemViewModel>(AddNightShiftRequest);
+            ClearLessorCommand = new RelayCommand(ClearLessor, (param) => EditingRequest != null);
         }
 
         /// <summary>
@@ -619,6 +629,7 @@ namespace OrderingSpecialEquipment.ViewModels
                 if (e != null)
                 {
                     _ = LoadDataAsync();
+                    _ = LoadUserPreferencesAsync(); // ДОБАВЛЕНО
                 }
             };
         }
@@ -634,9 +645,71 @@ namespace OrderingSpecialEquipment.ViewModels
         {
             if (_databaseService.IsConnected && _authenticationService.IsAuthenticated)
             {
+                await LoadUserPreferencesAsync(); // ДОБАВЛЕНО
                 await LoadAccessibleDepartmentsAsync();
                 await LoadComboBoxDataAsync();
                 await LoadDataAsync();
+            }
+        }
+
+        /// <summary>
+        /// Загрузка предпочтений пользователя из настроек
+        /// </summary>
+        private async Task LoadUserPreferencesAsync() // ДОБАВЛЕНО
+        {
+            try
+            {
+                var userId = _authenticationService.CurrentUser?.Id;
+                if (string.IsNullOrEmpty(userId)) return;
+
+                // Загружаем настройки пользователя
+                IsOnlyFavorites = await _userSettingsService.GetSettingAsync(userId, "OnlyFavorites", false);
+
+                // Загружаем последний выбранный отдел
+                var lastDepartmentId = await _userSettingsService.GetSettingAsync<string>(userId, "LastDepartment", null);
+                if (!string.IsNullOrEmpty(lastDepartmentId) && AccessibleDepartments != null)
+                {
+                    SelectedDepartment = AccessibleDepartments.FirstOrDefault(d => d.Id == lastDepartmentId);
+                }
+
+                // Загружаем последнюю выбранную дату
+                var lastDateStr = await _userSettingsService.GetSettingAsync<string>(userId, "LastDate", null);
+                if (!string.IsNullOrEmpty(lastDateStr) && DateTime.TryParse(lastDateStr, out DateTime lastDate))
+                {
+                    SelectedDate = lastDate;
+                }
+
+                // Загружаем тему
+                var darkTheme = await _userSettingsService.GetSettingAsync(userId, "DarkTheme", _themeService.IsDarkTheme);
+                if (darkTheme != _themeService.IsDarkTheme)
+                {
+                    _themeService.ApplyTheme(darkTheme);
+                }
+
+                System.Diagnostics.Debug.WriteLine("Предпочтения пользователя загружены");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка загрузки предпочтений: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Сохранение предпочтения пользователя
+        /// </summary>
+        private async Task SaveUserPreferenceAsync(string key, object value) // ДОБАВЛЕНО
+        {
+            try
+            {
+                var userId = _authenticationService.CurrentUser?.Id;
+                if (!string.IsNullOrEmpty(userId))
+                {
+                    await _userSettingsService.SaveSettingAsync(userId, key, value);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Ошибка сохранения предпочтения {key}: {ex.Message}");
             }
         }
 
@@ -649,7 +722,7 @@ namespace OrderingSpecialEquipment.ViewModels
             {
                 var departments = await _authorizationService.GetAccessibleDepartmentsAsync();
                 AccessibleDepartments = departments;
-                if (departments.Any())
+                if (departments.Any() && SelectedDepartment == null)
                 {
                     SelectedDepartment = departments.First();
                 }
@@ -1025,6 +1098,7 @@ namespace OrderingSpecialEquipment.ViewModels
             }
 
             _ = UpdateDisplayedShiftsAsync();
+            _ = SaveUserPreferenceAsync("LeftPanelVisible", IsLeftPanelVisible); // ДОБАВЛЕНО
         }
 
         /// <summary>
@@ -1410,6 +1484,19 @@ namespace OrderingSpecialEquipment.ViewModels
         }
 
         /// <summary>
+        /// Очистка арендодателя
+        /// </summary>
+        private void ClearLessor(object parameter) // ДОБАВЛЕНО
+        {
+            if (EditingRequest != null)
+            {
+                EditingRequest.LessorOrganization = null;
+                EditingRequest.LicensePlate = null;
+                OnPropertyChanged(nameof(FilteredLicensePlates));
+            }
+        }
+
+        /// <summary>
         /// Проверка возможности удаления заявки
         /// </summary>
         private bool CanDeleteRequest(ShiftRequestViewModel request)
@@ -1578,6 +1665,9 @@ namespace OrderingSpecialEquipment.ViewModels
                 case "Users":
                     window = new Views.UsersAndRolesView();
                     break;
+                case "UserSettings": // ДОБАВЛЕНО
+                    window = new Views.UserSettingsView();
+                    break;
             }
 
             if (window != null)
@@ -1618,6 +1708,7 @@ namespace OrderingSpecialEquipment.ViewModels
         {
             _themeService.ToggleTheme();
             IsDarkTheme = _themeService.IsDarkTheme;
+            _ = SaveUserPreferenceAsync("DarkTheme", IsDarkTheme); // ДОБАВЛЕНО
         }
 
         #endregion

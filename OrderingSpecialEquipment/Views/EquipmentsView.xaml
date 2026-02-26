@@ -27,7 +27,7 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}" Height="Auto">
             <Button x:Name="btnAdd" Click="BtnAdd_Click" Margin="2" Padding="8,3" Style="{StaticResource ModernButton}">
                 <StackPanel Orientation="Horizontal">
                     <materialDesign:PackIcon Kind="PlusBox" Style="{StaticResource AppPackIcon}" Margin="0,0,6,0"/>

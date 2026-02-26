@@ -7,9 +7,7 @@
     <!-- БАЗОВЫЕ СТИЛИ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ             -->
     <!-- ============================================= -->
 
-    <!-- Стиль для икон в приложении. По умолчанию использует Segoe MDL2 Assets.
-         При желании можно переключить на FontAwesome, установив соответствующий FontFamily. -->
-    <!-- Icon style: uses MaterialDesign PackIcon by default -->
+    <!-- Стиль для икон в приложении -->
     <Style x:Key="AppIconTextBlock" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
         <Setter Property="FontSize" Value="14"/>
@@ -75,6 +73,132 @@
     </Style>
 
     <!-- ============================================= -->
+    <!-- СТИЛИ ДЛЯ КАЛЕНДАРЯ (ОПРЕДЕЛЕНЫ ДО DATEPICKER) -->
+    <!-- ============================================= -->
+
+    <!-- Стиль для календаря с улучшенной видимостью в темной теме -->
+    <Style x:Key="ModernCalendar" TargetType="Calendar">
+        <Setter Property="Background" Value="{DynamicResource PopupBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Margin" Value="5"/>
+    </Style>
+
+    <!-- Стиль для кнопок дней календаря -->
+    <Style x:Key="ModernCalendarDayButton" TargetType="CalendarDayButton">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="MinWidth" Value="28"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CalendarDayButton">
+                    <Grid>
+                        <Border x:Name="NormalBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="3"
+                                Width="28"
+                                Height="28">
+                            <ContentControl x:Name="NormalText"
+                                            Content="{TemplateBinding Content}"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            FontSize="{TemplateBinding FontSize}"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <!-- При наведении - светлый фон -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="NormalBorder" Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                        </Trigger>
+
+                        <!-- Выбранная дата - яркий цвет с контрастным текстом -->
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="NormalBorder" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="NormalText" Property="Foreground" Value="White"/>
+                        </Trigger>
+
+                        <!-- Сегодняшний день - цветная рамка -->
+                        <Trigger Property="IsToday" Value="True">
+                            <Setter TargetName="NormalBorder" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="NormalBorder" Property="BorderThickness" Value="2"/>
+                        </Trigger>
+
+                        <!-- Неактивные дни (другие месяцы) - более светлый текст -->
+                        <Trigger Property="IsInactive" Value="True">
+                            <Setter TargetName="NormalText" Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                            <Setter TargetName="NormalText" Property="Opacity" Value="0.6"/>
+                        </Trigger>
+
+                        <!-- Заблокированные даты - перечеркнутый текст -->
+                        <Trigger Property="IsBlackedOut" Value="True">
+                            <Setter TargetName="NormalText" Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Стиль для заголовка календаря (месяц/год) -->
+    <Style x:Key="ModernCalendarHeader" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        TextElement.Foreground="{TemplateBinding Foreground}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Стиль для кнопок навигации календаря -->
+    <Style x:Key="ModernCalendarNavigationButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Width" Value="28"/>
+        <Setter Property="Height" Value="28"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="3">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ============================================= -->
     <!-- СТИЛИ ДЛЯ КНОПОК                              -->
     <!-- ============================================= -->
 
@@ -120,30 +244,6 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
     </Style>
 
-    <!-- Стиль для Calendar и кнопок календаря - минимальный, цвета берутся из темы -->
-    <Style TargetType="Calendar">
-        <Setter Property="Background" Value="{DynamicResource PopupBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-    </Style>
-
-    <Style TargetType="CalendarDayButton">
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Style.Triggers>
-            <Trigger Property="IsSelected" Value="True">
-                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
-                <Setter Property="Foreground" Value="White"/>
-            </Trigger>
-            <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
-            </Trigger>
-            <Trigger Property="IsEnabled" Value="False">
-                <Setter Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
-            </Trigger>
-        </Style.Triggers>
-    </Style>
-
     <!-- Стиль для IconButton -->
     <Style x:Key="IconButton" TargetType="Button" BasedOn="{StaticResource ModernButton}">
         <Setter Property="Padding" Value="0"/>
@@ -151,100 +251,6 @@
         <Setter Property="Height" Value="34"/>
         <Setter Property="MinWidth" Value="34"/>
         <Setter Property="FontSize" Value="16"/>
-    </Style>
-
-    <!-- ============================================= -->
-    <!-- СТИЛИ ДЛЯ DataGrid                              -->
-    <!-- ============================================= -->
-
-    <!-- Стиль для DataGrid - ОСТАВЛЯЕМ ТОЛЬКО ОДИН ВАРИАНТ -->
-    <Style x:Key="ModernDataGrid" TargetType="DataGrid">
-        <Setter Property="AutoGenerateColumns" Value="False"/>
-        <Setter Property="HeadersVisibility" Value="Column"/>
-        <Setter Property="GridLinesVisibility" Value="None"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="RowHeight" Value="35"/>
-        <Setter Property="FontSize" Value="12"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
-        <Setter Property="SelectionMode" Value="Single"/>
-        <Setter Property="SelectionUnit" Value="FullRow"/>
-        <Setter Property="CanUserAddRows" Value="False"/>
-        <Setter Property="CanUserDeleteRows" Value="False"/>
-        <Setter Property="CanUserResizeColumns" Value="True"/>
-        <Setter Property="CanUserResizeRows" Value="False"/>
-        <Setter Property="CanUserSortColumns" Value="True"/>
-        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-    </Style>
-
-    <!-- Стиль для DataGridColumnHeader -->
-    <Style x:Key="ModernDataGridColumnHeader" TargetType="DataGridColumnHeader">
-        <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Height" Value="32"/>
-        <Setter Property="Padding" Value="8,0"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="0,0,1,1"/>
-        <Setter Property="HorizontalContentAlignment" Value="Left"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-
-    <!-- Упрощенный стиль для DataGridRow - вся строка с обводкой -->
-    <Style x:Key="ModernDataGridRow" TargetType="DataGridRow">
-        <Setter Property="MinHeight" Value="35"/>
-        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="DataGridRow">
-                    <Border x:Name="RowBorder"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="0.5"
-                        CornerRadius="2"
-                        Padding="2"
-                        Margin="1,1,1,1">
-                        <DataGridCellsPresenter/>
-                    </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource DataGridSelectionBrush}"/>
-                            <Setter Property="Foreground" Value="White"/>
-                        </Trigger>
-                    </ControlTemplate.Triggers>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- Стиль для DataGridCell -->
-    <Style x:Key="ModernDataGridCell" TargetType="DataGridCell">
-        <Setter Property="Padding" Value="8,0"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="VerticalAlignment" Value="Center"/>
-        <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="DataGridCell">
-                    <Border Padding="{TemplateBinding Padding}"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                        <ContentPresenter x:Name="contentPresenter" 
-                                      VerticalAlignment="Center"
-                                      HorizontalAlignment="Left"/>
-                    </Border>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
     </Style>
 
     <!-- ============================================= -->
@@ -323,7 +329,7 @@
     <!-- СТИЛИ ДЛЯ ВЫПАДАЮЩИХ СПИСКОВ                   -->
     <!-- ============================================= -->
 
-    <!-- ИСПРАВЛЕННЫЙ СТИЛЬ для ComboBox (с поддержкой темы) -->
+    <!-- Стиль для ComboBox -->
     <Style x:Key="ModernComboBox" TargetType="ComboBox">
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
@@ -335,7 +341,6 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
         <Setter Property="MaxDropDownHeight" Value="300"/>
-        <!-- Добавляем шаблон для правильного отображения фона -->
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBox">
@@ -353,22 +358,13 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4"/>
 
-                        <!-- Выделенная область -->
-                        <Border x:Name="highlightBorder" 
-                                Grid.ColumnSpan="2"
-                                Background="Transparent"
-                                BorderBrush="{DynamicResource PrimaryBrush}"
-                                BorderThickness="0"
-                                CornerRadius="4"/>
-
-                        <!-- Содержимое: поддержка редактируемого режима (PART_EditableTextBox) -->
+                        <!-- Содержимое -->
                         <Grid Grid.Column="0" Margin="{TemplateBinding Padding}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- Editable textbox used when IsEditable=True -->
                             <TextBox x:Name="PART_EditableTextBox"
                                      Grid.Column="0"
                                      Background="Transparent"
@@ -377,7 +373,6 @@
                                      Visibility="Collapsed"
                                      Margin="0,0,4,0"/>
 
-                            <!-- Default content presenter for non-editable mode -->
                             <ContentPresenter x:Name="contentPresenter" 
                                               Grid.Column="0"
                                               Content="{TemplateBinding SelectionBoxItem}" 
@@ -399,7 +394,7 @@
                                   VerticalAlignment="Center"/>
                         </Grid>
 
-                        <!-- Кнопка для открытия списка. Используется прозрачный ToggleButton, который переключает IsDropDownOpen. -->
+                        <!-- Кнопка для открытия списка -->
                         <ToggleButton x:Name="toggleButton"
                                       Grid.ColumnSpan="2"
                                       Background="Transparent"
@@ -409,7 +404,6 @@
                                       Focusable="False"
                                       IsTabStop="False">
                             <ToggleButton.Template>
-                                <!-- Пустой шаблон, нужен чтобы кнопка оставалась кликабельной и не рисовала UI -->
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border Background="Transparent" />
                                 </ControlTemplate>
@@ -437,7 +431,7 @@
                             </Border>
                         </Popup>
                     </Grid>
-                        <ControlTemplate.Triggers>
+                    <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
                         </Trigger>
@@ -445,11 +439,10 @@
                             <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
                             <Setter TargetName="border" Property="BorderThickness" Value="2"/>
                         </Trigger>
-                            <!-- Показываем PART_EditableTextBox вместо contentPresenter для редактируемого ComboBox -->
-                            <Trigger Property="IsEditable" Value="True">
-                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="contentPresenter" Property="Visibility" Value="Collapsed"/>
-                            </Trigger>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="contentPresenter" Property="Visibility" Value="Collapsed"/>
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="border" Property="Background" Value="{DynamicResource BackgroundLightBrush}"/>
                             <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource BorderLightBrush}"/>
@@ -480,75 +473,36 @@
     </Style>
 
     <!-- ============================================= -->
-    <!-- ИСПРАВЛЕННЫЙ СТИЛЬ ДЛЯ DATEPICKER              -->
+    <!-- ПОЛНОСТЬЮ ПЕРЕРАБОТАННЫЙ СТИЛЬ ДЛЯ DATEPICKER  -->
     <!-- ============================================= -->
 
-    <Style x:Key="ModernDatePicker" TargetType="DatePicker">
-        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
-        <Setter Property="BorderThickness" Value="1"/>
+    <!-- Стиль для DatePickerTextBox -->
+    <Style x:Key="ModernDatePickerTextBox" TargetType="DatePickerTextBox">
         <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1,1,0,1"/>
+        <Setter Property="Padding" Value="8,0,0,0"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Height" Value="32"/>
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="DatePicker">
-                    <Grid>
-                        <!-- Используем стандартный шаблон DatePicker, но с нашими цветами -->
-                        <DatePickerTextBox x:Name="PART_TextBox" 
-                                       Grid.Row="0" 
-                                       Grid.Column="0"
-                                       Background="{TemplateBinding Background}"
-                                       BorderBrush="{TemplateBinding BorderBrush}"
-                                       BorderThickness="{TemplateBinding BorderThickness}"
-                                       Foreground="{TemplateBinding Foreground}"
-                                       FontSize="{TemplateBinding FontSize}"
-                                       Padding="8,6"/>
-
-                        <!-- Кнопка календаря -->
-                        <ToggleButton x:Name="PART_Button"
-                                  Grid.Row="0"
-                                  Grid.Column="1"
-                                  Background="{DynamicResource HeaderBackgroundBrush}"
-                                  BorderBrush="{TemplateBinding BorderBrush}"
-                                  BorderThickness="0,1,1,1"
-                                  IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                  Style="{StaticResource {x:Static ToolBar.ToggleButtonStyleKey}}"
-                                  Width="32"
-                                  Margin="0">
-                            <TextBlock FontFamily="Segoe MDL2 Assets"
-                                   Text="&#xE787;"
-                                   FontSize="16"
-                                   Foreground="{DynamicResource TextBrush}"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"/>
-                        </ToggleButton>
-
-                        <!-- Календарь -->
-                        <Popup x:Name="PART_Popup" 
-                           AllowsTransparency="True"
-                           Placement="Bottom"
-                           StaysOpen="False"
-                           IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
-                            <Border BorderBrush="{DynamicResource BorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Background="{DynamicResource PopupBackgroundBrush}">
-                                <Calendar x:Name="PART_Calendar"
-                                      Background="{DynamicResource PopupBackgroundBrush}"
-                                      Foreground="{DynamicResource TextBrush}"
-                                      BorderBrush="Transparent"
-                                      Margin="5"/>
-                            </Border>
-                        </Popup>
-                    </Grid>
+                <ControlTemplate TargetType="DatePickerTextBox">
+                    <Border x:Name="Border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4,0,0,4">
+                        <ScrollViewer x:Name="PART_ContentHost" 
+                                       Margin="5,0"
+                                       VerticalAlignment="Center"/>
+                    </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="PART_TextBox" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
                         </Trigger>
-                        <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="PART_TextBox" Property="Background" Value="{DynamicResource BackgroundLightBrush}"/>
-                            <Setter TargetName="PART_TextBox" Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                        <Trigger Property="IsFocused" Value="True">
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            <Setter TargetName="Border" Property="BorderThickness" Value="2,2,0,2"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -556,11 +510,95 @@
         </Setter>
     </Style>
 
-    <!-- Стиль для Calendar (используется в DatePicker) -->
-    <Style x:Key="ModernCalendar" TargetType="Calendar">
+    <Style x:Key="ModernDatePicker" TargetType="DatePicker">
         <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="IsTodayHighlighted" Value="True"/>
+        <Setter Property="SelectedDateFormat" Value="Short"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DatePicker">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Текстовое поле для ввода даты -->
+                        <DatePickerTextBox x:Name="PART_TextBox" 
+                                           Grid.Column="0"
+                                           Style="{StaticResource ModernDatePickerTextBox}"/>
+
+                        <!-- Кнопка открытия календаря с иконкой из MaterialDesign -->
+                        <ToggleButton x:Name="PART_Button"
+                                      Grid.Column="1"
+                                      Background="{DynamicResource HeaderBackgroundBrush}"
+                                      BorderBrush="{DynamicResource BorderBrush}"
+                                      BorderThickness="0,1,1,1"
+                                      IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Width="32"
+                                      Height="{TemplateBinding Height}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="{TemplateBinding Background}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                            CornerRadius="0,4,4,0">
+                                        <ContentPresenter HorizontalAlignment="Center" 
+                                                        VerticalAlignment="Center"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryDarkBrush}"/>
+                                        </Trigger>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+
+                            <!-- Иконка календаря из MaterialDesign -->
+                            <materialDesign:PackIcon Kind="CalendarMonth" 
+                                                     Width="16" 
+                                                     Height="16"
+                                                     Foreground="{DynamicResource TextBrush}"/>
+                        </ToggleButton>
+
+                        <!-- Выпадающий календарь -->
+                        <Popup x:Name="PART_Popup" 
+                               Grid.ColumnSpan="2"
+                               AllowsTransparency="True"
+                               Placement="Bottom"
+                               StaysOpen="False"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}">
+                            <Border BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Background="{DynamicResource PopupBackgroundBrush}"
+                                    Padding="5">
+                                <Calendar x:Name="PART_Calendar"
+                                          Background="{DynamicResource PopupBackgroundBrush}"
+                                          Foreground="{DynamicResource TextBrush}"
+                                          BorderBrush="Transparent"
+                                          Style="{StaticResource ModernCalendar}"/>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="PART_TextBox" Property="Background" Value="{DynamicResource BackgroundLightBrush}"/>
+                            <Setter TargetName="PART_TextBox" Property="Foreground" Value="{DynamicResource TextDisabledBrush}"/>
+                            <Setter TargetName="PART_Button" Property="Background" Value="{DynamicResource BackgroundLightBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <!-- ============================================= -->
@@ -655,7 +693,7 @@
     </Style>
 
     <!-- ============================================= -->
-    <!-- ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ СПИСКОВ                 -->
+    <!-- СТИЛИ ДЛЯ СПИСКОВ                              -->
     <!-- ============================================= -->
 
     <!-- Стиль для ListBox -->
@@ -699,7 +737,99 @@
         </Style.Triggers>
     </Style>
 
-    
+    <!-- ============================================= -->
+    <!-- СТИЛИ ДЛЯ DataGrid                              -->
+    <!-- ============================================= -->
+
+    <!-- Стиль для DataGrid -->
+    <Style x:Key="ModernDataGrid" TargetType="DataGrid">
+        <Setter Property="AutoGenerateColumns" Value="False"/>
+        <Setter Property="HeadersVisibility" Value="Column"/>
+        <Setter Property="GridLinesVisibility" Value="None"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="RowHeight" Value="35"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+        <Setter Property="SelectionMode" Value="Single"/>
+        <Setter Property="SelectionUnit" Value="FullRow"/>
+        <Setter Property="CanUserAddRows" Value="False"/>
+        <Setter Property="CanUserDeleteRows" Value="False"/>
+        <Setter Property="CanUserResizeColumns" Value="True"/>
+        <Setter Property="CanUserResizeRows" Value="False"/>
+        <Setter Property="CanUserSortColumns" Value="True"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+    </Style>
+
+    <!-- Стиль для DataGridColumnHeader -->
+    <Style x:Key="ModernDataGridColumnHeader" TargetType="DataGridColumnHeader">
+        <Setter Property="Background" Value="{DynamicResource HeaderBackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Height" Value="32"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0,0,1,1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
+    <!-- Упрощенный стиль для DataGridRow - вся строка с обводкой -->
+    <Style x:Key="ModernDataGridRow" TargetType="DataGridRow">
+        <Setter Property="MinHeight" Value="35"/>
+        <Setter Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridRow">
+                    <Border x:Name="RowBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="0.5"
+                        CornerRadius="2"
+                        Padding="2"
+                        Margin="1,1,1,1">
+                        <DataGridCellsPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="RowBorder" Property="Background" Value="{DynamicResource DataGridSelectionBrush}"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Стиль для DataGridCell -->
+    <Style x:Key="ModernDataGridCell" TargetType="DataGridCell">
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="DataGridCell">
+                    <Border Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter x:Name="contentPresenter" 
+                                      VerticalAlignment="Center"
+                                      HorizontalAlignment="Left"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <!-- ============================================= -->
     <!-- СТИЛИ ДЛЯ КОНТЕЙНЕРОВ                           -->
@@ -974,12 +1104,10 @@
     </Style>
 
     <!-- Стиль для звездочки избранного -->
-    <!-- Стиль для отображения звезды избранного. Использует Segoe MDL2 Assets для единых glyph. -->
     <Style x:Key="FavoriteStarStyle" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
         <Setter Property="FontSize" Value="16"/>
         <Setter Property="Foreground" Value="#FFFFC107"/>
-        <!-- E734 - outlined star, E735 - filled star -->
         <Setter Property="Text" Value="&#xE734;"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="VerticalAlignment" Value="Center"/>

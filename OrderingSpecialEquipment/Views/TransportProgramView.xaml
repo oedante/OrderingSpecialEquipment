@@ -28,7 +28,7 @@
         </Grid.RowDefinitions>
 
         <!-- Панель инструментов -->
-        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}">
+        <ToolBar Grid.Row="0" Style="{StaticResource ModernToolBar}" Height="Auto">
             <Button x:Name="btnAdd" Content="➕ Добавить" 
                     Click="BtnAdd_Click" 
                     Margin="2" Padding="8,3"

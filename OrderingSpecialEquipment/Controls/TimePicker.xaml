@@ -3,78 +3,113 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
              xmlns:local="clr-namespace:OrderingSpecialEquipment.Controls"
+             xmlns:converters="clr-namespace:OrderingSpecialEquipment.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="32" d:DesignWidth="200"
              x:Name="TimePickerControl">
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
         <!-- Стиль для кнопок управления временем (вертикальное расположение) -->
-        <Style x:Key="TimeSpinButton" TargetType="Button" BasedOn="{StaticResource IconButton}">
-            <Setter Property="Width" Value="24"/>
-            <Setter Property="Height" Value="15"/>
+        <Style x:Key="TimeSpinButton" TargetType="Button">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="14"/>
             <Setter Property="FontSize" Value="8"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Margin" Value="2,0,0,0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource DataGridHoverRowBrush}"/>
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!-- Стиль для контейнера стрелок -->
         <Style x:Key="SpinButtonsPanel" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Vertical"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="Margin" Value="0"/>
         </Style>
     </UserControl.Resources>
 
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
 
-            <!-- Текстовое поле для ввода времени -->
-            <TextBox x:Name="TimeTextBox"
-                     Grid.Column="0"
-                     Text="{Binding ElementName=TimePickerControl, Path=TimeText, UpdateSourceTrigger=PropertyChanged}"
-                     Height="32"
-                     MaxLength="5"
-                     LostFocus="TimeTextBox_LostFocus"
-                     PreviewTextInput="TimeTextBox_PreviewTextInput"
-                     PreviewKeyDown="TimeTextBox_PreviewKeyDown"
-                     VerticalContentAlignment="Center"
-                     DataObject.Pasting="TimeTextBox_Pasting">
-                <TextBox.Style>
-                    <Style TargetType="TextBox" BasedOn="{StaticResource ModernTextBox}">
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ElementName=TimePickerControl, Path=HasError}" Value="True">
-                                <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}"/>
-                                <Setter Property="BorderThickness" Value="1.5"/>
-                                <Setter Property="ToolTip" Value="{Binding ElementName=TimePickerControl, Path=ErrorText}"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBox.Style>
-            </TextBox>
+        <Border Grid.Row="0" Grid.ColumnSpan="2"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                Background="{DynamicResource BackgroundBrush}"
+                Height="32">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="20"/>
+                </Grid.ColumnDefinitions>
 
-            <!-- Вертикальная панель с кнопками-стрелками -->
-            <StackPanel Grid.Column="1" Style="{StaticResource SpinButtonsPanel}">
-                <Button Content="▲"
-                        Margin="2,0,0,2"
-                        Style="{StaticResource TimeSpinButton}"
-                        Click="IncreaseHour_Click"/>
-                <Button Content="▼"
-                        Style="{StaticResource TimeSpinButton}"
-                        Click="DecreaseHour_Click"/>
-            </StackPanel>
-        </Grid>
+                <!-- Текстовое поле для ввода времени -->
+                <TextBox x:Name="TimeTextBox"
+                         Grid.Column="0"
+                         Text="{Binding ElementName=TimePickerControl, Path=TimeText, UpdateSourceTrigger=PropertyChanged}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="8,0,0,0"
+                         VerticalContentAlignment="Center"
+                         FontSize="13"
+                         MaxLength="5"
+                         LostFocus="TimeTextBox_LostFocus"
+                         PreviewTextInput="TimeTextBox_PreviewTextInput"
+                         PreviewKeyDown="TimeTextBox_PreviewKeyDown"
+                         DataObject.Pasting="TimeTextBox_Pasting"/>
+                
+                <Border Grid.Column="1" HorizontalAlignment="Left" Width="1" Background="{DynamicResource BorderBrush}"/>
+                
+                <!-- Вертикальная панель с кнопками-стрелками -->
+                <StackPanel Grid.Column="1" 
+                            Style="{StaticResource SpinButtonsPanel}" 
+                            Width="20">
+                    <Button Content="▲"
+                            Height="15"
+                            Style="{StaticResource TimeSpinButton}"
+                            Click="IncreaseHour_Click"/>
+
+                    <Border Height="1" Background="{DynamicResource BorderBrush}"/>
+
+                    <Button Content="▼"
+                            Height="15"
+                            Style="{StaticResource TimeSpinButton}"
+                            Click="DecreaseHour_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- Error hint -->
         <TextBlock x:Name="ErrorTextBlock"
@@ -82,7 +117,7 @@
                    Text="{Binding ElementName=TimePickerControl, Path=ErrorText}"
                    Foreground="{DynamicResource ErrorBrush}"
                    FontSize="11"
-                   Margin="8,4,0,0"
+                   Margin="8,2,0,0"
                    Visibility="{Binding ElementName=TimePickerControl, Path=HasError, Converter={StaticResource BoolToVis}}"/>
     </Grid>
 </UserControl>
