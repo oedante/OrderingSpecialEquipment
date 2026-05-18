@@ -1021,7 +1021,7 @@ namespace OrderingSpecialEquipment.ViewModels
         /// <summary>
         /// Обновление времени в зависимости от выбранной смены
         /// </summary>
-        private void UpdateTimeBasedOnShift()
+        public void UpdateTimeBasedOnShift()
         {
             if (EditingRequest == null) return;
 
